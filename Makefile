@@ -6,4 +6,4 @@ install:
 	pip install .
 clean:
 	find . -iname *.pyc -exec rm -f {} +
-	pip uninstall -y stockapis
+	pip uninstall -y pyetrade

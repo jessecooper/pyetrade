@@ -6,5 +6,5 @@ __title__ = 'etrade'
 __version__ = '0.1'
 __author__ = 'Jesse Cooper'
 
-from . import etade
-from etrade import ETradeAPI
+from . import etrade
+from .etrade import ETradeAPI

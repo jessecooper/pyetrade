@@ -8,5 +8,5 @@ setup(name='etrade',
       author='Jesse Cooper',
       author_email='jesse_cooper@codeholics.com',
       url='https://git.aigalactic.com/Spyglass/pyetrade.git',
-      package=['pyetrade']
+      package=['pyetrade/etrade']
      )

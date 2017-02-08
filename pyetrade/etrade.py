@@ -42,9 +42,7 @@
    oauth_consumer_key  string  Required    The value used by the consumer to identify itself to the service provider.
    oauth_token   string  Required    The consumer’s request token.
    TODO:
-    * get_access_token
     * renew_access_token
-    * get_request_token to clean up __init__
     * Fix note formatting'''
 
 from requests_oauthlib import OAuth1Session

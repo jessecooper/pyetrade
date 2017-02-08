@@ -8,7 +8,9 @@ Python E-Trade API Wrapper
 	sudo make init
 	sudo make install
 
-## usage
+## Usage
 	from pyetrade import ETradeAPI
 	etrade = ETradeAPI(consumer_key, consumer_secret)
+	etrade.get_request_token()
+	#Follow url and get verification code
 	etrade.get_access_token(verifier_code)

@@ -53,7 +53,7 @@ class ETradeAPI(object):
     '''ETradeAPI
        Main API class'''
     def __init__(self, consumer_key, consumer_secret, callback_url = 'oob'):
-        '''__init__(consumer_key, consumer_secret, callback_url) -> stdout url
+        '''__init__(consumer_key, consumer_secret, callback_url)
            param: consumer_key
            type: str
            description: etrade oauth consumer key
@@ -63,27 +63,41 @@ class ETradeAPI(object):
            param: callback_url
            type: str
            description: etrade oauth callback url default oob'''
-
-        req_token_url = 'https://etws.etrade.com/oauth/request_token'
-        auth_token_url = 'https://us.etrade.com/e/t/etws/authorize'
+        
+        self.consumer_key = consumer_key
+        self.consumer_secret = consumer_secret
+        self.req_token_url = 'https://etws.etrade.com/oauth/request_token'
+        self.auth_token_url = 'https://us.etrade.com/e/t/etws/authorize'
         self.access_token_url = 'https://etws.etrade.com/oauth/access_token'
         self.callback_url = callback_url
+        self.access_token = None
+        self.resource_owner_key = None
+
+    def get_request_token(self):
+        '''get_request_token() -> auth url
+        rtype: str'''
+
         # Set up session
-        session = OAuth1Session(consumer_key,
-                                consumer_secret,
-                                callback_uri = self.callback_url,
-                                signature_type = 'AUTH_HEADER')
+        self.session = OAuth1Session(self.consumer_key,
+                                     self.consumer_secret,
+                                     callback_uri = self.callback_url,
+                                     signature_type = 'AUTH_HEADER')
         # get request token
-        session.fetch_request_token(req_token_url)
+        self.session.fetch_request_token(self.req_token_url)
         # get authorization url
         #etrade format: url?key&token
-        authorization_url = session.authorization_url(auth_token_url)
-        akey = session.parse_authorization_response(authorization_url)
-        formated_auth_url = '%s?key=%s&token=%s' % (auth_token_url, consumer_key, akey['oauth_token'])
-        print('Please go here and authorize, %s' %  formated_auth_url)
+        authorization_url = self.session.authorization_url(self.auth_token_url)
+        akey = self.session.parse_authorization_response(authorization_url)
+        # store oauth_token
+        self.resource_owner_key = akey['oauth_token']
+        formated_auth_url = '%s?key=%s&token=%s' % (self.auth_token_url, self.consumer_key, akey['oauth_token'])
+        self.verifier_url = formated_auth_url
+        #print('Please go here and authorize, %s' %  formated_auth_url)
+        return formated_auth_url
 
-    def get_access_token(self, verifier, dev=True):
-        '''get_access_token(verifier, dev) -> session
+
+    def get_access_token(self, verifier):
+        '''get_access_token(verifier, dev) -> void
            param: verifier
            type: str
            description: oauth verification code
@@ -97,4 +111,9 @@ class ETradeAPI(object):
            session.parse_authorization_response(redirect_url)
            get access token TODO move out into object function
            session.fetch_access_token('https://etws.etrade.com/oauth/access_token')'''
-        return None
+            
+        # Set verifier
+        self.session._client.client.verifier = verifier
+        # Get access token
+        self.access_token = self.session.fetch_access_token(self.access_token_url)
+        print(self.access_token)

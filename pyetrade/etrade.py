@@ -3,47 +3,10 @@
    Description: Python interface to the eTrade API
    NOTES:
    Oauth 1.0a package: requests_oauthlib
-   # Request token
-   URL
-   https://etws.etrade.com/oauth/request_token
-   HTTP Method: GET
-   Request Parameters
-   Property    Type    Description
-   oauth_consumer_key  string  The value used by the consumer to identify itself to the service provider.
-   oauth_timestamp integer The date and time of the request, in epoch time. Must be accurate within five minutes.
-   oauth_nonce string  A nonce, as described in the authorization guide - roughly, an arbitrary or random value that cannot be used again with the same timestamp.
-   oauth_signature_method  string  The signature method used by the consumer to sign the request. The only supported value is "HMAC-SHA1".
-   oauth_signature string  Signature generated with the shared secret and token secret using the specified oauth_signature_method, as described in OAuth documentation.
-   oauth_callback  string  Callback information, as described elsewhere. Must always be set to "oob", whether using a callback or not.
-
-   # Access Token
-   URL
-   https://etws.etrade.com/oauth/access_token
-   HTTP Method: GET
-   Request Parameters:
-
-   Property: oauth_consumer_key  
-   Type: string
-   Required: Required
-   Description: The value used by the consumer to identify itself to the service provider.
-   
-   oauth_timestamp integer Required    The date and time of the request, in epoch time. Must be accurate to within five minutes.
-   oauth_nonce string  Required    A nonce, as described in the authorization guide - roughly, an arbitrary or random value that cannot be used again with the same timestamp.
-   oauth_signature_method  string  Required    The signature method used by the consumer to sign the request. The only supported value is "HMAC-SHA1".
-   oauth_signature string  Required    Signature generated with the shared secret and token secret using the specified oauth_signature_method, as described in OAuth documentation.
-   oauth_token string  Required    The consumer’s request token to be exchanged for an access token.
-   oauth_verifier  string  Required    The code received by the user to authenticate with the third-party application.
-   # Authorization
-   URL
-   https://us.etrade.com/e/t/etws/authorize?key={oauth_consumer_key}&token={oauth_token}
-   HTTP Method: GET
-   Request Parameters
-   Property  Type    Required?   Description
-   oauth_consumer_key  string  Required    The value used by the consumer to identify itself to the service provider.
-   oauth_token   string  Required    The consumer’s request token.
    TODO:
     * renew_access_token
-    * Fix note formatting'''
+    * Fix doc strings
+    * Lint this messy code'''
 
 from requests_oauthlib import OAuth1Session
 
@@ -61,12 +24,14 @@ class ETradeAPI(object):
            param: callback_url
            type: str
            description: etrade oauth callback url default oob'''
-        
+
         self.consumer_key = consumer_key
         self.consumer_secret = consumer_secret
-        self.req_token_url = 'https://etws.etrade.com/oauth/request_token'
-        self.auth_token_url = 'https://us.etrade.com/e/t/etws/authorize'
-        self.access_token_url = 'https://etws.etrade.com/oauth/access_token'
+        self.base_url_prod = r'https://etws.etrade.com'
+        self.base_url_dev = r'https://etwssandbox.etrade.com'
+        self.req_token_url = r'https://etws.etrade.com/oauth/request_token'
+        self.auth_token_url = r'https://us.etrade.com/e/t/etws/authorize'
+        self.access_token_url = r'https://etws.etrade.com/oauth/access_token'
         self.callback_url = callback_url
         self.access_token = None
         self.resource_owner_key = None
@@ -88,7 +53,9 @@ class ETradeAPI(object):
         akey = self.session.parse_authorization_response(authorization_url)
         # store oauth_token
         self.resource_owner_key = akey['oauth_token']
-        formated_auth_url = '%s?key=%s&token=%s' % (self.auth_token_url, self.consumer_key, akey['oauth_token'])
+        formated_auth_url = '%s?key=%s&token=%s' % (self.auth_token_url,
+                                                    self.consumer_key,
+                                                    akey['oauth_token'])
         self.verifier_url = formated_auth_url
         #print('Please go here and authorize, %s' %  formated_auth_url)
         return formated_auth_url
@@ -109,9 +76,29 @@ class ETradeAPI(object):
            session.parse_authorization_response(redirect_url)
            get access token TODO move out into object function
            session.fetch_access_token('https://etws.etrade.com/oauth/access_token')'''
-            
+
         # Set verifier
         self.session._client.client.verifier = verifier
         # Get access token
         self.access_token = self.session.fetch_access_token(self.access_token_url)
-        print(self.access_token)
+
+        return self.access_token
+
+    def list_account(self, dev = True, resp_format = 'json'):
+        '''list_account(bool) -> obj'''
+
+        # TODO: change resp_format to support default xml
+        #       returns as well
+        # 'https://etws.etrade.com/accounts/rest/accountlist'
+        if dev:
+            uri = r'accounts/sandbox/rest/accountlist'
+        else:
+            uri = r'accounts/rest/accountlist'
+
+        api_url = '%s/%s.%s' % (self.base_url_dev, uri, resp_format)
+        print(api_url)
+        req = self.session.get(api_url)
+
+        return req
+
+        

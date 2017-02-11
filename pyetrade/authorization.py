@@ -10,7 +10,7 @@
 
 from requests_oauthlib import OAuth1Session
 
-class ETradeAPI(object):
+class ETradeOAuth(object):
     '''ETradeAPI
        Main API class'''
     def __init__(self, consumer_key, consumer_secret, callback_url = 'oob'):
@@ -83,22 +83,3 @@ class ETradeAPI(object):
         self.access_token = self.session.fetch_access_token(self.access_token_url)
 
         return self.access_token
-
-    def list_account(self, dev = True, resp_format = 'json'):
-        '''list_account(bool) -> obj'''
-
-        # TODO: change resp_format to support default xml
-        #       returns as well
-        # 'https://etws.etrade.com/accounts/rest/accountlist'
-        if dev:
-            uri = r'accounts/sandbox/rest/accountlist'
-        else:
-            uri = r'accounts/rest/accountlist'
-
-        api_url = '%s/%s.%s' % (self.base_url_dev, uri, resp_format)
-        print(api_url)
-        req = self.session.get(api_url)
-
-        return req
-
-        

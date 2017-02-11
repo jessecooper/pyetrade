@@ -9,8 +9,13 @@ Python E-Trade API Wrapper
 	sudo make install
 
 ## Usage
-	from pyetrade import ETradeAPI
-	etrade = ETradeAPI(consumer_key, consumer_secret)
-	etrade.get_request_token()
+	import pyetrade
+	oauth = pyetrade.ETradeOAuth(consumer_key, consumer_secret)
+	oauth.get_request_token()
 	#Follow url and get verification code
-	etrade.get_access_token(verifier_code)
+	tokens = oauth.get_access_token(verifier_code)
+	accounts = pyetrade.ETradeAccounts(consumer_key,
+					   consumer_secret, 
+					   tokens['oauth_token'],
+				           tokens['oauth_token_secret'])
+	accounts.list_accounts()

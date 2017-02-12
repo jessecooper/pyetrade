@@ -1,6 +1,9 @@
 #!/usr/bin/python3
+
 '''Accounts - ETrade Accounts API
-   Calls'''
+   Calls
+   TODO:
+       * Fix init doc string'''
 
 from requests_oauthlib import OAuth1Session
 
@@ -8,6 +11,8 @@ class ETradeAccounts(object):
     '''ETradeAccounts:'''
     def __init__(self, client_key, client_secret,
                  resource_owner_key, resource_owner_secret):
+        '''__init_()
+           '''
         self.client_key = client_key
         self.client_secret = client_secret
         self.resource_owner_key = resource_owner_key
@@ -21,19 +26,28 @@ class ETradeAccounts(object):
                                      signature_type = 'AUTH_HEADER')
 
     def list_account(self, dev = True, resp_format = 'json'):
-        '''list_account(bool) -> obj'''
+        '''list_account(dev, resp_format)
+           param: dev
+           type: bool
+           description: API enviornment
+           param: resp_format
+           type: str
+           description: Response format
+           rformat: json
+           rtype: dict
+           rformat: other than json
+           rtype: str'''
 
-        # TODO: change resp_format to support default xml
-        #       returns as well
-        # 'https://etws.etrade.com/accounts/rest/accountlist'
         if dev:
             uri = r'accounts/sandbox/rest/accountlist'
+            api_url = '%s/%s.%s' % (self.base_url_dev, uri, resp_format)
         else:
             uri = r'accounts/rest/accountlist'
+            api_url = '%s/%s.%s' % (self.base_url_prod, uri, resp_format)
 
-        api_url = '%s/%s.%s' % (self.base_url_dev, uri, resp_format)
-        print(api_url)
         req = self.session.get(api_url)
-
-        return req
+        if resp_format is 'json':
+            return req.json
+        else:
+            return req.text
 

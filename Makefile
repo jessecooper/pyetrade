@@ -2,6 +2,8 @@ init:
 	pip install -r requirements.txt
 test:
 	python -m unittest -v tests
+lint:
+	pylint pyetrade
 install:
 	pip install .
 clean:

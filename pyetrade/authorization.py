@@ -1,8 +1,7 @@
 #!/usr/bin/env python3
-'''etrade.py
-   Description: Python interface to the eTrade API
-   NOTES:
-   Oauth 1.0a package: requests_oauthlib
+
+'''authorization.py
+   Description: ETrade API authorization
    TODO:
     * renew_access_token
     * Fix doc strings
@@ -11,8 +10,8 @@
 from requests_oauthlib import OAuth1Session
 
 class ETradeOAuth(object):
-    '''ETradeAPI
-       Main API class'''
+    '''ETradeOAuth
+       ETrade OAuth 1.0a Wrapper'''
     def __init__(self, consumer_key, consumer_secret, callback_url = 'oob'):
         '''__init__(consumer_key, consumer_secret, callback_url)
            param: consumer_key
@@ -38,7 +37,8 @@ class ETradeOAuth(object):
 
     def get_request_token(self):
         '''get_request_token() -> auth url
-        rtype: str'''
+        rtype: str
+        description: Etrade autherization url'''
 
         # Set up session
         self.session = OAuth1Session(self.consumer_key,
@@ -62,20 +62,12 @@ class ETradeOAuth(object):
 
 
     def get_access_token(self, verifier):
-        '''get_access_token(verifier, dev) -> void
+        '''get_access_token(verifier) -> access_token
            param: verifier
            type: str
            description: oauth verification code
-           param: dev
-           type: bool
-           description: etrade dev or prod env
-           notes:
-           get redirect url
-           redirect_url = redirect_response = raw_input('Paste the full redirect URL here: ')
-           get varification code
-           session.parse_authorization_response(redirect_url)
-           get access token TODO move out into object function
-           session.fetch_access_token('https://etws.etrade.com/oauth/access_token')'''
+           rtype: dict
+           description: oauth access tokens'''
 
         # Set verifier
         self.session._client.client.verifier = verifier

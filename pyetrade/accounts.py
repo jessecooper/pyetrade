@@ -47,7 +47,7 @@ class ETradeAccounts(object):
 
         req = self.session.get(api_url)
         if resp_format is 'json':
-            return req.json
+            return req.json()
         else:
             return req.text
 

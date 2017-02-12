@@ -1,5 +1,7 @@
 init:
-	pip install -r requirements.txt
+	pip3 install -r requirements.txt
+devel:
+	pip3 install -r requirements_dev.txt
 test:
 	python -m unittest -v tests
 lint:

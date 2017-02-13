@@ -7,7 +7,7 @@ test:
 	coverage run --source pyetrade -m unittest -v
 	coverage report -m
 lint:
-	pylint pyetrade
+	pylint pyetrade tests
 install:
 	pip3 install .
 clean:

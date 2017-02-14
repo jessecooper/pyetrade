@@ -3,7 +3,8 @@
 '''Accounts - ETrade Accounts API
    Calls
    TODO:
-       * Fix init doc string'''
+       * Fix init doc string
+       * Check request response for error'''
 
 from requests_oauthlib import OAuth1Session
 
@@ -25,7 +26,7 @@ class ETradeAccounts(object):
                                      self.resource_owner_secret,
                                      signature_type = 'AUTH_HEADER')
 
-    def list_account(self, dev = True, resp_format = 'json'):
+    def list_accounts(self, dev = True, resp_format = 'json'):
         '''list_account(dev, resp_format)
            param: dev
            type: bool
@@ -49,5 +50,5 @@ class ETradeAccounts(object):
         if resp_format is 'json':
             return req.json()
         else:
-            return req.text
+            return req.text()
 

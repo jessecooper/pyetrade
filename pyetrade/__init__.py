@@ -2,7 +2,7 @@
 
 __ALL__ = ['authorization', 'accounts']
 
-__title__ = 'etrade'
+__title__ = 'pyetrade'
 __version__ = '0.1'
 __author__ = 'Jesse Cooper'
 

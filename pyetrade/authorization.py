@@ -3,11 +3,16 @@
 '''authorization.py
    Description: ETrade API authorization
    TODO:
-    * renew_access_token
     * Fix doc strings
-    * Lint this messy code'''
+    * Lint this messy code
+    * Add logging
+    * Catch events
+    * Revoke token'''
 
+import logging
 from requests_oauthlib import OAuth1Session
+# Set up logging
+logger = logging.getLogger(__name__)
 
 class ETradeOAuth(object):
     '''ETradeOAuth
@@ -31,6 +36,7 @@ class ETradeOAuth(object):
         self.req_token_url = r'https://etws.etrade.com/oauth/request_token'
         self.auth_token_url = r'https://us.etrade.com/e/t/etws/authorize'
         self.access_token_url = r'https://etws.etrade.com/oauth/access_token'
+        self.renew_access_token_url = r'https://etws.etrade.com/oauth/renew_access_token'
         self.callback_url = callback_url
         self.access_token = None
         self.resource_owner_key = None
@@ -57,9 +63,9 @@ class ETradeOAuth(object):
                                                     self.consumer_key,
                                                     akey['oauth_token'])
         self.verifier_url = formated_auth_url
-        #print('Please go here and authorize, %s' %  formated_auth_url)
-        return formated_auth_url
+        logger.debug(formated_auth_url)
 
+        return formated_auth_url
 
     def get_access_token(self, verifier):
         '''get_access_token(verifier) -> access_token
@@ -75,3 +81,12 @@ class ETradeOAuth(object):
         self.access_token = self.session.fetch_access_token(self.access_token_url)
 
         return self.access_token
+
+    def renew_access_token(self):
+        '''renew_access_token() -> bool'''
+        resp = self.session.get(self.renew_access_token_url)
+        
+        logger.debug(resp.text)
+        resp.raise_for_status()
+        
+        return True

@@ -19,3 +19,6 @@ Python E-Trade API Wrapper
 					   tokens['oauth_token'],
 				           tokens['oauth_token_secret'])
 	accounts.list_accounts()
+
+## Contribute to pyetrade
+Please read contribution wiki for development guide https://git.aigalactic.com/Spyglass/pyetrade/wiki/Contributing-to-PyEtrade

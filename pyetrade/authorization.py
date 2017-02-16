@@ -37,6 +37,7 @@ class ETradeOAuth(object):
         self.auth_token_url = r'https://us.etrade.com/e/t/etws/authorize'
         self.access_token_url = r'https://etws.etrade.com/oauth/access_token'
         self.renew_access_token_url = r'https://etws.etrade.com/oauth/renew_access_token'
+        self.revoke_access_token_url = r'https://etws.etrade.com/oauth/revoke_access_token'
         self.callback_url = callback_url
         self.access_token = None
         self.resource_owner_key = None
@@ -85,6 +86,15 @@ class ETradeOAuth(object):
     def renew_access_token(self):
         '''renew_access_token() -> bool'''
         resp = self.session.get(self.renew_access_token_url)
+        
+        logger.debug(resp.text)
+        resp.raise_for_status()
+        
+        return True
+
+    def revoke_access_token(self):
+        '''revoke_access_token() -> bool'''
+        resp = self.session.get(self.revoke_access_token_url)
         
         logger.debug(resp.text)
         resp.raise_for_status()

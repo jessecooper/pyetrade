@@ -33,12 +33,24 @@ class TestETradeAuthorization(unittest.TestCase):
     # Mock out OAuth1Session
     @patch('pyetrade.authorization.OAuth1Session')
     def test_renew_access_token(self, MockOAuthSession):
-        '''test_get_access_token(self, MockOAuthSession)'''
+        '''test_renew_access_token(self, MockOAuthSession)'''
         # Set Mock returns
         MockOAuthSession().fetch_access_token.return_value = "{'oauth_token': 'abc', 'oauth_token_secret': 'xyz'}"
         oauth = authorization.ETradeOAuth('xyz321', 'secret')
         oauth.get_request_token()
         oauth.get_access_token('abcxyz')
         self.assertTrue(oauth.renew_access_token())
+        self.assertTrue(MockOAuthSession().fetch_access_token.called)
+        self.assertTrue(MockOAuthSession().get.called)
+    # Mock out OAuth1Session
+    @patch('pyetrade.authorization.OAuth1Session')
+    def test_revoke_access_token(self, MockOAuthSession):
+        '''test_revoke_access_token(self, MockOAuthSession)'''
+        # Set Mock returns
+        MockOAuthSession().fetch_access_token.return_value = "{'oauth_token': 'abc', 'oauth_token_secret': 'xyz'}"
+        oauth = authorization.ETradeOAuth('xyz321', 'secret')
+        oauth.get_request_token()
+        oauth.get_access_token('abcxyz')
+        self.assertTrue(oauth.revoke_access_token())
         self.assertTrue(MockOAuthSession().fetch_access_token.called)
         self.assertTrue(MockOAuthSession().get.called)

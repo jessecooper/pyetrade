@@ -6,7 +6,10 @@
        * Fix init doc string
        * Check request response for error'''
 
+import logging
 from requests_oauthlib import OAuth1Session
+# Set up logging
+logger = logging.getLogger(__name__)
 
 class ETradeAccounts(object):
     '''ETradeAccounts:'''
@@ -46,7 +49,11 @@ class ETradeAccounts(object):
             uri = r'accounts/rest/accountlist'
             api_url = '%s/%s.%s' % (self.base_url_prod, uri, resp_format)
 
+        logger.debug(api_url)
         req = self.session.get(api_url)
+        req.raise_for_status()
+        logger.debug(req.text)
+
         if resp_format is 'json':
             return req.json()
         else:

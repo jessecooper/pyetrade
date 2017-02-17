@@ -80,6 +80,7 @@ class ETradeOAuth(object):
         self.session._client.client.verifier = verifier
         # Get access token
         self.access_token = self.session.fetch_access_token(self.access_token_url)
+        logger.debug(self.access_token)
 
         return self.access_token
 

@@ -289,6 +289,7 @@ class ETradeOrder(object):
         logger.debug(kwargs)
         # Test required values
         if 'accountId' not in kwargs and\
+           'symbol' not in kwargs and\
            'orderAction' not in kwargs and\
            'clientOrderId' not in kwargs and\
            'priceType' not in kwargs and\

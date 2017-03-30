@@ -21,10 +21,22 @@ from pyetrade.etrade_exception import OrderException
 logger = logging.getLogger(__name__)
 
 class ETradeOrder(object):
-    '''ETradeOrder:'''
+    '''ETradeOrder'''
     def __init__(self, client_key, client_secret,
                  resource_owner_key, resource_owner_secret):
-        '''__init_()'''
+        '''__init__(client_key, client_secret)
+           param: client_key
+           type: str
+           description: etrade client key
+           param: client_secret
+           type: str
+           description: etrade client secret
+           param: resource_owner_key
+           type: str
+           description: OAuth authentication token key
+           param: resource_owner_secret
+           type: str
+           description: OAuth authentication token secret'''
         self.client_key = client_key
         self.client_secret = client_secret
         self.resource_owner_key = resource_owner_key

@@ -2,10 +2,9 @@
 
 '''Order - ETrade Order API
    TODO:
-       * Fix init doc string
        * List Order
        * Preview Equity Order
-       * Place equity order
+       * Place equity order - test arg types
        * Preview equity order change
        * Place equity order change
        * Preview option order
@@ -68,7 +67,7 @@ class ETradeOrder(object):
            description: The market symbol for the security
                         being bought or sold
            param: orderAction
-           type: enum
+           type: str
            required: true
            description: The action that the broker is requested
                         to perform Possible values are:
@@ -97,7 +96,7 @@ class ETradeOrder(object):
                         within this account. It does not appear
                         in any API responses.
            param: priceType
-           type: enum
+           type: str
            required: true
            description: The type of pricing specified in the
                         equity order. Possible values are:
@@ -150,14 +149,14 @@ class ETradeOrder(object):
                         displayed if this is a reserve order.
                         Required if serveOrder is True.
            param: marketSession
-           type: enum
+           type: str
            required: true
            description: Session in which the equity order will
                         be placed. Possible values are:
                             * REGULAR
                             * EXTENDED
            param: orderTerm
-           type: enum
+           type: str
            required: true
            description: Specifies the term for which the order
                         is in effect. Possible values are:
@@ -168,7 +167,7 @@ class ETradeOrder(object):
                             * FILL_OR_KILL (only for limit
                               orders)
            param: routingDestination
-           type: enum
+           type: str
            required: optional
            description: The exchange where the order should be
                         executed. Users may want to specify
@@ -289,14 +288,7 @@ class ETradeOrder(object):
                              * ARCA
                              * NSDQ
                              * NYSE'''
-        # Set Env
-        if dev:
-            uri = r'order/sandbox/rest/placeequityorder'
-            api_url = '%s/%s.%s' % (self.base_url_dev, uri, resp_format)
-        else:
-            uri = r'order/rest/placeequityorder'
-            api_url = '%s/%s.%s' % (self.base_url_prod, uri, resp_format)
-
+        
         # Build Payload
         logger.debug(kwargs)
         # Test required values
@@ -321,9 +313,27 @@ class ETradeOrder(object):
            'stopPrice' in kwargs:
             raise OrderException
 
+        # Init payload
+        payload = {'PlaceEquityOrder': ''}
+
+        # Set Env
+        if dev:
+            uri = r'order/sandbox/rest/placeequityorder'
+            api_url = '%s/%s.%s' % (self.base_url_dev, uri, resp_format)
+            payload['PlaceEquityOrder'] = {'-xmlns': self.base_url_dev}
+            # Not sure if it matters
+            #payload['PlaceEquityOrder'] = {'-xmlns': r'http://order.etws.etrade.com'}
+        else:
+            uri = r'order/rest/placeequityorder'
+            api_url = '%s/%s.%s' % (self.base_url_prod, uri, resp_format)
+            payload['PlaceEquityOrder'] = {'-xmlns': self.base_url_prod}
+
+        # Build Payload
+        payload['PlaceEquityOrder']['EquityOrderRequest'] = kwargs
+        logger.debug('payload: %s' % payload)
 
         logger.debug(api_url)
-        req = self.session.post(api_url)
+        req = self.session.post(api_url, json=payload)
         req.raise_for_status()
         logger.debug(req.text)
 

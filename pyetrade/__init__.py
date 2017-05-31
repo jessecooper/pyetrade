@@ -7,7 +7,7 @@ __version__ = '0.1'
 __author__ = 'Jesse Cooper'
 
 from . import authorization
-from .authorization import ETradeOAuth
+from .authorization import ETradeOAuth, ETradeAccessManager
 from . import accounts
 from .accounts import ETradeAccounts
 from . import order

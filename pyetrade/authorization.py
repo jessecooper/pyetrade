@@ -44,8 +44,8 @@ class ETradeOAuth(object):
 
     def get_request_token(self):
         '''get_request_token() -> auth url
-        rtype: str
-        description: Etrade autherization url'''
+           rtype: str
+           description: Etrade autherization url'''
 
         # Set up session
         self.session = OAuth1Session(self.consumer_key,
@@ -84,6 +84,35 @@ class ETradeOAuth(object):
 
         return self.access_token
 
+class ETradeAccessManager(object):
+    '''ETradeAccessManager - Renew and revoke ETrade OAuth Access Tokens'''
+    def __init__(self, client_key, client_secret,
+                 resource_owner_key, resource_owner_secret):
+        '''__init__(client_key, client_secret)
+           param: client_key
+           type: str
+           description: etrade client key
+           param: client_secret
+           type: str
+           description: etrade client secret
+           param: resource_owner_key
+           type: str
+           description: OAuth authentication token key
+           param: resource_owner_secret
+           type: str
+           description: OAuth authentication token secret'''
+        self.client_key = client_key
+        self.client_secret = client_secret
+        self.resource_owner_key = resource_owner_key
+        self.resource_owner_secret = resource_owner_secret
+        self.renew_access_token_url = r'https://etws.etrade.com/oauth/renew_access_token'
+        self.revoke_access_token_url = r'https://etws.etrade.com/oauth/revoke_access_token'
+        self.session = OAuth1Session(self.client_key,
+                                     self.client_secret,
+                                     self.resource_owner_key,
+                                     self.resource_owner_secret,
+                                     signature_type = 'AUTH_HEADER')
+
     def renew_access_token(self):
         '''renew_access_token() -> bool'''
         resp = self.session.get(self.renew_access_token_url)
@@ -92,7 +121,6 @@ class ETradeOAuth(object):
         resp.raise_for_status()
         
         return True
-
     def revoke_access_token(self):
         '''revoke_access_token() -> bool'''
         resp = self.session.get(self.revoke_access_token_url)

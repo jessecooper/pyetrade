@@ -36,8 +36,6 @@ class ETradeOAuth(object):
         self.req_token_url = r'https://etws.etrade.com/oauth/request_token'
         self.auth_token_url = r'https://us.etrade.com/e/t/etws/authorize'
         self.access_token_url = r'https://etws.etrade.com/oauth/access_token'
-        self.renew_access_token_url = r'https://etws.etrade.com/oauth/renew_access_token'
-        self.revoke_access_token_url = r'https://etws.etrade.com/oauth/revoke_access_token'
         self.callback_url = callback_url
         self.access_token = None
         self.resource_owner_key = None
@@ -114,15 +112,82 @@ class ETradeAccessManager(object):
                                      signature_type = 'AUTH_HEADER')
 
     def renew_access_token(self):
-        '''renew_access_token() -> bool'''
+        '''renew_access_token() -> bool
+           some params handled by requests_oauthlib but put in
+           doc string for clarity into the API.
+           param: oauth_consumer_key
+           type: string
+           required: true
+           description: the value used by the consumer to identify
+                        itself to the service provider.
+           param: oauth_timestamp
+           type: int
+           required: true
+           description: the date and time of the request, in epoch time.
+                        must be accurate withiin five minutes.
+           param: oauth_nonce
+           type: str
+           required: true
+           description: a nonce, as described in the authorization guide
+                        roughly, an arbitrary or random value that cannot
+                        be used again with the same timestamp.
+           param: oauth_signature_method
+           type: str
+           required: true
+           description: the signature method used by the consumer to sign
+                        the request. the only supported value is "HMAC-SHA1".
+           param: oauth_signature
+           type: str
+           required: true
+           description: signature generated with the shared secret and
+                        token secret using the specified oauth_signature_method
+                        as described in OAuth documentation.
+           param: oauth_token
+           type: str
+           required: true
+           description: the consumer's access token to be renewed.'''
         resp = self.session.get(self.renew_access_token_url)
         
         logger.debug(resp.text)
         resp.raise_for_status()
         
         return True
+
     def revoke_access_token(self):
-        '''revoke_access_token() -> bool'''
+        '''revoke_access_token() -> bool
+           some params handled by requests_oauthlib but put in
+           doc string for clarity into the API.
+           param: oauth_consumer_key
+           type: string
+           required: true
+           description: the value used by the consumer to identify
+                        itself to the service provider.
+           param: oauth_timestamp
+           type: int
+           required: true
+           description: the date and time of the request, in epoch time.
+                        must be accurate withiin five minutes.
+           param: oauth_nonce
+           type: str
+           required: true
+           description: a nonce, as described in the authorization guide
+                        roughly, an arbitrary or random value that cannot
+                        be used again with the same timestamp.
+           param: oauth_signature_method
+           type: str
+           required: true
+           description: the signature method used by the consumer to sign
+                        the request. the only supported value is "HMAC-SHA1".
+           param: oauth_signature
+           type: str
+           required: true
+           description: signature generated with the shared secret and
+                        token secret using the specified oauth_signature_method
+                        as described in OAuth documentation.
+           param: oauth_token
+           type: str
+           required: true
+           description: the consumer's access token to be revoked.'''
         resp = self.session.get(self.revoke_access_token_url)
         
         logger.debug(resp.text)

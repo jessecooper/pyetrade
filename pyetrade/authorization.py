@@ -42,6 +42,35 @@ class ETradeOAuth(object):
 
     def get_request_token(self):
         '''get_request_token() -> auth url
+           some params handled by requests_oauthlib but put in
+           doc string for clarity into the API.
+           param: oauth_consumer_key
+           type: str
+           description: the value used by the consumer to identify
+                        itself to the service provider.
+           param: oauth_timestamp
+           type: int
+           description: the date and time of the request, in epoch time.
+                        must be accurate within five minutes.
+           param: oauth_nonce
+           type: str
+           description: a nonce, as discribed in the authorization guide
+                        roughly, an arbitrary or random value that cannot
+                        be used again with the same timestamp.
+           param: oauth_signature_method
+           type: str
+           description: the signature method used by the consumer to sign
+                        the request. the only supported value is 'HMAC-SHA1'.
+           param: oauth_signature
+           type: str
+           description: signature generated with the shared secret and token
+                        secret using the specified oauth_signature_method
+                        as described in OAuth documentation.
+           param: oauth_callback
+           type: str
+           description: callback information, as described elsewhere. must
+                        always be set to 'oob' whether using a callback or
+                        not
            rtype: str
            description: Etrade autherization url'''
 
@@ -72,7 +101,40 @@ class ETradeOAuth(object):
            type: str
            description: oauth verification code
            rtype: dict
-           description: oauth access tokens'''
+           description: oauth access tokens
+           
+           OAuth API paramiters mostly handled by requests_oauthlib
+           but illistrated here for clarity.
+           param: oauth_consumer_key
+           type: str
+           description: the value used by the consumer to identify
+                        itself to the service provider.
+           param: oauth_timestamp
+           type: int
+           description: the date and time of the request, in epoch time.
+                        must be accurate within five minutes.
+           param: oauth_nonce
+           type: str
+           description: a nonce, as discribed in the authorization guide
+                        roughly, an arbitrary or random value that cannot
+                        be used again with the same timestamp.
+           param: oauth_signature_method
+           type: str
+           description: the signature method used by the consumer to sign
+                        the request. the only supported value is 'HMAC-SHA1'.
+           param: oauth_signature
+           type: str
+           description: signature generated with the shared secret and token
+                        secret using the specified oauth_signature_method
+                        as described in OAuth documentation.
+           param: oauth_token
+           type: str
+           description: the consumer's request token to be exchanged for an
+                        access token
+           param: oauth_verifier
+           type: str
+           description: the code received by the user to authenticate with
+                        the third-party application'''
 
         # Set verifier
         self.session._client.client.verifier = verifier

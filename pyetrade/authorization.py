@@ -3,11 +3,8 @@
 '''authorization.py
    Description: ETrade API authorization
    TODO:
-    * Fix doc strings
     * Lint this messy code
-    * Add logging
-    * Catch events
-    * Revoke token'''
+    * Catch events'''
 
 import logging
 from requests_oauthlib import OAuth1Session

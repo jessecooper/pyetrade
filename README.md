@@ -26,7 +26,7 @@ accounts.list_accounts()
 * Fork pyetrade
 * Development Setup:  
 ```
-sudo make init
+sudo make init  
 sudo make devel
 ```
 * Lint  

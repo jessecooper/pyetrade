@@ -23,4 +23,20 @@ accounts = pyetrade.ETradeAccounts(consumer_key,
 accounts.list_accounts()
 ```
 ## Contribute to pyetrade
-Please read contribution wiki for development guide https://git.aigalactic.com/Spyglass/pyetrade/wiki/Contributing-to-PyEtrade
+* Fork pyetrade
+* Development Setup:
+```
+sudo make init
+sudo make devel
+```
+* Lint
+```
+make lint #Lint score should be >=8
+```
+* Test
+```
+make test #Ensure test coverage is >80%
+```
+* Push Changes:
+Push changes to a branch on your forked repo
+* Create pull request

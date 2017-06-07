@@ -24,19 +24,19 @@ accounts.list_accounts()
 ```
 ## Contribute to pyetrade
 * Fork pyetrade
-* Development Setup:
+* Development Setup:  
 ```
 sudo make init
 sudo make devel
 ```
-* Lint
+* Lint  
 ```
 make lint #Lint score should be >=8
 ```
-* Test
+* Test  
 ```
 make test #Ensure test coverage is >80%
 ```
-* Push Changes:
+* Push Changes:  
 Push changes to a branch on your forked repo
 * Create pull request

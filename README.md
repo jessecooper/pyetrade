@@ -7,6 +7,8 @@ Python E-Trade API Wrapper
 
 ## Install
 ```
+pip install pyetrade
+- or -
 git clone https://github.com/jessecooper/pyetrade.git
 cd pyetrade
 sudo make init

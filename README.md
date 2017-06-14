@@ -1,8 +1,8 @@
 # pyetrade
 
 Python E-Trade API Wrapper
-https://img.shields.io/pypi/v/pyetrade.svg
-![Pypi Version Badge](https://img.shields.io/pypi/v/pyetrade.svg "PyPi Version Badge")
+https://img.shields.io/pypi/v/pyetrade.svg  
+![alt text](https://img.shields.io/pypi/v/pyetrade.svg "PyPi Version Badge")
 
 ## Install
 ```

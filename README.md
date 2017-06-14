@@ -4,7 +4,7 @@ Python E-Trade API Wrapper
 
 ## Install
 ```
-git clone https://git.aigalactic.com/spyglass/pyetrade.git
+git clone https://github.com/jessecooper/pyetrade.git
 cd pyetrade
 sudo make init
 sudo make install

@@ -11,4 +11,5 @@ setup(name='pyetrade',
       license='GPLv3',
       packages=['pyetrade'],
       package_dir={'pyetrade':'pyetrade/'}
+      keywords = ['etrade', 'pyetrade', 'stocks']
      )

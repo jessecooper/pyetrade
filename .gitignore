@@ -62,4 +62,4 @@ target/
 *.note
 *.swp
 
-*.sh
+MANIFEST

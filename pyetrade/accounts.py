@@ -27,9 +27,9 @@ class ETradeAccounts(object):
                                      self.client_secret,
                                      self.resource_owner_key,
                                      self.resource_owner_secret,
-                                     signature_type = 'AUTH_HEADER')
+                                     signature_type='AUTH_HEADER')
 
-    def list_accounts(self, dev = True, resp_format = 'json'):
+    def list_accounts(self, dev=True, resp_format='json'):
         '''list_account(dev, resp_format)
            param: dev
            type: bool
@@ -58,4 +58,3 @@ class ETradeAccounts(object):
             return req.json()
         else:
             return req.text()
-

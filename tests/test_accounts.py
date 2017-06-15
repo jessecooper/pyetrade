@@ -12,17 +12,20 @@ class TestETradeAccounts(unittest.TestCase):
     # Mock out OAuth1Session
     @patch('pyetrade.accounts.OAuth1Session')
     def test_list_accounts(self, MockOAuthSession):
+        '''test_list_accounts(MockOAuthSession) -> None
+           param: MockOAuthSession
+           type: mock.MagicMock
+           description: MagicMock object for OAuth1Sessions'''
         # Set Mock returns
         MockOAuthSession().get().json.return_value = "{'account': 'abc123'}"
         MockOAuthSession().get().text.return_value = r'<xml> returns </xml>'
         account = accounts.ETradeAccounts('abc123', 'xyz123', 'abctoken', 'xyzsecret')
         # Test Dev JSON
-        self.assertEqual(account.list_accounts(), "{'account': 'abc123'}") 
+        self.assertEqual(account.list_accounts(), "{'account': 'abc123'}")
         # Test Prod JSON
-        self.assertEqual(account.list_accounts(dev=False), "{'account': 'abc123'}") 
+        self.assertEqual(account.list_accounts(dev=False), "{'account': 'abc123'}")
         # Test Dev XML
-        self.assertEqual(account.list_accounts(resp_format='xml'), r'<xml> returns </xml>') 
-        self.assertTrue(MockOAuthSession().get().json.called) 
-        self.assertTrue(MockOAuthSession().get().text.called) 
-        self.assertTrue(MockOAuthSession().get.called) 
-        
+        self.assertEqual(account.list_accounts(resp_format='xml'), r'<xml> returns </xml>')
+        self.assertTrue(MockOAuthSession().get().json.called)
+        self.assertTrue(MockOAuthSession().get().text.called)
+        self.assertTrue(MockOAuthSession().get.called)

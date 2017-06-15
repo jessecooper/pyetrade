@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 class ETradeOAuth(object):
     '''ETradeOAuth
        ETrade OAuth 1.0a Wrapper'''
-    def __init__(self, consumer_key, consumer_secret, callback_url = 'oob'):
+    def __init__(self, consumer_key, consumer_secret, callback_url='oob'):
         '''__init__(consumer_key, consumer_secret, callback_url)
            param: consumer_key
            type: str
@@ -74,8 +74,8 @@ class ETradeOAuth(object):
         # Set up session
         self.session = OAuth1Session(self.consumer_key,
                                      self.consumer_secret,
-                                     callback_uri = self.callback_url,
-                                     signature_type = 'AUTH_HEADER')
+                                     callback_uri=self.callback_url,
+                                     signature_type='AUTH_HEADER')
         # get request token
         self.session.fetch_request_token(self.req_token_url)
         # get authorization url
@@ -99,7 +99,7 @@ class ETradeOAuth(object):
            description: oauth verification code
            rtype: dict
            description: oauth access tokens
-           
+
            OAuth API paramiters mostly handled by requests_oauthlib
            but illistrated here for clarity.
            param: oauth_consumer_key
@@ -168,7 +168,7 @@ class ETradeAccessManager(object):
                                      self.client_secret,
                                      self.resource_owner_key,
                                      self.resource_owner_secret,
-                                     signature_type = 'AUTH_HEADER')
+                                     signature_type='AUTH_HEADER')
 
     def renew_access_token(self):
         '''renew_access_token() -> bool
@@ -205,11 +205,10 @@ class ETradeAccessManager(object):
            type: str
            required: true
            description: the consumer's access token to be renewed.'''
-        resp = self.session.get(self.renew_access_token_url)
-        
+        resp = self.session.get(self.renew_access_token_url) 
         logger.debug(resp.text)
         resp.raise_for_status()
-        
+
         return True
 
     def revoke_access_token(self):
@@ -248,8 +247,7 @@ class ETradeAccessManager(object):
            required: true
            description: the consumer's access token to be revoked.'''
         resp = self.session.get(self.revoke_access_token_url)
-        
         logger.debug(resp.text)
         resp.raise_for_status()
-        
+
         return True

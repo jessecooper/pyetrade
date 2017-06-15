@@ -46,7 +46,7 @@ class ETradeOrder(object):
                                      self.client_secret,
                                      self.resource_owner_key,
                                      self.resource_owner_secret,
-                                     signature_type = 'AUTH_HEADER')
+                                     signature_type='AUTH_HEADER')
 
     def place_equity_order(self, dev=True, resp_format='json', **kwargs):
         '''place_equity_order(dev, resp_format, **kwargs) -> resp
@@ -162,7 +162,7 @@ class ETradeOrder(object):
                         is in effect. Possible values are:
                             * GOOD_UNTIL_CANCEL
                             * GOOD_FOR_DAY
-                            * IMMEDIATE_OR_CANCEL (only for 
+                            * IMMEDIATE_OR_CANCEL (only for
                               limit orders)
                             * FILL_OR_KILL (only for limit
                               orders)
@@ -288,7 +288,6 @@ class ETradeOrder(object):
                              * ARCA
                              * NSDQ
                              * NYSE'''
-        
         # Build Payload
         logger.debug(kwargs)
         # Test required values
@@ -302,15 +301,15 @@ class ETradeOrder(object):
            'marketSession' not in kwargs:
             raise OrderException
 
-        if kwargs['priceType'] == 'STOP' and not\
-           'stopPrice' in kwargs:
+        if kwargs['priceType'] == 'STOP' and \
+           'stopPrice' not in kwargs:
             raise OrderException
-        if kwargs['priceType'] == 'LIMIT' and not\
-           'limitPrice' in kwargs:
+        if kwargs['priceType'] == 'LIMIT' and \
+           'limitPrice' not in kwargs:
             raise OrderException
-        if kwargs['priceType'] == 'STOP_LIMIT' and not\
-           'limitPrice' in kwargs and not\
-           'stopPrice' in kwargs:
+        if kwargs['priceType'] == 'STOP_LIMIT' and \
+           'limitPrice' not in kwargs and \
+           'stopPrice' not in kwargs:
             raise OrderException
 
         # Init payload
@@ -330,7 +329,7 @@ class ETradeOrder(object):
 
         # Build Payload
         payload['PlaceEquityOrder']['EquityOrderRequest'] = kwargs
-        logger.debug('payload: %s' % payload)
+        logger.debug('payload: %s', payload)
 
         logger.debug(api_url)
         req = self.session.post(api_url, json=payload)
@@ -341,4 +340,3 @@ class ETradeOrder(object):
             return req.json()
         else:
             return req.text()
-

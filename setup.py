@@ -2,6 +2,10 @@
 
 from distutils.core import setup
 
+# requirements
+with open('requirements.txt') as requirements:
+    req = [i.strip() for i in requirements]
+
 setup(name='pyetrade',
       version='0.1',
       description='eTrade API wrappers built on requests-oauth',
@@ -11,5 +15,6 @@ setup(name='pyetrade',
       license='GPLv3',
       packages=['pyetrade'],
       package_dir={'pyetrade':'pyetrade/'},
+      install_requires = req,
       keywords = ['etrade', 'pyetrade', 'stocks']
      )

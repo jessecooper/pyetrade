@@ -10,6 +10,8 @@ lint:
 	pylint pyetrade tests
 install:
 	pip3 install .
+build:
+	python3 setup.py build sdist
 clean:
 	find . -iname *.pyc -exec rm -f {} +
 	pip3 uninstall -y pyetrade

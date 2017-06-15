@@ -3,6 +3,7 @@
 Python E-Trade API Wrapper   
 ![alt text](https://img.shields.io/pypi/v/pyetrade.svg "PyPi Version Badge")
 ![alt text](https://img.shields.io/pypi/l/pyetrade.svg "PyPi License Badge")
+![alt text](https://img.shields.io/pypi/pyversions/pyetrade.svg "PyPi Python Versions Badge")
 
 
 ## Install

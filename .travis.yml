@@ -5,6 +5,8 @@ python:
     - "3.5"
     - "3.6"
     - "nightly"
+install:
+    - pip install codecov
 script:
     - make
     - make devel
@@ -16,3 +18,5 @@ notifications:
             - jesse_cooper@codeholics.com
         on_success: never
         on_failure: always
+after_success:
+    - codecov

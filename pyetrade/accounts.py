@@ -3,6 +3,13 @@
 '''Accounts - ETrade Accounts API
    Calls
    TODO:
+       * Get Account Balance
+       * Get Account Positions
+       * Get Transaction History
+       * Get Transaction Details
+       * List Alerts
+       * Read Alert
+       * Delete Alert
        * Fix init doc string
        * Check request response for error'''
 

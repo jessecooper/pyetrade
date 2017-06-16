@@ -1,10 +1,21 @@
 # pyetrade
 
 Python E-Trade API Wrapper   
-![alt text](https://img.shields.io/pypi/v/pyetrade.svg "PyPi Version Badge")
-![alt text](https://img.shields.io/pypi/l/pyetrade.svg "PyPi License Badge")
-![alt text](https://img.shields.io/pypi/pyversions/pyetrade.svg "PyPi Python Versions Badge")
+[![PyPI](https://img.shields.io/pypi/v/pyetrade.svg)](https://pypi.python.org/pypi/pyetrade)
+[![PyPI](https://img.shields.io/pypi/l/pyetrade.svg)]()
+[![PyPI](https://img.shields.io/pypi/pyversions/pyetrade.svg)](https://pypi.python.org/pypi/pyetrade)
 
+## Completed
+Authorization API - ALL  
+Accounts API - List Accounts  
+Order API - Place Equity Order  
+
+## TODO
+Accounts API - See pyetrade/accounts.py  
+Order API - See pyetrade/order.py  
+Market API - ALL  
+Notification API - ALL  
+Limits API - ALL  
 
 ## Install
 ```
@@ -29,6 +40,7 @@ accounts = pyetrade.ETradeAccounts(consumer_key,
 accounts.list_accounts()
 ```
 ## Contribute to pyetrade
+* [ETrade API Docs] (https://developer.etrade.com/ctnt/dev-portal/getArticleByCategory?category=Documentation)
 * Fork pyetrade
 * Development Setup:  
 ```

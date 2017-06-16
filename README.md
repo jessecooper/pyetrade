@@ -5,6 +5,7 @@ Python E-Trade API Wrapper
 [![PyPI](https://img.shields.io/pypi/l/pyetrade.svg)]()
 [![PyPI](https://img.shields.io/pypi/pyversions/pyetrade.svg)](https://pypi.python.org/pypi/pyetrade)
 [![Build Status](https://travis-ci.org/jessecooper/pyetrade.svg?branch=master)](https://travis-ci.org/jessecooper/pyetrade)
+[![codecov](https://codecov.io/gh/jessecooper/pyetrade/branch/master/graph/badge.svg)](https://codecov.io/gh/jessecooper/pyetrade)
 ## Completed
 Authorization API - ALL  
 Accounts API - List Accounts  

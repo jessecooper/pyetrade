@@ -63,3 +63,5 @@ target/
 *.swp
 
 MANIFEST
+# Docs
+docs/_build

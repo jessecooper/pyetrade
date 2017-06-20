@@ -11,7 +11,7 @@ lint:
 install:
 	pip3 install .
 dist:
-	python3 setup.py build sdist
+	python3 setup.py sdist
 clean:
 	find . -iname *.pyc -exec rm -f {} +
 	pip3 uninstall -y pyetrade

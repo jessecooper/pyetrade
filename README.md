@@ -28,7 +28,7 @@ sudo make init
 sudo make install
 ```
 ## Example Usage
-```
+```python
 import pyetrade
 oauth = pyetrade.ETradeOAuth(consumer_key, consumer_secret)
 oauth.get_request_token()
@@ -40,8 +40,10 @@ accounts = pyetrade.ETradeAccounts(consumer_key,
 				   tokens['oauth_token_secret'])
 accounts.list_accounts()
 ```
+## Documentation
+[PyEtrade Documentation](https://pyetrade.readthedocs.io/en/latest/)
 ## Contribute to pyetrade
-* [ETrade API Docs] (https://developer.etrade.com/ctnt/dev-portal/getArticleByCategory?category=Documentation)
+* [ETrade API Docs](https://developer.etrade.com/ctnt/dev-portal/getArticleByCategory?category=Documentation)
 * Fork pyetrade
 * Development Setup:  
 ```

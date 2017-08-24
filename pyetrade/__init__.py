@@ -10,5 +10,7 @@ from . import authorization
 from .authorization import ETradeOAuth, ETradeAccessManager
 from . import accounts
 from .accounts import ETradeAccounts
+from . import market
+from .market import ETradeMarket
 from . import order
 from .order import ETradeOrder

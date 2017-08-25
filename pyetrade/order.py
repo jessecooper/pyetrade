@@ -48,6 +48,24 @@ class ETradeOrder(object):
                                      self.resource_owner_secret,
                                      signature_type='AUTH_HEADER')
 
+    def list_orders(self, account_id, dev=True,
+                    resp_format='json', **kwargs):
+        '''list_orders(dev, resp_format) -> resp
+           param: account_id
+           type: int
+           required: true
+           description: Numeric account ID
+           param: marker
+           type: str
+           description: Specify the desired starting point of the set
+                of items to return. Used for paging.
+           param: count
+           type: int
+           description: The number of orders to return in a response.
+                The default is 25. Used for paging.
+           rdescription: see ETrade API docs'''
+        pass
+
     def place_equity_order(self, dev=True, resp_format='json', **kwargs):
         '''place_equity_order(dev, resp_format, **kwargs) -> resp
            param: dev

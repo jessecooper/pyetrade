@@ -10,11 +10,12 @@ Python E-Trade API Wrapper
 Authorization API - ALL  
 Accounts API - List Accounts  
 Order API - Place Equity Order  
+Market API - Get Quote  
 
 ## TODO
 Accounts API - See pyetrade/accounts.py  
 Order API - See pyetrade/order.py  
-Market API - ALL  
+Market API - See pyetrade/market.py  
 Notification API - ALL  
 Limits API - ALL  
 
@@ -34,10 +35,12 @@ oauth = pyetrade.ETradeOAuth(consumer_key, consumer_secret)
 oauth.get_request_token()
 #Follow url and get verification code
 tokens = oauth.get_access_token(verifier_code)
-accounts = pyetrade.ETradeAccounts(consumer_key,
-			           consumer_secret, 
-			           tokens['oauth_token'],
-				   tokens['oauth_token_secret'])
+accounts = pyetrade.ETradeAccounts(
+        consumer_key,
+        consumer_secret, 
+        tokens['oauth_token'],
+        tokens['oauth_token_secret']
+    )
 accounts.list_accounts()
 ```
 ## Documentation

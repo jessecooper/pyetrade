@@ -28,6 +28,15 @@ pyetrade\.etrade\_exception module
     :undoc-members:
     :show-inheritance:
 
+pyetrade\.maket module
+----------------------------------
+
+.. automodule:: pyetrade.market
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+
 pyetrade\.order module
 ----------------------
 

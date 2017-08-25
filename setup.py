@@ -7,7 +7,7 @@ with open('requirements.txt') as requirements:
     req = [i.strip() for i in requirements]
 
 setup(name='pyetrade',
-      version='0.1.3',
+      version='0.2.0',
       description='eTrade API wrappers',
       author='Jesse Cooper',
       author_email='jesse_cooper@codeholics.com',
@@ -26,9 +26,6 @@ setup(name='pyetrade',
           'License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)',
           'Natural Language :: English',
           'Programming Language :: Python :: 3',
-          'Programming Language :: Python :: 3.0',
-          'Programming Language :: Python :: 3.1',
-          'Programming Language :: Python :: 3.2',
           'Programming Language :: Python :: 3.3',
           'Programming Language :: Python :: 3.4',
           'Programming Language :: Python :: 3.5',

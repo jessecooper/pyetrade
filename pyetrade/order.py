@@ -64,7 +64,37 @@ class ETradeOrder(object):
            description: The number of orders to return in a response.
                 The default is 25. Used for paging.
            rdescription: see ETrade API docs'''
-        pass
+        # Set Env
+        if dev:
+            uri = r'order/sandbox/rest/orderlist'
+            api_url = '%s/%s/%s.%s' % (
+                    self.base_url_dev,
+                    uri,
+                    account_id,
+                    resp_format
+                )
+        else:
+            uri = r'order/rest/orderlist'
+            api_url = '%s/%s/%s.%s' % (
+                    self.base_url_prod,
+                    uri,
+                    account_id,
+                    resp_format
+                )
+
+        # Build Payload
+        payload = kwargs
+        logger.debug('payload: %s', payload)
+
+        logger.debug(api_url)
+        req = self.session.get(api_url, params=payload)
+        req.raise_for_status()
+        logger.debug(req.text)
+
+        if resp_format is 'json':
+            return req.json()
+        else:
+            return req.text
 
     def place_equity_order(self, dev=True, resp_format='json', **kwargs):
         '''place_equity_order(dev, resp_format, **kwargs) -> resp
@@ -357,4 +387,4 @@ class ETradeOrder(object):
         if resp_format is 'json':
             return req.json()
         else:
-            return req.text()
+            return req.text

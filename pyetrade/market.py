@@ -42,7 +42,7 @@ class ETradeMarket(object):
                                      self.resource_owner_secret,
                                      signature_type='AUTH_HEADER')
 
-    def get_quote(self, *args, dev=True, resp_format='json', detail_flag='ALL'):
+    def get_quote(self, dev=True, resp_format='json', detail_flag='ALL', *args):
         '''get_quote(dev, resp_format, **kwargs) -> resp
            param: dev
            type: bool

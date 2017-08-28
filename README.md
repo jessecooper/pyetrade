@@ -11,7 +11,8 @@ Authorization API - ALL
 Accounts API - List Accounts  
 Order API - 
 * List Orders
-* Place Equity Order  
+* Place Equity Order 
+ 
 Market API - Get Quote  
 
 ## TODO

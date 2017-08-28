@@ -2,7 +2,6 @@
 
 '''Order - ETrade Order API
    TODO:
-       * List Order
        * Preview Equity Order
        * Place equity order - test arg types
        * Preview equity order change

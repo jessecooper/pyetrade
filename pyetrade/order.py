@@ -2,7 +2,6 @@
 
 '''Order - ETrade Order API
    TODO:
-       * List Order
        * Preview Equity Order
        * Place equity order - test arg types
        * Preview equity order change
@@ -47,6 +46,54 @@ class ETradeOrder(object):
                                      self.resource_owner_key,
                                      self.resource_owner_secret,
                                      signature_type='AUTH_HEADER')
+
+    def list_orders(self, account_id, dev=True,
+                    resp_format='json', **kwargs):
+        '''list_orders(dev, resp_format) -> resp
+           param: account_id
+           type: int
+           required: true
+           description: Numeric account ID
+           param: marker
+           type: str
+           description: Specify the desired starting point of the set
+                of items to return. Used for paging.
+           param: count
+           type: int
+           description: The number of orders to return in a response.
+                The default is 25. Used for paging.
+           rdescription: see ETrade API docs'''
+        # Set Env
+        if dev:
+            uri = r'order/sandbox/rest/orderlist'
+            api_url = '%s/%s/%s.%s' % (
+                    self.base_url_dev,
+                    uri,
+                    account_id,
+                    resp_format
+                )
+        else:
+            uri = r'order/rest/orderlist'
+            api_url = '%s/%s/%s.%s' % (
+                    self.base_url_prod,
+                    uri,
+                    account_id,
+                    resp_format
+                )
+
+        # Build Payload
+        payload = kwargs
+        logger.debug('payload: %s', payload)
+
+        logger.debug(api_url)
+        req = self.session.get(api_url, params=payload)
+        req.raise_for_status()
+        logger.debug(req.text)
+
+        if resp_format is 'json':
+            return req.json()
+        else:
+            return req.text
 
     def place_equity_order(self, dev=True, resp_format='json', **kwargs):
         '''place_equity_order(dev, resp_format, **kwargs) -> resp
@@ -339,4 +386,4 @@ class ETradeOrder(object):
         if resp_format is 'json':
             return req.json()
         else:
-            return req.text()
+            return req.text

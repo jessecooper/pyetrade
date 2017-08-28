@@ -9,7 +9,9 @@ Python E-Trade API Wrapper
 ## Completed
 Authorization API - ALL  
 Accounts API - List Accounts  
-Order API - Place Equity Order  
+Order API - 
+* List Orders
+* Place Equity Order  
 Market API - Get Quote  
 
 ## TODO

@@ -65,3 +65,47 @@ class ETradeAccounts(object):
             return req.json()
         else:
             return req.text()
+    
+    def get_account_balance(self, account_id, dev=True, resp_format='json'):
+        '''get_account_balance(dev, resp_format)
+           param: account_id
+           type: int
+           required: true
+           description: Numeric account id
+           param: dev
+           type: bool
+           description: API enviornment
+           param: resp_format
+           type: str
+           description: Response format
+           rformat: json
+           rtype: dict
+           rformat: other than json
+           rtype: str'''
+
+        if dev:
+            uri = r'accounts/sandbox/rest/accountbalance'
+            api_url = '%s/%s/%s.%s' % (
+                    self.base_url_dev,
+                    uri,
+                    account_id,
+                    resp_format
+                )
+        else:
+            uri = r'accounts/rest/accountbalance'
+            api_url = '%s/%s/%s.%s' % (
+                    self.base_url_prod,
+                    uri,
+                    account_id,
+                    resp_format
+                )
+
+        logger.debug(api_url)
+        req = self.session.get(api_url)
+        req.raise_for_status()
+        logger.debug(req.text)
+
+        if resp_format is 'json':
+            return req.json()
+        else:
+            return req.text()

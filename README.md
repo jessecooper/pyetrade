@@ -8,7 +8,10 @@ Python E-Trade API Wrapper
 [![codecov](https://codecov.io/gh/jessecooper/pyetrade/branch/master/graph/badge.svg)](https://codecov.io/gh/jessecooper/pyetrade)
 ## Completed
 Authorization API - ALL  
-Accounts API - List Accounts  
+Accounts API - 
+* List Accounts 
+* Get Account Ballance 
+ 
 Order API - 
 * List Orders
 * Place Equity Order 

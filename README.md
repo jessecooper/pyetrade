@@ -11,6 +11,7 @@ Authorization API - ALL
 Accounts API - 
 * List Accounts 
 * Get Account Ballance 
+* Get Account Positions 
  
 Order API - 
 * List Orders

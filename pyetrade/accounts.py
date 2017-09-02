@@ -3,8 +3,6 @@
 '''Accounts - ETrade Accounts API
    Calls
    TODO:
-       * Get Account Balance
-       * Get Account Positions
        * Get Transaction History
        * Get Transaction Details
        * List Alerts
@@ -64,7 +62,7 @@ class ETradeAccounts(object):
         if resp_format is 'json':
             return req.json()
         else:
-            return req.text()
+            return req.text
     
     def get_account_balance(self, account_id, dev=True, resp_format='json'):
         '''get_account_balance(dev, resp_format)
@@ -108,4 +106,63 @@ class ETradeAccounts(object):
         if resp_format is 'json':
             return req.json()
         else:
-            return req.text()
+            return req.text
+
+    def get_account_positions(self, account_id, dev=True, resp_format='json'):
+        '''get_account_positions(dev, resp_format)
+           param: account_id
+           type: int
+           required: true
+           description: Numeric account id
+           param: dev
+           type: bool
+           description: API enviornment
+           param: resp_format
+           type: str
+           description: Response format
+           rformat: json
+           rtype: dict
+           rformat: other than json
+           rtype: str'''
+
+        if dev:
+            uri = r'accounts/sandbox/rest/accountpositions'
+            if resp_format is 'json':
+                api_url = '%s/%s/%s.%s' % (
+                        self.base_url_dev,
+                        uri,
+                        account_id,
+                        resp_format
+                    )
+            elif resp_format is 'xml':
+                api_url = '%s/%s/%s' % (
+                        self.base_url_dev,
+                        uri,
+                        account_id
+                    )
+
+        else:
+            uri = r'accounts/rest/accountpositions'
+            if resp_format is 'json':
+                api_url = '%s/%s/%s.%s' % (
+                        self.base_url_prod,
+                        uri,
+                        account_id,
+                        resp_format
+                    )
+            elif resp_format is 'xml':
+                    api_url = '%s/%s/%s' % (
+                        self.base_url_prod,
+                        uri,
+                        account_id
+                    )
+
+        logger.debug(api_url)
+        req = self.session.get(api_url)
+        req.raise_for_status()
+        logger.debug(req.text)
+
+        if resp_format is 'json':
+            return req.json()
+        else:
+            return req.text

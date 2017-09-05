@@ -17,7 +17,9 @@ Order API -
 * List Orders
 * Place Equity Order 
  
-Market API - Get Quote  
+Market API - 
+* Look Up Product 
+* Get Quote  
 
 ## TODO
 Accounts API - See pyetrade/accounts.py  

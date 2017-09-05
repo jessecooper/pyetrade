@@ -3,7 +3,7 @@
 __ALL__ = ['authorization', 'accounts']
 
 __title__ = 'pyetrade'
-__version__ = '0.3.0'
+__version__ = '0.4.0'
 __author__ = 'Jesse Cooper'
 
 from . import authorization

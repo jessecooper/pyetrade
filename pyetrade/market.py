@@ -42,6 +42,66 @@ class ETradeMarket(object):
                                      self.resource_owner_secret,
                                      signature_type='AUTH_HEADER')
 
+    def look_up_product(self, company, s_type,
+                        dev=True, resp_format='json'):
+        '''look_up_product() -> resp
+           param: company
+           type: string
+           description: full or partial name of the company. Note
+           that the system extensivly abbreviates common words
+           such as company, industry and systems and generally
+           skips punctuation
+           param: s_type
+           type: enum
+           description: the type of security. possible values are:
+               * EQ (equity)
+               * MF (mutual fund)
+           rparam: companyName
+           rtype: string
+           rdescription: the company name
+           rparam: exhange
+           rtype: string
+           rdescription: the exchange that lists that company
+           rparam: securityType
+           rtype: string
+           rdescription: the type of security. EQ or MF
+           rparam: symbol
+           rtype: string
+           rdescription: the market symbol for the security'''
+        # Set Env join symbles with .join(args)
+        if dev:
+            if resp_format is 'json':
+                uri = r'market/sandbox/rest/productlookup'
+                api_url = '%s/%s.%s' % (
+                        self.base_url_dev, uri, resp_format
+                    )
+            elif resp_format is 'xml':
+                uri = r'market/sandbox/rest/productlookup'
+                api_url = '%s/%s' % (self.base_url_dev, uri)
+        else:
+            if resp_format is 'json':
+                uri = r'market/rest/productlookup'
+                api_url = '%s/%s.%s' % (
+                        self.base_url_prod, uri, resp_format
+                    )
+            elif resp_format is 'xml':
+                uri = r'market/rest/productlookup'
+                api_url = '%s/%s' % (self.base_url_prod, uri)
+        logger.debug(api_url)
+        #add detail flag to url
+        payload = {
+                'company': company,
+                'type': s_type
+            }
+        req = self.session.get(api_url, params=payload)
+        req.raise_for_status()
+        logger.debug(req.text)
+
+        if resp_format is 'json':
+            return req.json()
+        else:
+            return req.text
+
     def get_quote(self, *args, dev=True, resp_format='json', detail_flag='ALL'):
         '''get_quote(dev, resp_format, **kwargs) -> resp
            param: dev
@@ -109,4 +169,4 @@ class ETradeMarket(object):
         if resp_format is 'json':
             return req.json()
         else:
-            return req.text()
+            return req.text

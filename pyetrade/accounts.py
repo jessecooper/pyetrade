@@ -109,7 +109,7 @@ class ETradeAccounts(object):
             return req.text
 
     def get_account_positions(self, account_id, dev=True, resp_format='json'):
-        '''get_account_positions(dev, resp_format)
+        '''get_account_positions(dev, account_id, resp_format) -> resp
            param: account_id
            type: int
            required: true
@@ -155,6 +155,57 @@ class ETradeAccounts(object):
                         self.base_url_prod,
                         uri,
                         account_id
+                    )
+
+        logger.debug(api_url)
+        req = self.session.get(api_url)
+        req.raise_for_status()
+        logger.debug(req.text)
+
+        if resp_format is 'json':
+            return req.json()
+        else:
+            return req.text
+    
+    def list_alerts(self, dev=True, resp_format='json'):
+        '''list_alerts(dev, resp_format) -> resp
+           param: dev
+           type: bool
+           description: API enviornment
+           param: resp_format
+           type: str
+           description: Response format
+           rformat: json
+           rtype: dict
+           rformat: other than json
+           rtype: str'''
+
+        if dev:
+            uri = r'accounts/sandbox/rest/alerts'
+            if resp_format is 'json':
+                api_url = '%s/%s.%s' % (
+                        self.base_url_dev,
+                        uri,
+                        resp_format
+                    )
+            elif resp_format is 'xml':
+                api_url = '%s/%s' % (
+                        self.base_url_dev,
+                        uri,
+                    )
+
+        else:
+            uri = r'accounts/rest/alerts'
+            if resp_format is 'json':
+                api_url = '%s/%s.%s' % (
+                        self.base_url_prod,
+                        uri,
+                        resp_format
+                    )
+            elif resp_format is 'xml':
+                    api_url = '%s/%s' % (
+                        self.base_url_prod,
+                        uri,
                     )
 
         logger.debug(api_url)

@@ -151,3 +151,81 @@ class TestETradeAccounts(unittest.TestCase):
                 )
         self.assertTrue(MockOAuthSession().get().json.called)
         self.assertTrue(MockOAuthSession().get.called)
+
+    # Mock out OAuth1Session
+    @patch('pyetrade.accounts.OAuth1Session')
+    def test_read_alert(self, MockOAuthSession):
+        '''test_list_alerts(MockOAuthSession) -> None
+           param: MockOAuthSession
+           type: mock.MagicMock
+           description: MagicMock object for OAuth1Sessions'''
+        # Set Mock returns
+        MockOAuthSession().get().json.return_value = "{'account': 'abc123'}"
+        MockOAuthSession().get().text = r'<xml> returns </xml>'
+        account = accounts.ETradeAccounts('abc123', 'xyz123', 'abctoken', 'xyzsecret')
+        # Test Dev JSON
+        self.assertEqual(account.read_alert(1234), "{'account': 'abc123'}")
+        # Test API URL
+        MockOAuthSession().get.assert_called_with(
+                ('https://etwssandbox.etrade.com/accounts/'
+                'sandbox/rest/alerts/1234.json')
+                )
+        # Test Prod JSON
+        self.assertEqual(account.read_alert(1234, dev=False), "{'account': 'abc123'}")
+        # Test API URL
+        MockOAuthSession().get.assert_called_with(
+                ('https://etws.etrade.com/accounts/'
+                'rest/alerts/1234.json')
+                )
+        # Test Dev XML
+        self.assertEqual(account.read_alert(1234, resp_format='xml'), r'<xml> returns </xml>')
+        MockOAuthSession().get.assert_called_with(
+                ('https://etwssandbox.etrade.com/accounts/'
+                'sandbox/rest/alerts/1234')
+                )
+        self.assertEqual(account.read_alert(1234, dev=False, resp_format='xml'), r'<xml> returns </xml>')
+        MockOAuthSession().get.assert_called_with(
+                ('https://etws.etrade.com/accounts/'
+                'rest/alerts/1234')
+                )
+        self.assertTrue(MockOAuthSession().get().json.called)
+        self.assertTrue(MockOAuthSession().get.called)
+
+    # Mock out OAuth1Session
+    @patch('pyetrade.accounts.OAuth1Session')
+    def test_delete_alert(self, MockOAuthSession):
+        '''test_list_alerts(MockOAuthSession) -> None
+           param: MockOAuthSession
+           type: mock.MagicMock
+           description: MagicMock object for OAuth1Sessions'''
+        # Set Mock returns
+        MockOAuthSession().delete().json.return_value = "{'account': 'abc123'}"
+        MockOAuthSession().delete().text = r'<xml> returns </xml>'
+        account = accounts.ETradeAccounts('abc123', 'xyz123', 'abctoken', 'xyzsecret')
+        # Test Dev JSON
+        self.assertEqual(account.delete_alert(1234), "{'account': 'abc123'}")
+        # Test API URL
+        MockOAuthSession().delete.assert_called_with(
+                ('https://etwssandbox.etrade.com/accounts/'
+                'sandbox/rest/alerts/1234.json')
+                )
+        # Test Prod JSON
+        self.assertEqual(account.delete_alert(1234, dev=False), "{'account': 'abc123'}")
+        # Test API URL
+        MockOAuthSession().delete.assert_called_with(
+                ('https://etws.etrade.com/accounts/'
+                'rest/alerts/1234.json')
+                )
+        # Test Dev XML
+        self.assertEqual(account.delete_alert(1234, resp_format='xml'), r'<xml> returns </xml>')
+        MockOAuthSession().delete.assert_called_with(
+                ('https://etwssandbox.etrade.com/accounts/'
+                'sandbox/rest/alerts/1234')
+                )
+        self.assertEqual(account.delete_alert(1234, dev=False, resp_format='xml'), r'<xml> returns </xml>')
+        MockOAuthSession().delete.assert_called_with(
+                ('https://etws.etrade.com/accounts/'
+                'rest/alerts/1234')
+                )
+        self.assertTrue(MockOAuthSession().delete().json.called)
+        self.assertTrue(MockOAuthSession().delete.called)

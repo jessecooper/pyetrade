@@ -5,9 +5,6 @@
    TODO:
        * Get Transaction History
        * Get Transaction Details
-       * List Alerts
-       * Read Alert
-       * Delete Alert
        * Fix init doc string
        * Check request response for error'''
 
@@ -210,6 +207,122 @@ class ETradeAccounts(object):
 
         logger.debug(api_url)
         req = self.session.get(api_url)
+        req.raise_for_status()
+        logger.debug(req.text)
+
+        if resp_format is 'json':
+            return req.json()
+        else:
+            return req.text
+    
+    def read_alert(self, alert_id, dev=True, resp_format='json'):
+        '''read_alert(alert_id, dev, resp_format) -> resp
+           param: alert_id
+           type: int
+           description: Numaric alert ID
+           param: dev
+           type: bool
+           description: API enviornment
+           param: resp_format
+           type: str
+           description: Response format
+           rformat: json
+           rtype: dict
+           rformat: other than json
+           rtype: str'''
+
+        if dev:
+            uri = r'accounts/sandbox/rest/alerts'
+            if resp_format is 'json':
+                api_url = '%s/%s/%s.%s' % (
+                        self.base_url_dev,
+                        uri,
+                        alert_id,
+                        resp_format
+                    )
+            elif resp_format is 'xml':
+                api_url = '%s/%s/%s' % (
+                        self.base_url_dev,
+                        uri,
+                        alert_id
+                    )
+
+        else:
+            uri = r'accounts/rest/alerts'
+            if resp_format is 'json':
+                api_url = '%s/%s/%s.%s' % (
+                        self.base_url_prod,
+                        uri,
+                        alert_id,
+                        resp_format
+                    )
+            elif resp_format is 'xml':
+                    api_url = '%s/%s/%s' % (
+                        self.base_url_prod,
+                        uri,
+                        alert_id
+                    )
+
+        logger.debug(api_url)
+        req = self.session.get(api_url)
+        req.raise_for_status()
+        logger.debug(req.text)
+
+        if resp_format is 'json':
+            return req.json()
+        else:
+            return req.text
+    
+    def delete_alert(self, alert_id, dev=True, resp_format='json'):
+        '''delete_alert(alert_id, dev, resp_format) -> resp
+           param: alert_id
+           type: int
+           description: Numaric alert ID
+           param: dev
+           type: bool
+           description: API enviornment
+           param: resp_format
+           type: str
+           description: Response format
+           rformat: json
+           rtype: dict
+           rformat: other than json
+           rtype: str'''
+
+        if dev:
+            uri = r'accounts/sandbox/rest/alerts'
+            if resp_format is 'json':
+                api_url = '%s/%s/%s.%s' % (
+                        self.base_url_dev,
+                        uri,
+                        alert_id,
+                        resp_format
+                    )
+            elif resp_format is 'xml':
+                api_url = '%s/%s/%s' % (
+                        self.base_url_dev,
+                        uri,
+                        alert_id
+                    )
+
+        else:
+            uri = r'accounts/rest/alerts'
+            if resp_format is 'json':
+                api_url = '%s/%s/%s.%s' % (
+                        self.base_url_prod,
+                        uri,
+                        alert_id,
+                        resp_format
+                    )
+            elif resp_format is 'xml':
+                    api_url = '%s/%s/%s' % (
+                        self.base_url_prod,
+                        uri,
+                        alert_id
+                    )
+
+        logger.debug(api_url)
+        req = self.session.delete(api_url)
         req.raise_for_status()
         logger.debug(req.text)
 

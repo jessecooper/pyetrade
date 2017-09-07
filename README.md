@@ -12,6 +12,9 @@ Accounts API -
 * List Accounts 
 * Get Account Ballance 
 * Get Account Positions 
+* List Alerts
+* Read Alert
+* Delete Alert
  
 Order API - 
 * List Orders

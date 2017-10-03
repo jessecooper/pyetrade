@@ -125,4 +125,69 @@ class TestETradeOrder(unittest.TestCase):
         # Test Dev XML
         #self.assertEqual(orders.place_equity_order(resp_format='xml'), r'<xml> returns </xml>')
         #self.assertTrue(MockOAuthSession().get().text.called)
-        
+    @patch('pyetrade.order.OAuth1Session')
+    def test_cancel_order(self, MockOAuthSession):
+        '''test_cancel_order(MockOAuthSession) -> None
+           param: MockOAuthSession
+           type: mock.MagicMock
+           description: MagicMock of OAuth1Session'''
+        MockOAuthSession().post().json.return_value = "{'accountId': '12345'}"
+        MockOAuthSession().post().text = r'<xml> returns </xml>'
+        orders = order.ETradeOrder(
+                'abc123',
+                'xyz123',
+                'abctoken',
+                'xyzsecret'
+                )
+        # Dev
+        self.assertEqual(
+                orders.cancel_order(12345, 42),
+                "{'accountId': '12345'}"
+                )
+        MockOAuthSession().post.assert_called_with(
+                ('https://etwssandbox.etrade.com'
+                 '/order/sandbox/rest/cancelorder.json'),
+                json={
+                    'cancelOrder': {
+                        'cancelOrderRequest': {
+                            'accountId': 12345, 'orderNum': 42
+                            },
+                        '-xmlns': 'https://etwssandbox.etrade.com'
+                        }
+                    }
+                )
+        self.assertTrue(MockOAuthSession().post().json.called)
+        self.assertTrue(MockOAuthSession().post.called)
+        self.assertEqual(
+                orders.cancel_order(12345, 42, resp_format='xml'),
+                "<xml> returns </xml>"
+                )
+        # Prod
+        self.assertEqual(
+                orders.cancel_order(12345, 42, dev=False),
+                "{'accountId': '12345'}"
+                )
+        MockOAuthSession().post.assert_called_with(
+                ('https://etws.etrade.com'
+                 '/order/rest/cancelorder.json'),
+                json={
+                    'cancelOrder': {
+                        'cancelOrderRequest': {
+                            'accountId': 12345, 'orderNum': 42
+                            },
+                        '-xmlns': 'https://etws.etrade.com'
+                        }
+                    }
+                )
+        self.assertTrue(MockOAuthSession().post().json.called)
+        self.assertTrue(MockOAuthSession().post.called)
+        self.assertEqual(
+                orders.cancel_order(
+                    12345,
+                    42,
+                    dev=False,
+                    resp_format='xml'
+                    ),
+                "<xml> returns </xml>"
+                )
+

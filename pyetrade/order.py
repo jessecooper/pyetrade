@@ -10,7 +10,7 @@
        * Place option order
        * Preview option order change
        * Place option order change
-       * Cancel Order'''
+       * xml support'''
 
 import logging
 from requests_oauthlib import OAuth1Session
@@ -379,6 +379,78 @@ class ETradeOrder(object):
         logger.debug('payload: %s', payload)
 
         logger.debug(api_url)
+        req = self.session.post(api_url, json=payload)
+        req.raise_for_status()
+        logger.debug(req.text)
+
+        if resp_format is 'json':
+            return req.json()
+        else:
+            return req.text
+
+    def cancel_order(self, account_id, order_num,
+            dev=True, resp_format='json'):
+        '''cancel_order(account_id, order_num, dev, resp_format)
+           param: account_id
+           type: int
+           description: numeric account id
+           param: order_num
+           type: int
+           description: numeric id for this order in the etrade system
+           param: dev
+           type: bool
+           description: API enviornment
+           param: resp_format
+           type: str
+           description: Response format JSON or None = XML'''
+        # Set Env
+        if dev:
+            payload = {
+                    'cancelOrder': {
+                        '-xmlns': self.base_url_dev,
+                        'cancelOrderRequest': {
+                            'accountId': account_id,
+                            'orderNum': order_num
+                            }
+                        }
+                    }
+            uri = r'order/sandbox/rest/cancelorder'
+            if resp_format is 'json':
+                api_url = '%s/%s.%s' % (
+                        self.base_url_dev,
+                        uri,
+                        resp_format
+                        )
+            elif resp_format is 'xml':
+                api_url = '%s/%s' % (
+                        self.base_url_dev,
+                        uri
+                        )
+        else:
+            payload = {
+                    'cancelOrder': {
+                        '-xmlns': self.base_url_prod,
+                        'cancelOrderRequest': {
+                            'accountId': account_id,
+                            'orderNum': order_num
+                            }
+                        }
+                    }
+            uri = r'order/rest/cancelorder'
+            if resp_format is 'json':
+                api_url = '%s/%s.%s' % (
+                        self.base_url_prod,
+                        uri,
+                        resp_format
+                        )
+            elif resp_format is 'xml':
+                api_url = '%s/%s' % (
+                        self.base_url_prod,
+                        uri
+                        )
+        logger.debug(api_url)
+        logger.debug('payload: %s', payload)
+
         req = self.session.post(api_url, json=payload)
         req.raise_for_status()
         logger.debug(req.text)

@@ -19,6 +19,7 @@ Accounts API -
 Order API - 
 * List Orders
 * Place Equity Order 
+* Cancel Order
  
 Market API - 
 * Look Up Product 

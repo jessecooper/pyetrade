@@ -60,7 +60,7 @@ class ETradeAccounts(object):
             return req.json()
         else:
             return req.text
-    
+
     def get_account_balance(self, account_id, dev=True, resp_format='json'):
         '''get_account_balance(dev, resp_format)
            param: account_id
@@ -163,7 +163,7 @@ class ETradeAccounts(object):
             return req.json()
         else:
             return req.text
-    
+
     def list_alerts(self, dev=True, resp_format='json'):
         '''list_alerts(dev, resp_format) -> resp
            param: dev
@@ -214,7 +214,7 @@ class ETradeAccounts(object):
             return req.json()
         else:
             return req.text
-    
+
     def read_alert(self, alert_id, dev=True, resp_format='json'):
         '''read_alert(alert_id, dev, resp_format) -> resp
            param: alert_id
@@ -272,7 +272,7 @@ class ETradeAccounts(object):
             return req.json()
         else:
             return req.text
-    
+
     def delete_alert(self, alert_id, dev=True, resp_format='json'):
         '''delete_alert(alert_id, dev, resp_format) -> resp
            param: alert_id
@@ -323,6 +323,79 @@ class ETradeAccounts(object):
 
         logger.debug(api_url)
         req = self.session.delete(api_url)
+        req.raise_for_status()
+        logger.debug(req.text)
+
+        if resp_format is 'json':
+            return req.json()
+        else:
+            return req.text
+
+    def get_transaction_history(self, account_id, dev=True,
+                    group = 'ALL',
+                    asset_type = 'ALL',
+                    transaction_type = 'ALL',
+                    ticker_symbol = 'ALL',
+                    resp_format='json', **kwargs):
+        '''get_transaction_history(account_id, dev, resp_format) -> resp
+           param: account_id
+           type: int
+           required: true
+           description: Numeric account ID
+           param: marker
+           type: str
+           description: Specify the desired starting point of the set
+                of items to return. Used for paging.
+           param: count
+           type: int
+           description: The number of orders to return in a response.
+                The default is 25. Used for paging.
+           rdescription: see ETrade API docs'''
+        # Set Env
+        if dev:
+            #assemble the following:
+            #self.base_url_dev: https://etws.etrade.com
+            #format string:     /
+            #uri:               accounts/rest
+            #format string:     /
+            #account_id:        {accountId}
+            #format string:     /transactions
+            # if not 'ALL' args:
+            #   group:              /{Group}
+            #   asset_type          /{AssetType}
+            #   transaction_type:   /{TransactionType}
+            #   ticker_symbol:      /{TickerSymbol}
+            #resp_format:       {.json}
+            #payload:           kwargs
+            #
+            #example:
+            #GET https://etwssandbox.etrade.com/accounts/sandbox/rest/83405188/transactions?count=10
+            uri = r'accounts/sandbox/rest'
+            optional_args = ''
+            api_url = '%s/%s/%s/transactions%s.%s' % (
+                    self.base_url_dev,
+                    uri,
+                    account_id,
+                    optional_args,
+                    resp_format
+                )
+        else:
+            uri = r'accounts/rest'
+            optional_args = ''
+            api_url = '%s/%s/%s/transactions%s.%s' % (
+                    self.base_url_prod,
+                    uri,
+                    account_id,
+                    optional_args,
+                    resp_format
+                )
+
+        # Build Payload
+        payload = kwargs
+        logger.debug('payload: %s', payload)
+
+        logger.debug(api_url)
+        req = self.session.get(api_url, params=payload)
         req.raise_for_status()
         logger.debug(req.text)
 

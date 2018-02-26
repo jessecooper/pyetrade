@@ -3,8 +3,6 @@
 '''Accounts - ETrade Accounts API
    Calls
    TODO:
-       * Get Transaction History
-       * Get Transaction Details
        * Fix init doc string
        * Check request response for error'''
 
@@ -338,19 +336,57 @@ class ETradeAccounts(object):
                     ticker_symbol = 'ALL',
                     resp_format='json', **kwargs):
         '''get_transaction_history(account_id, dev, resp_format) -> resp
+
            param: account_id
            type: int
            required: true
            description: Numeric account ID
+
+           param: group
+           type: string
+           default: 'ALL'
+           description: Possible values are: DEPOSITS, WITHDRAWALS, TRADES.
+
+           param: asset_type
+           type: string
+           default: 'ALL'
+           description: Only allowed if group is TRADES. Possible values are:
+                EQ (equities), OPTN (options), MMF (money market funds),
+                MF (mutual funds), BOND (bonds). To retrieve all types,
+                use ALL or omit this parameter.
+
+           param: transaction_type
+           type: string
+           default: 'ALL'
+           description: Transaction type(s) to include, e.g., check, deposit,
+                fee, dividend, etc. A list of types is provided in documentation
+
+           param: ticker_symbol
+           type: string
+           default: 'ALL'
+           description: Only allowed if group is TRADES. A single market symbol,
+                e.g., GOOG.
+
            param: marker
            type: str
            description: Specify the desired starting point of the set
                 of items to return. Used for paging.
+
            param: count
            type: int
            description: The number of orders to return in a response.
                 The default is 25. Used for paging.
-           rdescription: see ETrade API docs'''
+           description: see ETrade API docs'''
+
+        # add each optional argument not equal to 'ALL' to the uri
+        optional_args = [group, asset_type, transaction_type, ticker_symbol]
+        optional_uri = ''
+        for optional_arg in optional_args:
+            if optional_arg.upper() != 'ALL':
+                optional_uri = '%s/%s' % (
+                    optional_uri,
+                    optional_arg
+                )
         # Set Env
         if dev:
             #assemble the following:
@@ -371,22 +407,70 @@ class ETradeAccounts(object):
             #example:
             #GET https://etwssandbox.etrade.com/accounts/sandbox/rest/83405188/transactions?count=10
             uri = r'accounts/sandbox/rest'
-            optional_args = ''
             api_url = '%s/%s/%s/transactions%s.%s' % (
                     self.base_url_dev,
                     uri,
                     account_id,
-                    optional_args,
+                    optional_uri,
                     resp_format
                 )
         else:
             uri = r'accounts/rest'
-            optional_args = ''
             api_url = '%s/%s/%s/transactions%s.%s' % (
                     self.base_url_prod,
                     uri,
                     account_id,
-                    optional_args,
+                    optional_uri,
+                    resp_format
+                )
+
+        # Build Payload
+        payload = kwargs
+        logger.debug('payload: %s', payload)
+
+        logger.debug(api_url)
+        req = self.session.get(api_url, params=payload)
+        req.raise_for_status()
+        logger.debug(req.text)
+
+        if resp_format is 'json':
+            return req.json()
+        else:
+            return req.text
+
+    def get_transaction_details(self, account_id, transaction_id, dev=True,
+                    resp_format='json', **kwargs):
+        '''get_transaction_details(account_id, transaction_id, dev, resp_format) -> resp
+
+           param: account_id
+           type: int
+           required: true
+           description: Numeric account ID
+
+           param: transaction_id
+           type: int
+           required: true
+           description: Numeric transaction ID'''
+
+        # example:
+        # https://etws.etrade.com/accounts/rest/{accountId}/transactions/{transactionId}
+        # Set Env
+        if dev:
+            uri = r'accounts/sandbox/rest'
+            api_url = '%s/%s/%s/transactions/%s.%s' % (
+                    self.base_url_dev,
+                    uri,
+                    account_id,
+                    transaction_id,
+                    resp_format
+                )
+        else:
+            uri = r'accounts/rest'
+            api_url = '%s/%s/%s/transactions/%s.%s' % (
+                    self.base_url_prod,
+                    uri,
+                    account_id,
+                    transaction_id,
                     resp_format
                 )
 

@@ -403,22 +403,38 @@ class ETradeAccounts(object):
             #payload:           kwargs
             #
             uri = r'accounts/sandbox/rest'
-            api_url = '%s/%s/%s/transactions%s.%s' % (
-                    self.base_url_dev,
-                    uri,
-                    account_id,
-                    optional_uri,
-                    resp_format
-                )
+            if resp_format is 'json':
+                api_url = '%s/%s/%s/transactions%s.%s' % (
+                        self.base_url_dev,
+                        uri,
+                        account_id,
+                        optional_uri,
+                        resp_format
+                    )
+            elif resp_format is 'xml':
+                api_url = '%s/%s/%s/transactions%s' % (
+                        self.base_url_dev,
+                        uri,
+                        account_id,
+                        optional_uri
+                    )
         else:
             uri = r'accounts/rest'
-            api_url = '%s/%s/%s/transactions%s.%s' % (
-                    self.base_url_prod,
-                    uri,
-                    account_id,
-                    optional_uri,
-                    resp_format
-                )
+            if resp_format is 'json':
+                api_url = '%s/%s/%s/transactions%s.%s' % (
+                        self.base_url_prod,
+                        uri,
+                        account_id,
+                        optional_uri,
+                        resp_format
+                    )
+            elif resp_format is 'xml':
+                api_url = '%s/%s/%s/transactions%s' % (
+                        self.base_url_prod,
+                        uri,
+                        account_id,
+                        optional_uri
+                    )
 
         # Build Payload
         payload = kwargs
@@ -451,22 +467,38 @@ class ETradeAccounts(object):
         # Set Env
         if dev:
             uri = r'accounts/sandbox/rest'
-            api_url = '%s/%s/%s/transactions/%s.%s' % (
-                    self.base_url_dev,
-                    uri,
-                    account_id,
-                    transaction_id,
-                    resp_format
-                )
+            if resp_format is 'json':
+                api_url = '%s/%s/%s/transactions/%s.%s' % (
+                        self.base_url_dev,
+                        uri,
+                        account_id,
+                        transaction_id,
+                        resp_format
+                    )
+            elif resp_format is 'xml':
+                api_url = '%s/%s/%s/transactions/%s' % (
+                        self.base_url_dev,
+                        uri,
+                        account_id,
+                        transaction_id
+                    )
         else:
             uri = r'accounts/rest'
-            api_url = '%s/%s/%s/transactions/%s.%s' % (
-                    self.base_url_prod,
-                    uri,
-                    account_id,
-                    transaction_id,
-                    resp_format
-                )
+            if resp_format is 'json':
+                api_url = '%s/%s/%s/transactions/%s.%s' % (
+                        self.base_url_prod,
+                        uri,
+                        account_id,
+                        transaction_id,
+                        resp_format
+                    )
+            elif resp_format is 'xml':
+                api_url = '%s/%s/%s/transactions/%s' % (
+                        self.base_url_prod,
+                        uri,
+                        account_id,
+                        transaction_id
+                    )
 
         # Build Payload
         payload = kwargs

@@ -8,14 +8,7 @@ Python E-Trade API Wrapper
 [![codecov](https://codecov.io/gh/jessecooper/pyetrade/branch/master/graph/badge.svg)](https://codecov.io/gh/jessecooper/pyetrade)
 ## Completed
 Authorization API - ALL  
-Accounts API - 
-* List Accounts 
-* Get Account Ballance 
-* Get Account Positions 
-* List Alerts
-* Read Alert
-* Delete Alert
- 
+Accounts API - ALL  
 Order API - 
 * List Orders
 * Place Equity Order 
@@ -26,7 +19,6 @@ Market API -
 * Get Quote  
 
 ## TODO
-Accounts API - See pyetrade/accounts.py  
 Order API - See pyetrade/order.py  
 Market API - See pyetrade/market.py  
 Notification API - ALL  

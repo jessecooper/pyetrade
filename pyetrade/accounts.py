@@ -391,10 +391,8 @@ class ETradeAccounts(object):
         if dev:
             #assemble the following:
             #self.base_url_dev: https://etws.etrade.com
-            #format string:     /
-            #uri:               accounts/rest
-            #format string:     /
-            #account_id:        {accountId}
+            #uri:               /accounts/rest
+            #account_id:        /{accountId}
             #format string:     /transactions
             # if not 'ALL' args:
             #   group:              /{Group}
@@ -404,8 +402,6 @@ class ETradeAccounts(object):
             #resp_format:       {.json}
             #payload:           kwargs
             #
-            #example:
-            #GET https://etwssandbox.etrade.com/accounts/sandbox/rest/83405188/transactions?count=10
             uri = r'accounts/sandbox/rest'
             api_url = '%s/%s/%s/transactions%s.%s' % (
                     self.base_url_dev,
@@ -452,8 +448,6 @@ class ETradeAccounts(object):
            required: true
            description: Numeric transaction ID'''
 
-        # example:
-        # https://etws.etrade.com/accounts/rest/{accountId}/transactions/{transactionId}
         # Set Env
         if dev:
             uri = r'accounts/sandbox/rest'

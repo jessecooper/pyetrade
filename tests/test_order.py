@@ -25,10 +25,12 @@ class TestETradeOrder(unittest.TestCase):
         self.assertTrue(MockOAuthSession().get().json.called)
         self.assertTrue(MockOAuthSession().get.called)
         # Test Prod buy order equity
-        self.assertEqual(orders.list_orders('12345', dev=False), "{'accountId': '12345'}")
+        self.assertEqual(orders.list_orders('12345', dev=False),
+                         "{'accountId': '12345'}")
         self.assertTrue(MockOAuthSession().get().json.called)
         self.assertTrue(MockOAuthSession().get.called)
-        self.assertEqual(orders.list_orders('12345', dev=False, resp_format='xml'), r'<xml> returns </xml>')
+        self.assertEqual(orders.list_orders('12345', dev=False,
+                                            resp_format='xml'), r'<xml> returns </xml>')
         self.assertTrue(MockOAuthSession().get().json.called)
         self.assertTrue(MockOAuthSession().get.called)
     # Mock out OAuth1Session
@@ -50,7 +52,8 @@ class TestETradeOrder(unittest.TestCase):
                                                    priceType='MARKET',
                                                    quantity=100,
                                                    orderTerm='GOOD_UNTIL_CANCEL',
-                                                   marketSession='REGULAR'), "{'accountId': '12345'}")
+                                                   marketSession='REGULAR'),
+                         "{'accountId': '12345'}")
         self.assertTrue(MockOAuthSession().post().json.called)
         self.assertTrue(MockOAuthSession().post.called)
         # Test prod buy order equity
@@ -62,7 +65,8 @@ class TestETradeOrder(unittest.TestCase):
                                                    priceType='MARKET',
                                                    quantity=100,
                                                    orderTerm='GOOD_UNTIL_CANCEL',
-                                                   marketSession='REGULAR'), "{'accountId': '12345'}")
+                                                   marketSession='REGULAR'),
+                         "{'accountId': '12345'}")
         self.assertTrue(MockOAuthSession().post().json.called)
         self.assertTrue(MockOAuthSession().post.called)
         # Test prod buy order equity
@@ -75,7 +79,8 @@ class TestETradeOrder(unittest.TestCase):
                                                    priceType='MARKET',
                                                    quantity=100,
                                                    orderTerm='GOOD_UNTIL_CANCEL',
-                                                   marketSession='REGULAR'), "<xml> returns </xml>")
+                                                   marketSession='REGULAR'),
+                         "<xml> returns </xml>")
         self.assertTrue(MockOAuthSession().post().json.called)
         self.assertTrue(MockOAuthSession().post.called)
 
@@ -134,60 +139,59 @@ class TestETradeOrder(unittest.TestCase):
         MockOAuthSession().post().json.return_value = "{'accountId': '12345'}"
         MockOAuthSession().post().text = r'<xml> returns </xml>'
         orders = order.ETradeOrder(
-                'abc123',
-                'xyz123',
-                'abctoken',
-                'xyzsecret'
-                )
+            'abc123',
+            'xyz123',
+            'abctoken',
+            'xyzsecret'
+            )
         # Dev
         self.assertEqual(
-                orders.cancel_order(12345, 42),
-                "{'accountId': '12345'}"
-                )
+            orders.cancel_order(12345, 42),
+            "{'accountId': '12345'}"
+            )
         MockOAuthSession().post.assert_called_with(
-                ('https://etwssandbox.etrade.com'
-                 '/order/sandbox/rest/cancelorder.json'),
-                json={
-                    'cancelOrder': {
-                        'cancelOrderRequest': {
-                            'accountId': 12345, 'orderNum': 42
-                            },
-                        '-xmlns': 'https://etwssandbox.etrade.com'
-                        }
+            ('https://etwssandbox.etrade.com'
+             '/order/sandbox/rest/cancelorder.json'),
+            json={
+                'cancelOrder': {
+                    'cancelOrderRequest': {
+                        'accountId': 12345, 'orderNum': 42
+                        },
+                    '-xmlns': 'https://etwssandbox.etrade.com'
                     }
-                )
+                }
+            )
         self.assertTrue(MockOAuthSession().post().json.called)
         self.assertTrue(MockOAuthSession().post.called)
         self.assertEqual(
-                orders.cancel_order(12345, 42, resp_format='xml'),
-                "<xml> returns </xml>"
-                )
+            orders.cancel_order(12345, 42, resp_format='xml'),
+            "<xml> returns </xml>"
+            )
         # Prod
         self.assertEqual(
-                orders.cancel_order(12345, 42, dev=False),
-                "{'accountId': '12345'}"
-                )
+            orders.cancel_order(12345, 42, dev=False),
+            "{'accountId': '12345'}"
+            )
         MockOAuthSession().post.assert_called_with(
-                ('https://etws.etrade.com'
-                 '/order/rest/cancelorder.json'),
-                json={
-                    'cancelOrder': {
-                        'cancelOrderRequest': {
-                            'accountId': 12345, 'orderNum': 42
-                            },
-                        '-xmlns': 'https://etws.etrade.com'
-                        }
+            ('https://etws.etrade.com'
+             '/order/rest/cancelorder.json'),
+            json={
+                'cancelOrder': {
+                    'cancelOrderRequest': {
+                        'accountId': 12345, 'orderNum': 42
+                        },
+                    '-xmlns': 'https://etws.etrade.com'
                     }
-                )
+                }
+            )
         self.assertTrue(MockOAuthSession().post().json.called)
         self.assertTrue(MockOAuthSession().post.called)
         self.assertEqual(
-                orders.cancel_order(
-                    12345,
-                    42,
-                    dev=False,
-                    resp_format='xml'
-                    ),
-                "<xml> returns </xml>"
-                )
-
+            orders.cancel_order(
+                12345,
+                42,
+                dev=False,
+                resp_format='xml'
+                ),
+            "<xml> returns </xml>"
+            )

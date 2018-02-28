@@ -24,28 +24,23 @@ class TestETradeMarket(unittest.TestCase):
         mark = market.ETradeMarket('abc123', 'xyz123', 'abctoken', 'xyzsecret')
         # Test Dev Get Quote
         self.assertEqual(
-                mark.look_up_product('Bank Of', 'EQ'),
-                "{'BAC': '32.10'}"
-                )
+            mark.look_up_product('Bank Of', 'EQ'),
+            "{'BAC': '32.10'}"
+            )
         self.assertTrue(MockOAuthSession().get().json.called)
         self.assertTrue(MockOAuthSession().get.called)
         # Test Dev Get Qoute xml
-        self.assertEqual(mark.look_up_product(
-                'Back Of', 'EQ', resp_format='xml'),
-                r"<xml> returns </xml>"
-            )
+        self.assertEqual(mark.look_up_product('Back Of', 'EQ', resp_format='xml'),
+                         r"<xml> returns </xml>")
         self.assertTrue(MockOAuthSession().get.called)
         # Test Prod Get Qoute
-        self.assertEqual(mark.look_up_product(
-            'Bank Of', 'EQ', dev=False), "{'BAC': '32.10'}"
-            )
+        self.assertEqual(mark.look_up_product('Bank Of', 'EQ', dev=False),
+                         "{'BAC': '32.10'}")
         self.assertTrue(MockOAuthSession().get().json.called)
         self.assertTrue(MockOAuthSession().get.called)
         # Test prod Get Qoute xml
-        self.assertEqual(mark.look_up_product(
-                'Back Of', 'EQ', resp_format='xml', dev=False),
-                r"<xml> returns </xml>"
-            )
+        self.assertEqual(mark.look_up_product('Back Of', 'EQ', resp_format='xml', dev=False),
+                         r"<xml> returns </xml>")
         self.assertTrue(MockOAuthSession().get.called)
     # Mock out OAuth1Session
     @patch('pyetrade.market.OAuth1Session')
@@ -67,10 +62,8 @@ class TestETradeMarket(unittest.TestCase):
         self.assertTrue(MockOAuthSession().get().json.called)
         self.assertTrue(MockOAuthSession().get.called)
         # Test prod Get Qoute xml
-        self.assertEqual(mark.get_quote(
-                'BAC', resp_format='xml', dev=False),
-                r"<xml> returns </xml>"
-            )
+        self.assertEqual(mark.get_quote('BAC', resp_format='xml', dev=False),
+                         r"<xml> returns </xml>")
         self.assertTrue(MockOAuthSession().get.called)
 
     @patch('pyetrade.market.OAuth1Session')
@@ -87,4 +80,3 @@ class TestETradeMarket(unittest.TestCase):
         # Test exception class
         with self.assertRaises(etrade_exception.MarketQuoteException):
             mark.get_quote(*sym)
-        

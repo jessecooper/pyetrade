@@ -9,7 +9,7 @@
 import logging
 from requests_oauthlib import OAuth1Session
 # Set up logging
-logger = logging.getLogger(__name__)
+LOGGER = logging.getLogger(__name__)
 
 class ETradeOAuth(object):
     '''ETradeOAuth
@@ -88,7 +88,7 @@ class ETradeOAuth(object):
                                                     self.consumer_key,
                                                     akey['oauth_token'])
         self.verifier_url = formated_auth_url
-        logger.debug(formated_auth_url)
+        LOGGER.debug(formated_auth_url)
 
         return formated_auth_url
 
@@ -137,7 +137,7 @@ class ETradeOAuth(object):
         self.session._client.client.verifier = verifier
         # Get access token
         self.access_token = self.session.fetch_access_token(self.access_token_url)
-        logger.debug(self.access_token)
+        LOGGER.debug(self.access_token)
 
         return self.access_token
 
@@ -205,8 +205,8 @@ class ETradeAccessManager(object):
            type: str
            required: true
            description: the consumer's access token to be renewed.'''
-        resp = self.session.get(self.renew_access_token_url) 
-        logger.debug(resp.text)
+        resp = self.session.get(self.renew_access_token_url)
+        LOGGER.debug(resp.text)
         resp.raise_for_status()
 
         return True
@@ -247,7 +247,7 @@ class ETradeAccessManager(object):
            required: true
            description: the consumer's access token to be revoked.'''
         resp = self.session.get(self.revoke_access_token_url)
-        logger.debug(resp.text)
+        LOGGER.debug(resp.text)
         resp.raise_for_status()
 
         return True

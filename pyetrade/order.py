@@ -16,7 +16,7 @@ import logging
 from requests_oauthlib import OAuth1Session
 from pyetrade.etrade_exception import OrderException
 # Set up logging
-logger = logging.getLogger(__name__)
+LOGGER = logging.getLogger(__name__)
 
 class ETradeOrder(object):
     '''ETradeOrder'''
@@ -67,33 +67,32 @@ class ETradeOrder(object):
         if dev:
             uri = r'order/sandbox/rest/orderlist'
             api_url = '%s/%s/%s.%s' % (
-                    self.base_url_dev,
-                    uri,
-                    account_id,
-                    resp_format
+                self.base_url_dev,
+                uri,
+                account_id,
+                resp_format
                 )
         else:
             uri = r'order/rest/orderlist'
             api_url = '%s/%s/%s.%s' % (
-                    self.base_url_prod,
-                    uri,
-                    account_id,
-                    resp_format
+                self.base_url_prod,
+                uri,
+                account_id,
+                resp_format
                 )
 
         # Build Payload
         payload = kwargs
-        logger.debug('payload: %s', payload)
+        LOGGER.debug('payload: %s', payload)
 
-        logger.debug(api_url)
+        LOGGER.debug(api_url)
         req = self.session.get(api_url, params=payload)
         req.raise_for_status()
-        logger.debug(req.text)
+        LOGGER.debug(req.text)
 
-        if resp_format is 'json':
+        if resp_format == 'json':
             return req.json()
-        else:
-            return req.text
+        return req.text
 
     def place_equity_order(self, dev=True, resp_format='json', **kwargs):
         '''place_equity_order(dev, resp_format, **kwargs) -> resp
@@ -336,7 +335,7 @@ class ETradeOrder(object):
                              * NSDQ
                              * NYSE'''
         # Build Payload
-        logger.debug(kwargs)
+        LOGGER.debug(kwargs)
         # Test required values
         if 'accountId' not in kwargs and\
            'symbol' not in kwargs and\
@@ -376,20 +375,19 @@ class ETradeOrder(object):
 
         # Build Payload
         payload['PlaceEquityOrder']['EquityOrderRequest'] = kwargs
-        logger.debug('payload: %s', payload)
+        LOGGER.debug('payload: %s', payload)
 
-        logger.debug(api_url)
+        LOGGER.debug(api_url)
         req = self.session.post(api_url, json=payload)
         req.raise_for_status()
-        logger.debug(req.text)
+        LOGGER.debug(req.text)
 
-        if resp_format is 'json':
+        if resp_format == 'json':
             return req.json()
-        else:
-            return req.text
+        return req.text
 
     def cancel_order(self, account_id, order_num,
-            dev=True, resp_format='json'):
+                     dev=True, resp_format='json'):
         '''cancel_order(account_id, order_num, dev, resp_format)
            param: account_id
            type: int
@@ -406,56 +404,55 @@ class ETradeOrder(object):
         # Set Env
         if dev:
             payload = {
-                    'cancelOrder': {
-                        '-xmlns': self.base_url_dev,
-                        'cancelOrderRequest': {
-                            'accountId': account_id,
-                            'orderNum': order_num
-                            }
+                'cancelOrder': {
+                    '-xmlns': self.base_url_dev,
+                    'cancelOrderRequest': {
+                        'accountId': account_id,
+                        'orderNum': order_num
                         }
                     }
+                }
             uri = r'order/sandbox/rest/cancelorder'
-            if resp_format is 'json':
+            if resp_format == 'json':
                 api_url = '%s/%s.%s' % (
-                        self.base_url_dev,
-                        uri,
-                        resp_format
-                        )
-            elif resp_format is 'xml':
+                    self.base_url_dev,
+                    uri,
+                    resp_format
+                    )
+            elif resp_format == 'xml':
                 api_url = '%s/%s' % (
-                        self.base_url_dev,
-                        uri
-                        )
+                    self.base_url_dev,
+                    uri
+                    )
         else:
             payload = {
-                    'cancelOrder': {
-                        '-xmlns': self.base_url_prod,
-                        'cancelOrderRequest': {
-                            'accountId': account_id,
-                            'orderNum': order_num
-                            }
+                'cancelOrder': {
+                    '-xmlns': self.base_url_prod,
+                    'cancelOrderRequest': {
+                        'accountId': account_id,
+                        'orderNum': order_num
                         }
                     }
+                }
             uri = r'order/rest/cancelorder'
-            if resp_format is 'json':
+            if resp_format == 'json':
                 api_url = '%s/%s.%s' % (
-                        self.base_url_prod,
-                        uri,
-                        resp_format
-                        )
-            elif resp_format is 'xml':
+                    self.base_url_prod,
+                    uri,
+                    resp_format
+                    )
+            elif resp_format == 'xml':
                 api_url = '%s/%s' % (
-                        self.base_url_prod,
-                        uri
-                        )
-        logger.debug(api_url)
-        logger.debug('payload: %s', payload)
+                    self.base_url_prod,
+                    uri
+                    )
+        LOGGER.debug(api_url)
+        LOGGER.debug('payload: %s', payload)
 
         req = self.session.post(api_url, json=payload)
         req.raise_for_status()
-        logger.debug(req.text)
+        LOGGER.debug(req.text)
 
-        if resp_format is 'json':
+        if resp_format == 'json':
             return req.json()
-        else:
-            return req.text
+        return req.text

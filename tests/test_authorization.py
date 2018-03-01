@@ -19,7 +19,8 @@ class TestETradeAuthorization(unittest.TestCase):
         MockOAuthSession().parse_authorization_response().__getitem__.return_value = 'abc123'
         # Setup authorization
         oauth = authorization.ETradeOAuth('xyz321', 'secret')
-        self.assertEqual(oauth.get_request_token(), 'https://us.etrade.com/e/t/etws/authorize?key=xyz321&token=abc123')
+        self.assertEqual(oauth.get_request_token(),
+                         'https://us.etrade.com/e/t/etws/authorize?key=xyz321&token=abc123')
         self.assertTrue(MockOAuthSession().parse_authorization_response().__getitem__.called)
     # Mock out OAuth1Session
     @patch('pyetrade.authorization.OAuth1Session')
@@ -29,9 +30,10 @@ class TestETradeAuthorization(unittest.TestCase):
         MockOAuthSession().fetch_access_token.return_value = "{'oauth_token': 'abc', 'oauth_token_secret': 'xyz'}"
         oauth = authorization.ETradeOAuth('xyz321', 'secret')
         oauth.get_request_token()
-        self.assertEqual(oauth.get_access_token('abcxyz'), "{'oauth_token': 'abc', 'oauth_token_secret': 'xyz'}")
+        self.assertEqual(oauth.get_access_token('abcxyz'),
+                         "{'oauth_token': 'abc', 'oauth_token_secret': 'xyz'}")
         self.assertTrue(MockOAuthSession().fetch_access_token.called)
-    
+
 class TestETradeAccessManager(unittest.TestCase):
     @patch('pyetrade.authorization.OAuth1Session')
     def test_renew_access_token(self, MockOAuthSession):

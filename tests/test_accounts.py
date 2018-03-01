@@ -24,16 +24,16 @@ class TestETradeAccounts(unittest.TestCase):
         self.assertEqual(account.list_accounts(), "{'account': 'abc123'}")
         # Test API URL
         MockOAuthSession().get.assert_called_with(
-                ('https://etwssandbox.etrade.com/accounts/'
-                'sandbox/rest/accountlist.json')
-                )
+            ('https://etwssandbox.etrade.com/accounts/'
+             'sandbox/rest/accountlist.json')
+            )
         # Test Prod JSON
         self.assertEqual(account.list_accounts(dev=False), "{'account': 'abc123'}")
         # Test API URL
         MockOAuthSession().get.assert_called_with(
-                ('https://etws.etrade.com/accounts/'
-                'rest/accountlist.json')
-                )
+            ('https://etws.etrade.com/accounts/'
+             'rest/accountlist.json')
+            )
         # Test Dev XML
         self.assertEqual(account.list_accounts(resp_format='xml'), r'<xml> returns </xml>')
         self.assertTrue(MockOAuthSession().get().json.called)
@@ -54,18 +54,19 @@ class TestETradeAccounts(unittest.TestCase):
         self.assertEqual(account.get_account_balance(12345), "{'account': 'abc123'}")
         # Test API URL
         MockOAuthSession().get.assert_called_with(
-                ('https://etwssandbox.etrade.com/accounts/'
-                'sandbox/rest/accountbalance/12345.json')
-                )
+            ('https://etwssandbox.etrade.com/accounts/'
+             'sandbox/rest/accountbalance/12345.json')
+            )
         # Test Prod JSON
         self.assertEqual(account.get_account_balance(12345, dev=False), "{'account': 'abc123'}")
         # Test API URL
         MockOAuthSession().get.assert_called_with(
-                ('https://etws.etrade.com/accounts/'
-                'rest/accountbalance/12345.json')
-                )
+            ('https://etws.etrade.com/accounts/'
+             'rest/accountbalance/12345.json')
+            )
         # Test Dev XML
-        self.assertEqual(account.get_account_balance(12345, resp_format='xml'), r'<xml> returns </xml>')
+        self.assertEqual(account.get_account_balance(12345, resp_format='xml'),
+                         r'<xml> returns </xml>')
         #MockOAuthSession().get.assert_called_with(
         #        ('https://etws.etrade.com/accounts/'
         #        'rest/accountbalance/12345')
@@ -89,27 +90,29 @@ class TestETradeAccounts(unittest.TestCase):
         self.assertEqual(account.get_account_positions(12345), "{'account': 'abc123'}")
         # Test API URL
         MockOAuthSession().get.assert_called_with(
-                ('https://etwssandbox.etrade.com/accounts/'
-                'sandbox/rest/accountpositions/12345.json')
-                )
+            ('https://etwssandbox.etrade.com/accounts/'
+             'sandbox/rest/accountpositions/12345.json')
+            )
         # Test Prod JSON
         self.assertEqual(account.get_account_positions(12345, dev=False), "{'account': 'abc123'}")
         # Test API URL
         MockOAuthSession().get.assert_called_with(
-                ('https://etws.etrade.com/accounts/'
-                'rest/accountpositions/12345.json')
-                )
+            ('https://etws.etrade.com/accounts/'
+             'rest/accountpositions/12345.json')
+            )
         # Test Dev XML
-        self.assertEqual(account.get_account_positions(12345, resp_format='xml'), r'<xml> returns </xml>')
+        self.assertEqual(account.get_account_positions(12345, resp_format='xml'),
+                         r'<xml> returns </xml>')
         MockOAuthSession().get.assert_called_with(
-                ('https://etwssandbox.etrade.com/accounts/'
-                'sandbox/rest/accountpositions/12345')
-                )
-        self.assertEqual(account.get_account_positions(12345, dev=False, resp_format='xml'), r'<xml> returns </xml>')
+            ('https://etwssandbox.etrade.com/accounts/'
+             'sandbox/rest/accountpositions/12345')
+            )
+        self.assertEqual(account.get_account_positions(12345, dev=False, resp_format='xml'),
+                         r'<xml> returns </xml>')
         MockOAuthSession().get.assert_called_with(
-                ('https://etws.etrade.com/accounts/'
-                'rest/accountpositions/12345')
-                )
+            ('https://etws.etrade.com/accounts/'
+             'rest/accountpositions/12345')
+            )
         self.assertTrue(MockOAuthSession().get().json.called)
         self.assertTrue(MockOAuthSession().get.called)
 
@@ -128,27 +131,27 @@ class TestETradeAccounts(unittest.TestCase):
         self.assertEqual(account.list_alerts(), "{'account': 'abc123'}")
         # Test API URL
         MockOAuthSession().get.assert_called_with(
-                ('https://etwssandbox.etrade.com/accounts/'
-                'sandbox/rest/alerts.json')
-                )
+            ('https://etwssandbox.etrade.com/accounts/'
+             'sandbox/rest/alerts.json')
+            )
         # Test Prod JSON
         self.assertEqual(account.list_alerts(dev=False), "{'account': 'abc123'}")
         # Test API URL
         MockOAuthSession().get.assert_called_with(
-                ('https://etws.etrade.com/accounts/'
-                'rest/alerts.json')
-                )
+            ('https://etws.etrade.com/accounts/'
+             'rest/alerts.json')
+            )
         # Test Dev XML
         self.assertEqual(account.list_alerts(resp_format='xml'), r'<xml> returns </xml>')
         MockOAuthSession().get.assert_called_with(
-                ('https://etwssandbox.etrade.com/accounts/'
-                'sandbox/rest/alerts')
-                )
+            ('https://etwssandbox.etrade.com/accounts/'
+             'sandbox/rest/alerts')
+            )
         self.assertEqual(account.list_alerts(dev=False, resp_format='xml'), r'<xml> returns </xml>')
         MockOAuthSession().get.assert_called_with(
-                ('https://etws.etrade.com/accounts/'
-                'rest/alerts')
-                )
+            ('https://etws.etrade.com/accounts/'
+             'rest/alerts')
+            )
         self.assertTrue(MockOAuthSession().get().json.called)
         self.assertTrue(MockOAuthSession().get.called)
 
@@ -167,27 +170,28 @@ class TestETradeAccounts(unittest.TestCase):
         self.assertEqual(account.read_alert(1234), "{'account': 'abc123'}")
         # Test API URL
         MockOAuthSession().get.assert_called_with(
-                ('https://etwssandbox.etrade.com/accounts/'
-                'sandbox/rest/alerts/1234.json')
-                )
+            ('https://etwssandbox.etrade.com/accounts/'
+             'sandbox/rest/alerts/1234.json')
+            )
         # Test Prod JSON
         self.assertEqual(account.read_alert(1234, dev=False), "{'account': 'abc123'}")
         # Test API URL
         MockOAuthSession().get.assert_called_with(
-                ('https://etws.etrade.com/accounts/'
-                'rest/alerts/1234.json')
-                )
+            ('https://etws.etrade.com/accounts/'
+             'rest/alerts/1234.json')
+            )
         # Test Dev XML
         self.assertEqual(account.read_alert(1234, resp_format='xml'), r'<xml> returns </xml>')
         MockOAuthSession().get.assert_called_with(
-                ('https://etwssandbox.etrade.com/accounts/'
-                'sandbox/rest/alerts/1234')
-                )
-        self.assertEqual(account.read_alert(1234, dev=False, resp_format='xml'), r'<xml> returns </xml>')
+            ('https://etwssandbox.etrade.com/accounts/'
+             'sandbox/rest/alerts/1234')
+            )
+        self.assertEqual(account.read_alert(1234, dev=False, resp_format='xml'),
+                         r'<xml> returns </xml>')
         MockOAuthSession().get.assert_called_with(
-                ('https://etws.etrade.com/accounts/'
-                'rest/alerts/1234')
-                )
+            ('https://etws.etrade.com/accounts/'
+             'rest/alerts/1234')
+            )
         self.assertTrue(MockOAuthSession().get().json.called)
         self.assertTrue(MockOAuthSession().get.called)
 
@@ -206,27 +210,28 @@ class TestETradeAccounts(unittest.TestCase):
         self.assertEqual(account.delete_alert(1234), "{'account': 'abc123'}")
         # Test API URL
         MockOAuthSession().delete.assert_called_with(
-                ('https://etwssandbox.etrade.com/accounts/'
-                'sandbox/rest/alerts/1234.json')
-                )
+            ('https://etwssandbox.etrade.com/accounts/'
+             'sandbox/rest/alerts/1234.json')
+            )
         # Test Prod JSON
         self.assertEqual(account.delete_alert(1234, dev=False), "{'account': 'abc123'}")
         # Test API URL
         MockOAuthSession().delete.assert_called_with(
-                ('https://etws.etrade.com/accounts/'
-                'rest/alerts/1234.json')
-                )
+            ('https://etws.etrade.com/accounts/'
+             'rest/alerts/1234.json')
+            )
         # Test Dev XML
         self.assertEqual(account.delete_alert(1234, resp_format='xml'), r'<xml> returns </xml>')
         MockOAuthSession().delete.assert_called_with(
-                ('https://etwssandbox.etrade.com/accounts/'
-                'sandbox/rest/alerts/1234')
-                )
-        self.assertEqual(account.delete_alert(1234, dev=False, resp_format='xml'), r'<xml> returns </xml>')
+            ('https://etwssandbox.etrade.com/accounts/'
+             'sandbox/rest/alerts/1234')
+            )
+        self.assertEqual(account.delete_alert(1234, dev=False, resp_format='xml'),
+                         r'<xml> returns </xml>')
         MockOAuthSession().delete.assert_called_with(
-                ('https://etws.etrade.com/accounts/'
-                'rest/alerts/1234')
-                )
+            ('https://etws.etrade.com/accounts/'
+             'rest/alerts/1234')
+            )
         self.assertTrue(MockOAuthSession().delete().json.called)
         self.assertTrue(MockOAuthSession().delete.called)
 
@@ -241,43 +246,42 @@ class TestETradeAccounts(unittest.TestCase):
         MockOAuthSession().get().json.return_value = "{'transaction': 'abc123'}"
         MockOAuthSession().get().text = r'<xml> returns </xml>'
         account = accounts.ETradeAccounts('abc123', 'xyz123', 'abctoken',
-                'xyzsecret')
+                                          'xyzsecret')
         # Test Dev JSON
         self.assertEqual(account.get_transaction_history(12345),
-                "{'transaction': 'abc123'}")
+                         "{'transaction': 'abc123'}")
         # Test API URL
         MockOAuthSession().get.assert_called_with(
-                ('https://etwssandbox.etrade.com/accounts/'
-                'sandbox/rest/12345/transactions.json'), params = {}
-                )
+            ('https://etwssandbox.etrade.com/accounts/'
+             'sandbox/rest/12345/transactions.json'), params={}
+            )
         # Test Prod JSON
         self.assertEqual(account.get_transaction_history(12345, dev=False),
-                "{'transaction': 'abc123'}")
+                         "{'transaction': 'abc123'}")
         # Test API URL
         MockOAuthSession().get.assert_called_with(
-                ('https://etws.etrade.com/accounts/'
-                'rest/12345/transactions.json'), params = {}
-                )
+            ('https://etws.etrade.com/accounts/'
+             'rest/12345/transactions.json'), params={}
+            )
         # Test Dev XML
-        self.assertEqual(account.get_transaction_history(12345,
-                resp_format='xml'), r'<xml> returns </xml>')
+        self.assertEqual(account.get_transaction_history(12345, resp_format='xml'),
+                         r'<xml> returns </xml>')
         # Test API URL
         MockOAuthSession().get.assert_called_with(
-                ('https://etwssandbox.etrade.com/accounts/'
-                'sandbox/rest/12345/transactions'), params = {}
-                )
+            ('https://etwssandbox.etrade.com/accounts/'
+             'sandbox/rest/12345/transactions'), params={}
+            )
         # Test Prod XML
-        self.assertEqual(account.get_transaction_history(12345,
-                dev=False, resp_format='xml'), r'<xml> returns </xml>')
+        self.assertEqual(account.get_transaction_history(12345, dev=False, resp_format='xml'),
+                         r'<xml> returns </xml>')
         # Test API URL
         MockOAuthSession().get.assert_called_with(
-                ('https://etws.etrade.com/accounts/'
-                'rest/12345/transactions'), params = {}
-                )
+            ('https://etws.etrade.com/accounts/'
+             'rest/12345/transactions'), params={}
+            )
         # Test optional_args
-        self.assertEqual(account.get_transaction_history(12345,
-                group = 'WITHDRAWALS'), "{'transaction': 'abc123'}")
-
+        self.assertEqual(account.get_transaction_history(12345, group='WITHDRAWALS'),
+                         "{'transaction': 'abc123'}")
         self.assertTrue(MockOAuthSession().get().json.called)
         self.assertTrue(MockOAuthSession().get.called)
 
@@ -291,38 +295,38 @@ class TestETradeAccounts(unittest.TestCase):
         # Set Mock returns
         MockOAuthSession().get().json.return_value = "{'transaction': 'abc123'}"
         MockOAuthSession().get().text = r'<xml> returns </xml>'
-        account = accounts.ETradeAccounts('abc123', 'xyz123', 'abctoken',
-                'xyzsecret')
+        account = accounts.ETradeAccounts('abc123', 'xyz123', 'abctoken', 'xyzsecret')
         # Test Dev JSON
         self.assertEqual(account.get_transaction_details(12345, 67890),
-                "{'transaction': 'abc123'}")
+                         "{'transaction': 'abc123'}")
         # Test API URL
         MockOAuthSession().get.assert_called_with(
-                ('https://etwssandbox.etrade.com/accounts/'
-                'sandbox/rest/12345/transactions/67890.json'), params = {}
-                )
+            ('https://etwssandbox.etrade.com/accounts/'
+             'sandbox/rest/12345/transactions/67890.json'), params={}
+            )
         # Test Prod JSON
-        self.assertEqual(account.get_transaction_details(12345, 67890,
-                dev=False), "{'transaction': 'abc123'}")
+        self.assertEqual(account.get_transaction_details(12345, 67890, dev=False),
+                         "{'transaction': 'abc123'}")
         # Test API URL
         MockOAuthSession().get.assert_called_with(
-                ('https://etws.etrade.com/accounts/'
-                'rest/12345/transactions/67890.json'), params = {}
-                )
+            ('https://etws.etrade.com/accounts/'
+             'rest/12345/transactions/67890.json'), params={}
+            )
         # Test Dev XML
-        self.assertEqual(account.get_transaction_details(12345, 67890,
-                resp_format='xml'), r'<xml> returns </xml>')
+        self.assertEqual(account.get_transaction_details(12345, 67890, resp_format='xml'),
+                         r'<xml> returns </xml>')
         MockOAuthSession().get.assert_called_with(
-                ('https://etwssandbox.etrade.com/accounts/'
-                'sandbox/rest/12345/transactions/67890'), params = {}
-                )
+            ('https://etwssandbox.etrade.com/accounts/'
+             'sandbox/rest/12345/transactions/67890'), params={}
+            )
         # Test Prod XML
-        self.assertEqual(account.get_transaction_details(12345, 67890,
-                dev=False, resp_format='xml'), r'<xml> returns </xml>')
+        self.assertEqual(account.get_transaction_details(12345, 67890, dev=False,
+                                                         resp_format='xml'),
+                         r'<xml> returns </xml>')
         MockOAuthSession().get.assert_called_with(
-                ('https://etws.etrade.com/accounts/'
-                'rest/12345/transactions/67890'), params = {}
-                )
+            ('https://etws.etrade.com/accounts/'
+             'rest/12345/transactions/67890'), params={}
+            )
 
         self.assertTrue(MockOAuthSession().get().json.called)
         self.assertTrue(MockOAuthSession().get.called)

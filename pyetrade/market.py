@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 
-'''Market - ETrade Market API 
+'''Market - ETrade Market API
    TODO:
     * Get Option Chains
     * Get Option Expire Dates
@@ -11,7 +11,7 @@ import logging
 from requests_oauthlib import OAuth1Session
 from pyetrade.etrade_exception import MarketQuoteException
 # Set up logging
-logger = logging.getLogger(__name__)
+LOGGER = logging.getLogger(__name__)
 
 class ETradeMarket(object):
     '''ETradeMarket'''
@@ -70,37 +70,36 @@ class ETradeMarket(object):
            rdescription: the market symbol for the security'''
         # Set Env join symbles with .join(args)
         if dev:
-            if resp_format is 'json':
+            if resp_format == 'json':
                 uri = r'market/sandbox/rest/productlookup'
                 api_url = '%s/%s.%s' % (
-                        self.base_url_dev, uri, resp_format
+                    self.base_url_dev, uri, resp_format
                     )
-            elif resp_format is 'xml':
+            elif resp_format == 'xml':
                 uri = r'market/sandbox/rest/productlookup'
                 api_url = '%s/%s' % (self.base_url_dev, uri)
         else:
-            if resp_format is 'json':
+            if resp_format == 'json':
                 uri = r'market/rest/productlookup'
                 api_url = '%s/%s.%s' % (
-                        self.base_url_prod, uri, resp_format
+                    self.base_url_prod, uri, resp_format
                     )
-            elif resp_format is 'xml':
+            elif resp_format == 'xml':
                 uri = r'market/rest/productlookup'
                 api_url = '%s/%s' % (self.base_url_prod, uri)
-        logger.debug(api_url)
+        LOGGER.debug(api_url)
         #add detail flag to url
         payload = {
-                'company': company,
-                'type': s_type
+            'company': company,
+            'type': s_type
             }
         req = self.session.get(api_url, params=payload)
         req.raise_for_status()
-        logger.debug(req.text)
+        LOGGER.debug(req.text)
 
-        if resp_format is 'json':
+        if resp_format == 'json':
             return req.json()
-        else:
-            return req.text
+        return req.text
 
     def get_quote(self, *args, dev=True, resp_format='json', detail_flag='ALL'):
         '''get_quote(dev, resp_format, **kwargs) -> resp
@@ -159,14 +158,13 @@ class ETradeMarket(object):
         else:
             uri = r'market/rest/quote/'+','.join(args)
             api_url = '%s/%s.%s' % (self.base_url_prod, uri, resp_format)
-        logger.debug(api_url)
+        LOGGER.debug(api_url)
         #add detail flag to url
         payload = {'detailFlag': detail_flag}
         req = self.session.get(api_url, params=payload)
         req.raise_for_status()
-        logger.debug(req.text)
+        LOGGER.debug(req.text)
 
-        if resp_format is 'json':
+        if resp_format == 'json':
             return req.json()
-        else:
-            return req.text
+        return req.text

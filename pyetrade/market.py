@@ -2,16 +2,20 @@
 
 '''Market - ETrade Market API
    TODO:
-    * Get Option Chains
-    * Get Option Expire Dates
     * Look Up Product
     * Get Quote - Doc String'''
 
 import logging
+import datetime as dt
 from requests_oauthlib import OAuth1Session
 from pyetrade.etrade_exception import MarketQuoteException
+
 # Set up logging
 LOGGER = logging.getLogger(__name__)
+
+# know when today is
+TODAY = dt.date.today()
+(THIS_YEAR, THIS_MONTH, THIS_DAY) = (TODAY.year, TODAY.month, TODAY.day)
 
 class ETradeMarket(object):
     '''ETradeMarket'''
@@ -99,7 +103,8 @@ class ETradeMarket(object):
 
         if resp_format == 'json':
             return req.json()
-        return req.text
+        else:
+            return req.text
 
     def get_quote(self, *args, dev=True, resp_format='json', detail_flag='ALL'):
         '''get_quote(dev, resp_format, **kwargs) -> resp
@@ -167,4 +172,109 @@ class ETradeMarket(object):
 
         if resp_format == 'json':
             return req.json()
-        return req.text
+        else:
+            return req.text
+
+    def get_optionchains(self, chainType='CALLPUT', expirationMonth=THIS_MONTH, expirationYear=THIS_YEAR, underlier='GOOGL', skipAdjusted=True,
+                         dev=True, resp_format='json'):
+        '''get_optionchains(dev, resp_format, **kwargs) -> resp
+            
+           param: chainType
+           type: str
+           description: CALL, PUT, or CALLPUT (both)
+           
+           param: expirationMonth
+           type: int
+           description: contract expiration month; number between 1 (January) and 12 (December)
+           
+           param: expirationYear
+           type: int
+           description: contract expiration year; number between 2012 and future year
+           
+           param: underlier
+           type: str
+           description: market symbol
+           
+           param: skipAdjusted
+           type: bool
+           description: Specifies whether to show (TRUE) or not show (FALSE) adjusted options, i.e., options 
+                        that have undergone a change resulting in a modification of the option contract.
+               
+           param: dev
+           type: bool
+           description: API enviornment
+           
+           param: resp_format
+           type: str
+           description: Response format JSON or None = XML
+           
+           Sample Request
+           GET https://etws.etrade.com/market/rest/optionchains?expirationMonth=04&expirationYear=2011&chainType=PUT&skipAdjusted=true&underlier=GOOG
+
+        '''
+        assert 0 < expirationMonth <= 12
+        assert expirationYear >= 2010
+        assert (resp_format in ('json', 'xml', None))
+        assert (chainType in ('CALLPUT','CALL','PUT'))
+        
+        # separator ',' instead of '&' to follow previous code; need '?' after optionchains?
+        args_str = 'expirationMonth=%02d,expirationYear=%04d,underlier=%s,chainType=%s,skipAdjusted=%s' % (expirationMonth, expirationYear, underlier, chainType, str(skipAdjusted))
+        
+        if dev:
+            uri = r'market/sandbox/rest/optionchains/'
+            api_url = '%s/%s?%s.%s' % (self.base_url_dev, uri, args_str, resp_format)
+        else:
+            uri = r'market/rest/optionchains/'
+            api_url = '%s/%s?%s.%s' % (self.base_url_prod, uri, args_str, resp_format)
+        LOGGER.debug(api_url)
+        
+        req = self.session.get(api_url)
+        req.raise_for_status()
+        LOGGER.debug(req.text)
+
+        if resp_format == 'json':
+            return req.json(), api_url
+        else:
+            return req.text, api_url
+
+
+    def get_optionexpiredate(self, underlier='GOOGL',
+                             dev=True, resp_format='json'):
+        '''get_option_expiry_dates(dev, resp_format, **kwargs) -> resp
+            
+           param: underlier
+           type: str
+           description: market symbol
+           
+           param: dev
+           type: bool
+           description: API enviornment
+           
+           param: resp_format
+           type: str
+           description: Response format JSON or None = XML
+           
+           Sample Request
+           GET https://etws.etrade.com/market/rest/optionexpiredate?underlier=GOOGL
+           
+               https://etws.etrade.com/market/rest/optionexpiredate?underlier=GOOGL.json
+        '''
+        
+        # separator ',' instead of '&' to follow previous code; need '?' after optionchains?
+        args_str = 'underlier=%s' % underlier
+        if dev:
+            uri = r'market/sandbox/rest/optionexpiredate'
+            api_url = '%s/%s?%s.%s' % (self.base_url_dev, uri, args_str, resp_format)
+        else:
+            uri = r'market/rest/optionexpiredate'
+            api_url = '%s/%s?%s.%s' % (self.base_url_prod, uri, args_str, resp_format)
+        LOGGER.debug(api_url)
+        
+        req = self.session.get(api_url)
+        req.raise_for_status()
+        LOGGER.debug(req.text)
+
+        if resp_format == 'json':
+            return req.json(), api_url
+        else:
+            return req.text, api_url

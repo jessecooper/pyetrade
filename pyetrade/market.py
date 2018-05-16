@@ -16,6 +16,9 @@
     option_dates = me.get_optionexpiredate('aapl', resp_format=None )
     strikes = me.get_option_strikes('aapl', 5, 2018)
     option_data = me.get_option_chain_data('aapl',strikes)
+    
+    or, all in one:
+    (option_data,count) = me.get_all_option_data('aapl')
 
 '''
 
@@ -211,6 +214,27 @@ class ETradeMarket(object):
         else:
             return req.text
         
+    def get_all_option_data(self, underlier):
+        ''' Given the underlier, return all option_chain_data as a dictionary of lists,
+            with the key being a text date of the form YYYY-MM; e.g., 2018-05
+            INPUT: underlying symbol
+            RETURN: dictionary of lists
+                    count of total options downloaded
+        '''
+        expiry_dates = self.get_optionexpiredate(underlier)     # this contains all expiration dates
+        
+        # group by month, as this is the approach that ETrade API returns options_chain_data
+        rtn = dict()
+        count = 0
+        for this_date in expiry_dates:
+            option_key = '%04d-%02d' % (this_date.year, this_date.month)
+            if option_key not in rtn:
+                strikes = self.get_option_strikes(underlier, this_date.month, this_date.year)
+                rtn[option_key] = self.get_option_chain_data('aapl',strikes)
+                count += len(rtn[option_key])
+        
+        return rtn, count
+        
     def get_option_chain_data(self, underlier, date_strikes):
         ''' Return a list of dictionary objects, one for each option_chain entry
             INPUT:  underlier: a particular symbol
@@ -318,7 +342,7 @@ class ETradeMarket(object):
         else:
             return(req.text)  
 
-    def get_optionexpiredate(self, underlier='GOOGL', dev=True, resp_format=None):
+    def get_optionexpiredate(self, underlier, resp_format=None):
         '''get_option_expiry_dates(dev, resp_format, **kwargs) -> resp
         
             if resp_format is None, return a list of datetime.date objects, which seem to be
@@ -340,7 +364,7 @@ class ETradeMarket(object):
            
            Sample Request
            GET https://etws.etrade.com/market/rest/optionexpiredate?underlier=GOOGL
-           or  https://etws.etrade.com/market/rest/optionexpiredate?underlier=GOOGL.json
+           or  https://etws.etrade.com/market/rest/optionexpiredate?underlier=GOOGL.json  <== doesn't seem to work
         '''
 
         args_str = 'underlier=%s' % underlier

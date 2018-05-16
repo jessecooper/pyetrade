@@ -5,10 +5,24 @@
     * Look Up Product
     * Get Quote - Doc String'''
 
+''' Calling sequence to get all option chains for a particular month
+    me = pyetrade.market.ETradeMarket(
+                    consumer_key,
+                    consumer_secret, 
+                    tokens['oauth_token'],
+                    tokens['oauth_token_secret'],
+                    dev = False)
+    
+    option_dates = me.get_optionexpiredate('aapl', resp_format=None )
+    strikes = me.get_option_strikes('aapl', 5, 2018)
+    option_data = me.get_option_chain_data('aapl',strikes)
+
+'''
+
 import logging
+import jxmlease
 import datetime as dt
 from requests_oauthlib import OAuth1Session
-from pyetrade.etrade_exception import MarketQuoteException
 
 # Set up logging
 LOGGER = logging.getLogger(__name__)
@@ -17,10 +31,41 @@ LOGGER = logging.getLogger(__name__)
 TODAY = dt.date.today()
 (THIS_YEAR, THIS_MONTH, THIS_DAY) = (TODAY.year, TODAY.month, TODAY.day)
 
+        
+def decode_option_xml(xml_text):
+    ''' given xml_text, return list of option chains
+        return list of (dt.date,strikePrice) tuples
+        {'call': {'expireDate': {'day': '18',
+                      'expiryType': 'MONTHLY',
+                      'month': '5',
+                      'year': '2018'},
+       'product': {'exchangeCode': 'CINC',
+                   'symbol': "AAPL May 18 '18 $250 Call",
+                   'typeCode': 'OPTN'},
+       'rootSymbol': 'AAPL',
+       'strikePrice': '250.000000'},
+    '''
+    xmlobj = jxmlease.parse(xml_text)
+    z = xmlobj['OptionChainResponse']['optionPairs']
+    
+# determine whether call or put from first item in list
+    if 'call' in z[0]:
+        option_type = 'call'
+    else:
+        option_type = 'put'
+        
+    x = list()
+    for this_opt in z:
+        q = this_opt[option_type]['expireDate']
+        strikePrice = float(this_opt[option_type]['strikePrice'])
+        x.append((dt.date(int(q['year']),int(q['month']),int(q['day'])),strikePrice))        
+    return x
+    
+
 class ETradeMarket(object):
     '''ETradeMarket'''
     def __init__(self, client_key, client_secret,
-                 resource_owner_key, resource_owner_secret):
+                 resource_owner_key, resource_owner_secret, dev=True):
         '''__init__(client_key, client_secret)
            param: client_key
            type: str
@@ -33,21 +78,24 @@ class ETradeMarket(object):
            description: OAuth authentication token key
            param: resource_owner_secret
            type: str
-           description: OAuth authentication token secret'''
+           description: OAuth authentication token secret
+           param: dev
+           type: boolean
+           description: use the development environment (True) or production (False)
+        '''
         self.client_key = client_key
         self.client_secret = client_secret
         self.resource_owner_key = resource_owner_key
         self.resource_owner_secret = resource_owner_secret
-        self.base_url_prod = r'https://etws.etrade.com'
-        self.base_url_dev = r'https://etwssandbox.etrade.com'
+        self.dev_environment = dev
+        self.base_url = (r'https://etwssandbox.etrade.com' if dev else r'https://etws.etrade.com')
         self.session = OAuth1Session(self.client_key,
                                      self.client_secret,
                                      self.resource_owner_key,
                                      self.resource_owner_secret,
                                      signature_type='AUTH_HEADER')
 
-    def look_up_product(self, company, s_type,
-                        dev=True, resp_format='json'):
+    def look_up_product(self, company, s_type, resp_format='json'):
         '''look_up_product() -> resp
            param: company
            type: string
@@ -72,26 +120,14 @@ class ETradeMarket(object):
            rparam: symbol
            rtype: string
            rdescription: the market symbol for the security'''
+           
         # Set Env join symbles with .join(args)
-        if dev:
-            if resp_format == 'json':
-                uri = r'market/sandbox/rest/productlookup'
-                api_url = '%s/%s.%s' % (
-                    self.base_url_dev, uri, resp_format
-                    )
-            elif resp_format == 'xml':
-                uri = r'market/sandbox/rest/productlookup'
-                api_url = '%s/%s' % (self.base_url_dev, uri)
-        else:
-            if resp_format == 'json':
-                uri = r'market/rest/productlookup'
-                api_url = '%s/%s.%s' % (
-                    self.base_url_prod, uri, resp_format
-                    )
-            elif resp_format == 'xml':
-                uri = r'market/rest/productlookup'
-                api_url = '%s/%s' % (self.base_url_prod, uri)
+        uri = (r'market/sandbox/rest/productlookup' if self.dev_environment else  r'market/rest/productlookup')
+        api_url = '%s/%s' % (self.base_url, uri)
+        if resp_format == 'json':
+            api_url = api_url + '.json'
         LOGGER.debug(api_url)
+        
         #add detail flag to url
         payload = {
             'company': company,
@@ -106,14 +142,12 @@ class ETradeMarket(object):
         else:
             return req.text
 
-    def get_quote(self, *args, dev=True, resp_format='json', detail_flag='ALL'):
+    def get_quote(self, args, resp_format='json', detail_flag='ALL'):
         '''get_quote(dev, resp_format, **kwargs) -> resp
-           param: dev
-           type: bool
-           description: API enviornment
            param: resp_format
            type: str
            description: Response format JSON or None = XML
+           
            param: detailFlag
            type: enum
            required: optional
@@ -132,15 +166,15 @@ class ETradeMarket(object):
                         more
            args:
            param: symbol
-           type: array
+           type: list
            required: true
-           description: One or more (comma-seperated) symobols
+           description: One or more symobols
                 for equities or options, up to a maximum of 25 Symbols
                 for equities are simple, e.g. GOOG. Symbols for options
                 are more complex, consisting of six elements separated
                 by colons, in this format:
                 underlier:year:month:day:optionType:strikePrice
-                        rparam: adjNonAdjFlag
+            rparam: adjNonAdjFlag
             rtype: bool
             rdescription: Indicates whether an option has been adjusted
                 due to a corporate action (e.g. a dividend or stock
@@ -152,17 +186,19 @@ class ETradeMarket(object):
             rtype: double
             rdescription: The current ask price for a security
             rtype: askExchange
-            ...'''
-        # exception if args > 25
-        if len(args) > 25:
-            raise MarketQuoteException
-        # Set Env join symbles with .join(args)
-        if dev:
-            uri = r'market/sandbox/rest/quote/'+','.join(args)
-            api_url = '%s/%s.%s' % (self.base_url_dev, uri, resp_format)
-        else:
-            uri = r'market/rest/quote/'+','.join(args)
-            api_url = '%s/%s.%s' % (self.base_url_prod, uri, resp_format)
+                
+                y=self.get_quote(['googl','aapl'])
+                y['quoteResponse']['quoteData'][0]['all'] ==> dictionary for 1st element in return list
+                
+                y=self.get_quote(['AAPL:2018:05:18:put:150'])
+            '''
+            
+        # ensure that a max of 25 symbols are sent
+        args_25 = ','.join(args[:25])
+        uri = (r'market/sandbox/rest/quote/' if self.dev_environment else r'market/rest/quote/')
+        api_url = '%s/%s%s' % (self.base_url, uri, args_25)
+        if resp_format == 'json': api_url += '.json'
+        
         LOGGER.debug(api_url)
         #add detail flag to url
         payload = {'detailFlag': detail_flag}
@@ -174,14 +210,68 @@ class ETradeMarket(object):
             return req.json()
         else:
             return req.text
-
-    def get_optionchains(self, chainType='CALLPUT', expirationMonth=THIS_MONTH, expirationYear=THIS_YEAR, underlier='GOOGL', skipAdjusted=True,
-                         dev=True, resp_format='json'):
-        '''get_optionchains(dev, resp_format, **kwargs) -> resp
+        
+    def get_option_chain_data(self, underlier, date_strikes):
+        ''' Return a list of dictionary objects, one for each option_chain entry
+            INPUT:  underlier: a particular symbol
+                    date_strikes is a dictionary with two keys ('put','call') that each
+                            contains a list of (dt.dates, strike_price) tuples
+            RETURN: list of dictionary objects with all the option data in it
             
+            for each option, get_quote using format underlier:year:month:day:optionType:strikePrice.
+            Package the requests up in groups of 25 to limit number of calls to Etrade API.
+        '''
+        assert 'put' in date_strikes
+        assert 'call' in date_strikes
+        
+        # create request strings
+        reqs = list()
+        for opt_type in ('put','call'):
+            for (this_dt,this_strike) in date_strikes[opt_type]:
+                reqs.append('%s:%04d:%02d:%02d:%s:%.2f' % (underlier, this_dt.year, this_dt.month, this_dt.day,
+                                                           opt_type, this_strike))
+        
+        # send off requests in batches of 25; add to return list
+        rtn = list()
+        for n in range(0,len(reqs),25):
+            x = self.get_quote(reqs[n:n+25])
+            y = x['quoteResponse']['quoteData']
+            if isinstance(y,dict):
+                rtn.append(y)
+            elif isinstance(y,list):
+                rtn += y
+            else:
+                LOGGER.error('Return from get_quote not expected; got %s', x)
+        return rtn
+    
+    def get_option_strikes(self, underlier, expirationMonth=THIS_MONTH, expirationYear=THIS_YEAR):
+        ''' Return all put and call dates and strikes as a dictionary.
+        
+            INPUT: underlier: a particular symbol
+                   expirationMonth, expirationYear: integers
+                   dev: true or false (production)
+            RETURN: dictionary with keys('put','call'), each of which has a list of (dt.dates, strike_price) tuples
+        '''
+        assert 0 < expirationMonth <= 12
+        assert expirationYear >= 2010
+        date_strikes = dict()
+        for opt_type in ('put','call'):
+            xml_text = self.get_optionchains(underlier, expirationMonth, expirationYear, chainType=opt_type, resp_format=None)
+            date_strikes[opt_type] = decode_option_xml(xml_text)
+            
+        return date_strikes
+    
+    def get_optionchains(self, underlier, expirationMonth=THIS_MONTH, expirationYear=THIS_YEAR, skipAdjusted=True,
+                         chainType='callput', resp_format=None):
+        '''get_optionchains(dev, resp_format, **kwargs) -> resp
+        
+           param: underlier
+           type: str
+           description: market symbol
+           
            param: chainType
            type: str
-           description: CALL, PUT, or CALLPUT (both)
+           description: PUT, CALL, or CALLPUT
            
            param: expirationMonth
            type: int
@@ -191,18 +281,10 @@ class ETradeMarket(object):
            type: int
            description: contract expiration year; number between 2012 and future year
            
-           param: underlier
-           type: str
-           description: market symbol
-           
            param: skipAdjusted
            type: bool
            description: Specifies whether to show (TRUE) or not show (FALSE) adjusted options, i.e., options 
                         that have undergone a change resulting in a modification of the option contract.
-               
-           param: dev
-           type: bool
-           description: API enviornment
            
            param: resp_format
            type: str
@@ -214,33 +296,35 @@ class ETradeMarket(object):
         '''
         assert 0 < expirationMonth <= 12
         assert expirationYear >= 2010
-        assert (resp_format in ('json', 'xml', None))
-        assert (chainType in ('CALLPUT','CALL','PUT'))
+        assert (resp_format in ('json', None))
+        assert chainType in ('put', 'call', 'callput')
         
-        # separator ',' instead of '&' to follow previous code; need '?' after optionchains?
-        args_str = 'expirationMonth=%02d,expirationYear=%04d,underlier=%s,chainType=%s,skipAdjusted=%s' % (expirationMonth, expirationYear, underlier, chainType, str(skipAdjusted))
+        args_str = 'expirationMonth=%02d&expirationYear=%04d&underlier=%s&skipAdjusted=%s&chainType=%s' % (expirationMonth,
+                                                                expirationYear, underlier, str(skipAdjusted), chainType.upper())
         
-        if dev:
-            uri = r'market/sandbox/rest/optionchains/'
-            api_url = '%s/%s?%s.%s' % (self.base_url_dev, uri, args_str, resp_format)
+        uri = (r'market/sandbox/rest/optionchains' if self.dev_environment else r'market/rest/optionchains')
+        api_url = '%s/%s?%s' % (self.base_url, uri, args_str)
+        
+        if resp_format == 'json':
+            req = self.session.get(api_url + '.json')
         else:
-            uri = r'market/rest/optionchains/'
-            api_url = '%s/%s?%s.%s' % (self.base_url_prod, uri, args_str, resp_format)
+            req = self.session.get(api_url)
         LOGGER.debug(api_url)
-        
-        req = self.session.get(api_url)
         req.raise_for_status()
         LOGGER.debug(req.text)
 
         if resp_format == 'json':
-            return req.json(), api_url
+            return req.json()
         else:
-            return req.text, api_url
+            return(req.text)  
 
-
-    def get_optionexpiredate(self, underlier='GOOGL',
-                             dev=True, resp_format='json'):
+    def get_optionexpiredate(self, underlier='GOOGL', dev=True, resp_format=None):
         '''get_option_expiry_dates(dev, resp_format, **kwargs) -> resp
+        
+            if resp_format is None, return a list of datetime.date objects, which seem to be
+            sorted in ascending order.
+            
+            if resp_format is 'json', return the python object <== this currently doesn't work
             
            param: underlier
            type: str
@@ -252,29 +336,35 @@ class ETradeMarket(object):
            
            param: resp_format
            type: str
-           description: Response format JSON or None = XML
+           description: Response format .JSON or None = XML
            
            Sample Request
            GET https://etws.etrade.com/market/rest/optionexpiredate?underlier=GOOGL
-           
-               https://etws.etrade.com/market/rest/optionexpiredate?underlier=GOOGL.json
+           or  https://etws.etrade.com/market/rest/optionexpiredate?underlier=GOOGL.json
         '''
-        
-        # separator ',' instead of '&' to follow previous code; need '?' after optionchains?
+
         args_str = 'underlier=%s' % underlier
-        if dev:
-            uri = r'market/sandbox/rest/optionexpiredate'
-            api_url = '%s/%s?%s.%s' % (self.base_url_dev, uri, args_str, resp_format)
-        else:
-            uri = r'market/rest/optionexpiredate'
-            api_url = '%s/%s?%s.%s' % (self.base_url_prod, uri, args_str, resp_format)
+        uri = (r'market/sandbox/rest/optionexpiredate' if self.dev_environment else r'market/rest/optionexpiredate')
+        api_url = '%s/%s?%s' % (self.base_url, uri, args_str)
         LOGGER.debug(api_url)
         
-        req = self.session.get(api_url)
+        if resp_format == 'json':
+            req = self.session.get(api_url + '.json')
+        else:
+            req = self.session.get(api_url)
         req.raise_for_status()
         LOGGER.debug(req.text)
 
+# JSON format a lot easier to deal with, but doesn't seem to work
         if resp_format == 'json':
-            return req.json(), api_url
+            return req.json()
         else:
-            return req.text, api_url
+            try:
+                xmlobj = jxmlease.parse(req.text)
+                z = xmlobj['OptionExpireDateGetResponse']['ExpirationDate']
+                dates = [ dt.date(int(this_date['year']), int(this_date['month']), int(this_date['day'])) for this_date in z ]
+            except Exception as err:
+                LOGGER.error(err)
+                return None
+            return dates
+        

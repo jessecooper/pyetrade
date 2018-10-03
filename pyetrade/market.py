@@ -17,7 +17,7 @@
     strikes = me.get_option_strikes('aapl', 5, 2018)
     option_data = me.get_option_chain_data('aapl',strikes)
     
-    or, all in one:
+    or, all in one get all strikes for all future dates:
     (option_data,count) = me.get_all_option_data('aapl')
 
 '''
@@ -36,17 +36,21 @@ TODAY = dt.date.today()
 
         
 def decode_option_xml(xml_text):
-    ''' given xml_text, return list of option chains
+    ''' decode_option_xml(xml_text)
+    
+        Given xml_text from an option chains download, return list of option chain dates and strikes
         return list of (dt.date,strikePrice) tuples
-        {'call': {'expireDate': {'day': '18',
-                      'expiryType': 'MONTHLY',
-                      'month': '5',
-                      'year': '2018'},
-       'product': {'exchangeCode': 'CINC',
-                   'symbol': "AAPL May 18 '18 $250 Call",
-                   'typeCode': 'OPTN'},
-       'rootSymbol': 'AAPL',
-       'strikePrice': '250.000000'},
+        { 'call': {'expireDate': {'day': '18',
+                   'expiryType': 'MONTHLY',
+                   'month': '5',
+                   'year': '2018'},
+          'product': {'exchangeCode': 'CINC',
+                      'symbol': "AAPL May 18 '18 $250 Call",
+                      'typeCode': 'OPTN'},
+          'rootSymbol': 'AAPL',
+          'strikePrice': '250.000000'
+        }
+          
     '''
     xmlobj = jxmlease.parse(xml_text)
     z = xmlobj['OptionChainResponse']['optionPairs']
@@ -67,21 +71,25 @@ def decode_option_xml(xml_text):
 
 class ETradeMarket(object):
     '''ETradeMarket'''
-    def __init__(self, client_key, client_secret,
-                 resource_owner_key, resource_owner_secret, dev=True):
-        '''__init__(client_key, client_secret)
+    def __init__(self, client_key, client_secret, resource_owner_key, resource_owner_secret, dev=True):
+        '''__init__(client_key, client_secret, resource_owner_key, resource_owner_secret, dev=True)
+        
            param: client_key
            type: str
            description: etrade client key
+           
            param: client_secret
            type: str
            description: etrade client secret
+           
            param: resource_owner_key
            type: str
            description: OAuth authentication token key
+           
            param: resource_owner_secret
            type: str
            description: OAuth authentication token secret
+           
            param: dev
            type: boolean
            description: use the development environment (True) or production (False)
@@ -99,7 +107,8 @@ class ETradeMarket(object):
                                      signature_type='AUTH_HEADER')
 
     def look_up_product(self, company, s_type, resp_format='json'):
-        '''look_up_product() -> resp
+        '''look_up_product(company, s_type, resp_format='json')
+        
            param: company
            type: string
            description: full or partial name of the company. Note
@@ -111,18 +120,22 @@ class ETradeMarket(object):
            description: the type of security. possible values are:
                * EQ (equity)
                * MF (mutual fund)
-           rparam: companyName
-           rtype: string
-           rdescription: the company name
-           rparam: exhange
-           rtype: string
-           rdescription: the exchange that lists that company
-           rparam: securityType
-           rtype: string
-           rdescription: the type of security. EQ or MF
-           rparam: symbol
-           rtype: string
-           rdescription: the market symbol for the security'''
+               
+           param: companyName
+           type: string
+           description: the company name
+           
+           param: exhange
+           type: string
+           description: the exchange that lists that company
+           
+           param: securityType
+           type: string
+           description: the type of security. EQ or MF
+           
+           param: symbol
+           type: string
+           description: the market symbol for the security'''
            
         # Set Env join symbles with .join(args)
         uri = (r'market/sandbox/rest/productlookup' if self.dev_environment else  r'market/rest/productlookup')
@@ -146,7 +159,9 @@ class ETradeMarket(object):
             return req.text
 
     def get_quote(self, args, resp_format='json', detail_flag='ALL'):
-        '''get_quote(dev, resp_format, **kwargs) -> resp
+        '''get_quote(resp_format, detail_flag, **kwargs)
+        
+        
            param: resp_format
            type: str
            description: Response format JSON or None = XML
@@ -167,28 +182,29 @@ class ETradeMarket(object):
                         lowest low
                     * ALL (default) - All of the above information and
                         more
-           args:
+           kwargs:
            param: symbol
            type: list
            required: true
            description: One or more symobols
-                for equities or options, up to a maximum of 25 Symbols
+                for equities or options, up to a maximum of 25 symbols
                 for equities are simple, e.g. GOOG. Symbols for options
                 are more complex, consisting of six elements separated
                 by colons, in this format:
                 underlier:year:month:day:optionType:strikePrice
-            rparam: adjNonAdjFlag
-            rtype: bool
-            rdescription: Indicates whether an option has been adjusted
+                
+            param: adjNonAdjFlag
+            type: bool
+            description: Indicates whether an option has been adjusted
                 due to a corporate action (e.g. a dividend or stock
                 split). Possible values are TRUE, FALSE
-            rparam: annualDividend
-            rtype: double
-            rdescription: Cash amount paid per share over the past year
-            rparam: ask
-            rtype: double
-            rdescription: The current ask price for a security
-            rtype: askExchange
+            param: annualDividend
+            type: double
+            description: Cash amount paid per share over the past year
+            param: ask
+            type: double
+            description: The current ask price for a security
+            type: askExchange
                 
                 y=self.get_quote(['googl','aapl'])
                 y['quoteResponse']['quoteData'][0]['all'] ==> dictionary for 1st element in return list
@@ -215,11 +231,18 @@ class ETradeMarket(object):
             return req.text
         
     def get_all_option_data(self, underlier):
-        ''' Given the underlier, return all option_chain_data as a dictionary of lists,
-            with the key being a text date of the form YYYY-MM; e.g., 2018-05
-            INPUT: underlying symbol
-            RETURN: dictionary of lists
-                    count of total options downloaded
+        ''' get_all_option_data(underlier)
+        
+            Given the underling symbol, return all option_chain_data as a dictionary of lists
+            and the total count options chains returned
+            
+            INPUT:
+                * underlying symbol
+            
+            RETURN
+                * dictionary of lists (the key being a text date of the form YYYY-MM; e.g., 2018-05)
+                * count of total options downloaded
+                
         '''
         expiry_dates = self.get_optionexpiredate(underlier)     # this contains all expiration dates
         
@@ -236,14 +259,20 @@ class ETradeMarket(object):
         return rtn, count
         
     def get_option_chain_data(self, underlier, date_strikes):
-        ''' Return a list of dictionary objects, one for each option_chain entry
-            INPUT:  underlier: a particular symbol
-                    date_strikes is a dictionary with two keys ('put','call') that each
-                            contains a list of (dt.dates, strike_price) tuples
-            RETURN: list of dictionary objects with all the option data in it
+        ''' get_option_chain_data(underlier, date_strikes)
             
-            for each option, get_quote using format underlier:year:month:day:optionType:strikePrice.
+            Return a list of dictionary objects, one for each option_chain entry.
+            
+            INPUT:
+                * underlier: a particular symbol
+                * date_strikes is a dictionary with two keys ('put','call') that each
+                            contains a list of (dt.dates, strike_price) tuples
+            RETURN:
+                * list of dictionary objects with all the option data in it
+            
+            Gor each option, get_quote using format underlier:year:month:day:optionType:strikePrice.
             Package the requests up in groups of 25 to limit number of calls to Etrade API.
+            
         '''
         assert 'put' in date_strikes
         assert 'call' in date_strikes
@@ -269,12 +298,17 @@ class ETradeMarket(object):
         return rtn
     
     def get_option_strikes(self, underlier, expirationMonth=THIS_MONTH, expirationYear=THIS_YEAR):
-        ''' Return all put and call dates and strikes as a dictionary.
+        ''' get_option_strikes(underlier, expirationMonth=THIS_MONTH, expirationYear=THIS_YEAR)
         
-            INPUT: underlier: a particular symbol
-                   expirationMonth, expirationYear: integers
-                   dev: true or false (production)
-            RETURN: dictionary with keys('put','call'), each of which has a list of (dt.dates, strike_price) tuples
+            Return all put and call dates and strikes as a dictionary.
+        
+            INPUT:
+                * underlier: a particular symbol
+                * expirationMonth, expirationYear: integers
+                
+            RETURN:
+                * dictionary with keys('put','call'), each of which has a list of (dt.dates, strike_price) tuples
+                
         '''
         assert 0 < expirationMonth <= 12
         assert expirationYear >= 2010
@@ -287,7 +321,8 @@ class ETradeMarket(object):
     
     def get_optionchains(self, underlier, expirationMonth=THIS_MONTH, expirationYear=THIS_YEAR, skipAdjusted=True,
                          chainType='callput', resp_format=None):
-        '''get_optionchains(dev, resp_format, **kwargs) -> resp
+        '''get_optionchains(underlier, expirationMonth=THIS_MONTH, expirationYear=THIS_YEAR, skipAdjusted=True,
+                            chainType='callput', resp_format=None)
         
            param: underlier
            type: str
@@ -295,7 +330,7 @@ class ETradeMarket(object):
            
            param: chainType
            type: str
-           description: PUT, CALL, or CALLPUT
+           description: put, call, or callput
            
            param: expirationMonth
            type: int
@@ -343,28 +378,29 @@ class ETradeMarket(object):
             return(req.text)  
 
     def get_optionexpiredate(self, underlier, resp_format=None):
-        '''get_option_expiry_dates(dev, resp_format, **kwargs) -> resp
+        ''' get_option_expiry_dates(underlier, resp_format, **kwargs)
         
             if resp_format is None, return a list of datetime.date objects, which seem to be
             sorted in ascending order.
             
             if resp_format is 'json', return the python object <== this currently doesn't work
             
-           param: underlier
-           type: str
-           description: market symbol
+            param: underlier
+            type: str
+            description: market symbol
            
-           param: dev
-           type: bool
-           description: API enviornment
+            param: dev
+            type: bool
+            description: API enviornment
            
-           param: resp_format
-           type: str
-           description: Response format .JSON or None = XML
+            param: resp_format
+            type: str
+            description: Response format .JSON or None = XML
            
-           Sample Request
-           GET https://etws.etrade.com/market/rest/optionexpiredate?underlier=GOOGL
-           or  https://etws.etrade.com/market/rest/optionexpiredate?underlier=GOOGL.json  <== doesn't seem to work
+            Sample Request
+            GET https://etws.etrade.com/market/rest/optionexpiredate?underlier=GOOGL
+            or  https://etws.etrade.com/market/rest/optionexpiredate?underlier=GOOGL.json  <== doesn't seem to work
+            
         '''
 
         args_str = 'underlier=%s' % underlier

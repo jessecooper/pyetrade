@@ -57,16 +57,8 @@ class ETradeOrder(object):
         self.client_secret = client_secret
         self.resource_owner_key = resource_owner_key
         self.resource_owner_secret = resource_owner_secret
-        if dev:
-            self.base_url = r'https://etwssandbox.etrade.com'
-            self.order_uri = r'order/sandbox/rest/orderlist'
-            self.place_order_uri = r'order/sandbox/rest/placeequityorder'
-            self.cancel_order_uri = r'order/sandbox/rest/cancelorder'
-        else:
-            self.base_url = r'https://etws.etrade.com'
-            self.order_uri = r'order/rest/orderlist'
-            self.place_order_uri = r'order/rest/placeequityorder'
-            self.cancel_order_uri = r'order/rest/cancelorder'
+        self.base_url = (r'https://etwssandbox.etrade.com' if dev else r'https://etws.etrade.com')
+        self.dev_environment = dev
         self.session = OAuth1Session(self.client_key,
                                      self.client_secret,
                                      self.resource_owner_key,
@@ -95,7 +87,8 @@ class ETradeOrder(object):
             
         '''
         assert resp_format in ('json','xml')
-        api_url = '%s/%s/%s.%s' % (self.base_url,self.order_uri, account_id, resp_format )
+        order_uri = (r'order/sandbox/rest/orderlist' if self.dev_environment else r'order/rest/orderlist')
+        api_url = '%s/%s/%s.%s' % (self.base_url, order_uri, account_id, resp_format )
 
         # Build Payload
         payload = kwargs
@@ -388,6 +381,7 @@ class ETradeOrder(object):
                              
         assert resp_format in ('json','xml')
         LOGGER.debug(kwargs)
+        order_uri = (r'order/sandbox/rest/placeequityorder' if self.dev_environment else r'order/rest/placeequityorder')
         
         # Test required values
         if 'accountId' not in kwargs and\
@@ -412,10 +406,12 @@ class ETradeOrder(object):
             raise OrderException
 
         # payload creation
-        api_url = '%s/%s.%s' % (self.base_url, self.place_order_uri, resp_format)
-        payload = { 'PlaceEquityOrder': dict() }
-        payload['PlaceEquityOrder']['-xmlns'] = self.base_url
-        payload['PlaceEquityOrder']['EquityOrderRequest'] = kwargs
+        api_url = '%s/%s.%s' % (self.base_url, order_uri, resp_format)
+        payload = { 'PlaceEquityOrder': {
+                        '-xmlns': self.base_url,
+                        'EquityOrderRequest': kwargs
+                        }
+            }
 
         LOGGER.debug('payload: %s', payload)
         LOGGER.debug(api_url)
@@ -448,7 +444,8 @@ class ETradeOrder(object):
             
         '''
         assert resp_format in ('json','xml')
-        api_url = '%s/%s.%s' % (self.base_url, self.cancel_order_uri, resp_format)
+        order_uri = (r'order/sandbox/rest/cancelorder' if self.dev_environment else r'order/rest/cancelorder')
+        api_url = '%s/%s.%s' % (self.base_url, order_uri, resp_format)
         payload = {
             'cancelOrder': {
                 '-xmlns': self.base_url,

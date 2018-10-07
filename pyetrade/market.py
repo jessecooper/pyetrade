@@ -27,10 +27,7 @@ import jxmlease
 import datetime as dt
 from requests_oauthlib import OAuth1Session
 
-# Set up logging
 LOGGER = logging.getLogger(__name__)
-
-# know when today is
 TODAY = dt.date.today()
 (THIS_YEAR, THIS_MONTH, THIS_DAY) = (TODAY.year, TODAY.month, TODAY.day)
 
@@ -105,6 +102,13 @@ class ETradeMarket(object):
                                      self.resource_owner_key,
                                      self.resource_owner_secret,
                                      signature_type='AUTH_HEADER')
+        
+    def __str__(self):
+        ret = [ '%s' % self.symbol,
+                'Use development environment: %s' % self.dev_environment,
+                'base URL: %s' % self.base_url
+                ]
+        return '\n'.join(ret)
 
     def look_up_product(self, company, s_type, resp_format='json'):
         '''look_up_product(company, s_type, resp_format='json')
@@ -137,11 +141,10 @@ class ETradeMarket(object):
            type: string
            description: the market symbol for the security'''
            
+        assert resp_format in ('json','xml')
         # Set Env join symbles with .join(args)
         uri = (r'market/sandbox/rest/productlookup' if self.dev_environment else  r'market/rest/productlookup')
-        api_url = '%s/%s' % (self.base_url, uri)
-        if resp_format == 'json':
-            api_url = api_url + '.json'
+        api_url = '%s/%s.%s' % (self.base_url, uri, resp_format)
         LOGGER.debug(api_url)
         
         #add detail flag to url
@@ -212,6 +215,7 @@ class ETradeMarket(object):
                 y=self.get_quote(['AAPL:2018:05:18:put:150'])
             '''
             
+        assert resp_format in ('json','xml')
         # ensure that a max of 25 symbols are sent
         args_25 = ','.join(args[:25])
         uri = (r'market/sandbox/rest/quote/' if self.dev_environment else r'market/rest/quote/')
@@ -388,10 +392,6 @@ class ETradeMarket(object):
             param: underlier
             type: str
             description: market symbol
-           
-            param: dev
-            type: bool
-            description: API enviornment
            
             param: resp_format
             type: str

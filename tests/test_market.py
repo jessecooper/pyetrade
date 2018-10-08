@@ -7,7 +7,7 @@ import string
 import random
 import unittest
 from unittest.mock import patch
-from pyetrade import market, etrade_exception
+from pyetrade import market
 
 class TestETradeMarket(unittest.TestCase):
     '''TestEtradeMarket Unit Test'''
@@ -21,25 +21,25 @@ class TestETradeMarket(unittest.TestCase):
         # Set Mock returns
         MockOAuthSession().get().json.return_value = "{'BAC': '32.10'}"
         MockOAuthSession().get().text = r'<xml> returns </xml>'
-        mark = market.ETradeMarket('abc123', 'xyz123', 'abctoken', 'xyzsecret')
-        # Test Dev Get Quote
+        mark = market.ETradeMarket('abc123', 'xyz123', 'abctoken', 'xyzsecret', dev=False)
+        # Test Get Quote
         self.assertEqual(
             mark.look_up_product('Bank Of', 'EQ'),
             "{'BAC': '32.10'}"
             )
         self.assertTrue(MockOAuthSession().get().json.called)
         self.assertTrue(MockOAuthSession().get.called)
-        # Test Dev Get Qoute xml
+        # Test Get Qoute xml
         self.assertEqual(mark.look_up_product('Back Of', 'EQ', resp_format='xml'),
                          r"<xml> returns </xml>")
         self.assertTrue(MockOAuthSession().get.called)
         # Test Prod Get Qoute
-        self.assertEqual(mark.look_up_product('Bank Of', 'EQ', dev=False),
+        self.assertEqual(mark.look_up_product('Bank Of', 'EQ'),
                          "{'BAC': '32.10'}")
         self.assertTrue(MockOAuthSession().get().json.called)
         self.assertTrue(MockOAuthSession().get.called)
         # Test prod Get Qoute xml
-        self.assertEqual(mark.look_up_product('Back Of', 'EQ', resp_format='xml', dev=False),
+        self.assertEqual(mark.look_up_product('Back Of', 'EQ', resp_format='xml'),
                          r"<xml> returns </xml>")
         self.assertTrue(MockOAuthSession().get.called)
     # Mock out OAuth1Session
@@ -52,17 +52,13 @@ class TestETradeMarket(unittest.TestCase):
         # Set Mock returns
         MockOAuthSession().get().json.return_value = "{'BAC': '32.10'}"
         MockOAuthSession().get().text = r'<xml> returns </xml>'
-        mark = market.ETradeMarket('abc123', 'xyz123', 'abctoken', 'xyzsecret')
-        # Test Dev Get Quote
+        mark = market.ETradeMarket('abc123', 'xyz123', 'abctoken', 'xyzsecret', dev=False)
+        # Test prod Get Qoute
         self.assertEqual(mark.get_quote('BAC'), "{'BAC': '32.10'}")
         self.assertTrue(MockOAuthSession().get().json.called)
         self.assertTrue(MockOAuthSession().get.called)
-        # Test prod Get Qoute
-        self.assertEqual(mark.get_quote('BAC', dev=False), "{'BAC': '32.10'}")
-        self.assertTrue(MockOAuthSession().get().json.called)
-        self.assertTrue(MockOAuthSession().get.called)
         # Test prod Get Qoute xml
-        self.assertEqual(mark.get_quote('BAC', resp_format='xml', dev=False),
+        self.assertEqual(mark.get_quote('BAC', resp_format='xml'),
                          r"<xml> returns </xml>")
         self.assertTrue(MockOAuthSession().get.called)
 
@@ -75,8 +71,7 @@ class TestETradeMarket(unittest.TestCase):
         # Generate symboles
         sym = [''.join(random.choice(string.ascii_uppercase) \
                for _ in range(3)) for _ in range(30)]
-        mark = market.ETradeMarket('abc123', 'xyz123', 'abctoken', 'xyzsecret')
+        mark = market.ETradeMarket('abc123', 'xyz123', 'abctoken', 'xyzsecret', dev=False)
 
         # Test exception class
-        with self.assertRaises(etrade_exception.MarketQuoteException):
-            mark.get_quote(*sym)
+        mark.get_quote(sym)

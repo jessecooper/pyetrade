@@ -108,7 +108,7 @@ class ETradeMarket(object):
                                      signature_type='AUTH_HEADER')
         
     def __str__(self):
-        ret = [ '%s' % self.symbol,
+        ret = [ 'symbol: %s' % self.symbol,
                 'Use development environment: %s' % self.dev_environment,
                 'base URL: %s' % self.base_url
                 ]
@@ -124,11 +124,11 @@ class ETradeMarket(object):
            such as company, industry and systems and generally
            skips punctuation
            
-           param: s_type
-           type: enum
-           description: the type of security. possible values are:
+           param: s_type. possible values are:
                * EQ (equity)
                * MF (mutual fund)
+           type: enum
+           description: the type of security.
                
            param: companyName
            type: string
@@ -144,7 +144,9 @@ class ETradeMarket(object):
            
            param: symbol
            type: string
-           description: the market symbol for the security'''
+           description: the market symbol for the security
+           
+           '''
            
         assert resp_format in ('json','xml')
         uri = (r'market/sandbox/rest/productlookup' if self.dev_environment else  r'market/rest/productlookup')
@@ -152,10 +154,7 @@ class ETradeMarket(object):
         LOGGER.debug(api_url)
         
         #add detail flag to url
-        payload = {
-            'company': company,
-            'type': s_type
-            }
+        payload = { 'company': company, 'type': s_type }
         req = self.session.get(api_url, params=payload)
         req.raise_for_status()
         LOGGER.debug(req.text)

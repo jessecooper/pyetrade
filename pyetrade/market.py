@@ -71,25 +71,29 @@ class ETradeMarket(object):
     def __init__(self, client_key, client_secret, resource_owner_key, resource_owner_secret, dev=True):
         '''__init__(client_key, client_secret, resource_owner_key, resource_owner_secret, dev=True)
         
-           param: client_key
-           type: str
-           description: etrade client key
+            This is the object initialization routine, which simply sets the various variables to be
+            used by the rest of the methods and constructs the OAuth1Session.
+            
+            param: client_key
+            type: str
+            description: etrade client key
            
-           param: client_secret
-           type: str
-           description: etrade client secret
+            param: client_secret
+            type: str
+            description: etrade client secret
            
-           param: resource_owner_key
-           type: str
-           description: OAuth authentication token key
+            param: resource_owner_key
+            type: str
+            description: OAuth authentication token key
            
-           param: resource_owner_secret
-           type: str
-           description: OAuth authentication token secret
+            param: resource_owner_secret
+            type: str
+            description: OAuth authentication token secret
            
-           param: dev
-           type: boolean
-           description: use the development environment (True) or production (False)
+            param: dev
+            type: boolean
+            description: use the development environment (True) or production (False)
+            
         '''
         self.client_key = client_key
         self.client_secret = client_secret
@@ -119,6 +123,7 @@ class ETradeMarket(object):
            that the system extensivly abbreviates common words
            such as company, industry and systems and generally
            skips punctuation
+           
            param: s_type
            type: enum
            description: the type of security. possible values are:
@@ -142,7 +147,6 @@ class ETradeMarket(object):
            description: the market symbol for the security'''
            
         assert resp_format in ('json','xml')
-        # Set Env join symbles with .join(args)
         uri = (r'market/sandbox/rest/productlookup' if self.dev_environment else  r'market/rest/productlookup')
         api_url = '%s/%s.%s' % (self.base_url, uri, resp_format)
         LOGGER.debug(api_url)
@@ -162,17 +166,20 @@ class ETradeMarket(object):
             return req.text
 
     def get_quote(self, args, resp_format='json', detail_flag='ALL'):
-        '''get_quote(resp_format, detail_flag, **kwargs)
+        ''' get_quote(resp_format, detail_flag, **kwargs)
         
+            Get quote data on all symbols provided in the list args.
+            the eTrade API is limited to 25 requests per call. Issue
+            warning if more than 25 are requested. Only process the first 25.
         
-           param: resp_format
-           type: str
-           description: Response format JSON or None = XML
+            param: resp_format
+            type: str
+            description: Response format JSON or None = XML
            
-           param: detailFlag
-           type: enum
-           required: optional
-           description: Optional parameter specifying which details to
+            param: detailFlag
+            type: enum
+            required: optional
+            description: Optional parameter specifying which details to
                 return in the response. The field set for each possible
                 value is listed in separate tables below. The possible
                 values are:
@@ -185,45 +192,48 @@ class ETradeMarket(object):
                         lowest low
                     * ALL (default) - All of the above information and
                         more
-           kwargs:
-           param: symbol
-           type: list
-           required: true
-           description: One or more symobols
+            kwargs:
+            param: symbol
+            type: list
+            required: true
+            description: One or more symobols
                 for equities or options, up to a maximum of 25 symbols
                 for equities are simple, e.g. GOOG. Symbols for options
                 are more complex, consisting of six elements separated
                 by colons, in this format:
                 underlier:year:month:day:optionType:strikePrice
                 
-            param: adjNonAdjFlag
-            type: bool
-            description: Indicates whether an option has been adjusted
+             param: adjNonAdjFlag
+             type: bool
+             description: Indicates whether an option has been adjusted
                 due to a corporate action (e.g. a dividend or stock
                 split). Possible values are TRUE, FALSE
-            param: annualDividend
-            type: double
-            description: Cash amount paid per share over the past year
-            param: ask
-            type: double
-            description: The current ask price for a security
-            type: askExchange
+                
+             param: annualDividend
+             type: double
+             description: Cash amount paid per share over the past year
+             
+             param: ask
+             type: double
+             description: The current ask price for a security
+             type: askExchange
                 
                 y=self.get_quote(['googl','aapl'])
                 y['quoteResponse']['quoteData'][0]['all'] ==> dictionary for 1st element in return list
                 
                 y=self.get_quote(['AAPL:2018:05:18:put:150'])
+                
             '''
             
         assert resp_format in ('json','xml')
-        # ensure that a max of 25 symbols are sent
-        args_25 = ','.join(args[:25])
+        if len(args) > 25: LOGGER.warning('get_quote asked for %d requests; only first 25 returned' % len(args))
+        
+        args_25 = ','.join(args[:25])       # ensure that a max of 25 symbols are sent
         uri = (r'market/sandbox/rest/quote/' if self.dev_environment else r'market/rest/quote/')
         api_url = '%s/%s%s' % (self.base_url, uri, args_25)
         if resp_format == 'json': api_url += '.json'
         
         LOGGER.debug(api_url)
-        #add detail flag to url
         payload = {'detailFlag': detail_flag}
         req = self.session.get(api_url, params=payload)
         req.raise_for_status()
@@ -248,8 +258,12 @@ class ETradeMarket(object):
                 * count of total options downloaded
                 
         '''
-        expiry_dates = self.get_optionexpiredate(underlier)     # this contains all expiration dates
-        
+        try:
+            expiry_dates = self.get_optionexpiredate(underlier)     # this contains all expiration dates
+        except Exception as err:
+            LOGGER.error(err)
+            raise
+            
         # group by month, as this is the approach that ETrade API returns options_chain_data
         rtn = dict()
         count = 0
@@ -257,7 +271,7 @@ class ETradeMarket(object):
             option_key = '%04d-%02d' % (this_date.year, this_date.month)
             if option_key not in rtn:
                 strikes = self.get_option_strikes(underlier, this_date.month, this_date.year)
-                rtn[option_key] = self.get_option_chain_data('aapl',strikes)
+                rtn[option_key] = self.get_option_chain_data(underlier,strikes)
                 count += len(rtn[option_key])
         
         return rtn, count
@@ -265,7 +279,7 @@ class ETradeMarket(object):
     def get_option_chain_data(self, underlier, date_strikes):
         ''' get_option_chain_data(underlier, date_strikes)
             
-            Return a list of dictionary objects, one for each option_chain entry.
+            Return a list of dictionary objects, one for each option_chain entry for the underlyier
             
             INPUT:
                 * underlier: a particular symbol
@@ -274,8 +288,8 @@ class ETradeMarket(object):
             RETURN:
                 * list of dictionary objects with all the option data in it
             
-            Gor each option, get_quote using format underlier:year:month:day:optionType:strikePrice.
-            Package the requests up in groups of 25 to limit number of calls to Etrade API.
+            For each option, get_quote using format underlier:year:month:day:optionType:strikePrice.
+            Package the requests up in groups of 25 to minimize the number of Etrade API calls.
             
         '''
         assert 'put' in date_strikes
@@ -422,9 +436,8 @@ class ETradeMarket(object):
             try:
                 xmlobj = jxmlease.parse(req.text)
                 z = xmlobj['OptionExpireDateGetResponse']['ExpirationDate']
-                dates = [ dt.date(int(this_date['year']), int(this_date['month']), int(this_date['day'])) for this_date in z ]
+                return [ dt.date(int(this_date['year']), int(this_date['month']), int(this_date['day'])) for this_date in z ]
             except Exception as err:
                 LOGGER.error(err)
-                return None
-            return dates
+                raise
         

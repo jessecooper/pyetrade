@@ -149,7 +149,7 @@ class ETradeMarket(object):
            '''
            
         assert resp_format in ('json','xml')
-        uri = (r'market/sandbox/rest/productlookup' if self.dev_environment else  r'market/rest/productlookup')
+        uri = (r'market/sandbox/rest/productlookup' if self.dev_environment else r'market/rest/productlookup')
         api_url = '%s/%s.%s' % (self.base_url, uri, resp_format)
         LOGGER.debug(api_url)
         
@@ -376,7 +376,7 @@ class ETradeMarket(object):
         assert chainType in ('put', 'call', 'callput')
         
         args_str = 'expirationMonth=%02d&expirationYear=%04d&underlier=%s&skipAdjusted=%s&chainType=%s' % (expirationMonth,
-                                                                expirationYear, underlier, str(skipAdjusted), chainType.upper())
+                   expirationYear, underlier, str(skipAdjusted), chainType.upper())
         
         uri = (r'market/sandbox/rest/optionchains' if self.dev_environment else r'market/rest/optionchains')
         api_url = '%s/%s?%s' % (self.base_url, uri, args_str)
@@ -400,7 +400,7 @@ class ETradeMarket(object):
             if resp_format is None, return a list of datetime.date objects, which seem to be
             sorted in ascending order.
             
-            if resp_format is 'json', return the python object <== this currently doesn't work
+            if resp_format is 'json', return the python object <== this currently doesn't work as described by the eTrade API
             
             param: underlier
             type: str

@@ -3,13 +3,18 @@
    TODO:
        * lint'''
 
-import string, random, unittest
+import string
+import random
+import unittest
 import datetime as dt
 from unittest.mock import patch
 from pyetrade import market
 
-global option_response, XML_response
+global option_response, XML_response, date_strikes
 XML_response = r'<xml> returns </xml>'
+date_strikes = { 'put':  [ (dt.date(2018,10,19),100.0), (dt.date(2018,10,19),200.0) ],
+                 'call': [ (dt.date(2018,10,19),100.0), (dt.date(2018,10,19),200.0) ]
+                 }
 option_response = {'2018-10': {'all': {'adjNonAdjFlag': False,
                       'annualDividend': 0,
                       'ask': 0.01,
@@ -150,9 +155,6 @@ class TestETradeMarket(unittest.TestCase):
            description: MagicMock of OAuth1Session'''
         mark = market.ETradeMarket('abc123', 'xyz123', 'abctoken', 'xyzsecret', dev=False)
         sym = 'AAPL'
-        date_strikes = { 'put':  [ (dt.date(2018,10,19),2.5) ],
-                         'call': [ (dt.date(2018,10,19),2.5) ]
-                        }
         MockOAuthSession().get().return_value = option_response
         self.assertEqual(mark.get_option_chain_data(sym,date_strikes), option_response)
         self.assertTrue(MockOAuthSession().get.called)
@@ -165,11 +167,8 @@ class TestETradeMarket(unittest.TestCase):
            description: MagicMock of OAuth1Session'''
         mark = market.ETradeMarket('abc123', 'xyz123', 'abctoken', 'xyzsecret', dev=False)
         sym = 'AAPL'
-        response = { 'put':  [ (dt.date(2018,10,19),100.0), (dt.date(2018,10,19),200.0) ],
-                     'call': [ (dt.date(2018,10,19),100.0), (dt.date(2018,10,19),200.0) ]
-                     }
-        MockOAuthSession().get().return_value = response
-        self.assertEqual(mark.get_option_strikes(sym,10,2018), response)
+        MockOAuthSession().get().return_value = date_strikes
+        self.assertEqual(mark.get_option_strikes(sym,2018,10), date_strikes)
         self.assertTrue(MockOAuthSession().get.called)
         
     # Mock out OAuth1Session
@@ -196,7 +195,7 @@ class TestETradeMarket(unittest.TestCase):
         
     # Mock out OAuth1Session
     @patch('pyetrade.market.OAuth1Session')
-    def test_get_optionexpiredate(self, MockOAuthSession):
+    def test_get_option_expire_date(self, MockOAuthSession):
         '''test_get_optionexpiredate(MockOAuthSession) -> None
            param: MockOAuthSession
            type: mock.MagicMock
@@ -204,6 +203,6 @@ class TestETradeMarket(unittest.TestCase):
         # Set Mock returns
         MockOAuthSession().get().return_value = [ dt.date(2018,10,19) ]
         mark = market.ETradeMarket('abc123', 'xyz123', 'abctoken', 'xyzsecret', dev=False)
-        self.assertEqual(mark.get_optionexpiredate('AAPL'), [ dt.date(2018,10,19) ])
+        self.assertEqual(mark.get_option_expire_date('AAPL'), [ dt.date(2018,10,19) ])
         self.assertTrue(MockOAuthSession().get.called)
         

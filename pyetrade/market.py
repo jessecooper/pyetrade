@@ -13,9 +13,9 @@
                     tokens['oauth_token_secret'],
                     dev = False)
     
-    option_dates = me.get_optionexpiredate('aapl', resp_format=None )
-    strikes = me.get_option_strikes('aapl', 5, 2018)
-    option_data = me.get_option_chain_data('aapl',strikes)
+    option_dates = me.get_option_expire_date('aapl', None)
+    date_strikes = me.get_option_strikes('aapl', 2018, 5)
+    option_data = me.get_option_chain_data('aapl',date_strikes)
     
     or, all in one get all strikes for all future dates:
     (option_data,count) = me.get_all_option_data('aapl')
@@ -37,6 +37,7 @@ def decode_option_xml(xml_text):
     
         Given xml_text from an option chains download, return list of option chain dates and strikes
         return list of (dt.date,strikePrice) tuples
+        
         { 'call': {'expireDate': {'day': '18',
                    'expiryType': 'MONTHLY',
                    'month': '5',
@@ -254,26 +255,30 @@ class ETradeMarket(object):
                 * underlying symbol
             
             RETURN
-                * dictionary of lists (the key being a text date of the form YYYY-MM; e.g., 2018-05)
+                * dictionary of lists (the key being the option_expiry dt.date)
                 * count of total options downloaded
                 
         '''
         try:
-            expiry_dates = self.get_optionexpiredate(underlier)     # this contains all expiration dates
+            expiry_dates = self.get_option_expire_date(underlier, resp_format=None)     # this contains all expiration dates for the underlier
         except Exception as err:
             LOGGER.error(err)
             raise
             
-        # group by month, as this is the approach that ETrade API returns options_chain_data
-        rtn = dict()
+        # grab option_chain data by month, as this is the approach that ETrade API returns options_chain_data
+        rtn = dict.fromkeys(expiry_dates, list())
+        grabbed_month = list()
         count = 0
         for this_date in expiry_dates:
-            option_key = '%04d-%02d' % (this_date.year, this_date.month)
-            if option_key not in rtn:
-                strikes = self.get_option_strikes(underlier, this_date.month, this_date.year)
-                rtn[option_key] = self.get_option_chain_data(underlier,strikes)
-                count += len(rtn[option_key])
-        
+            this_month = '%04d-%02d' % (this_date.year, this_date.month)
+            if this_month not in grabbed_month:
+                grabbed_month.append(this_month)
+                date_strikes = self.get_option_strikes(underlier, this_date.year, this_date.month)
+                option_data = self.get_option_chain_data(underlier,date_strikes)
+                count += len(option_data)
+                for x in option_data:
+                    contract_expiry_date = dt.date(x['product']['expirationYear'], x['product']['expirationMonth'], x['product']['expirationDay'])
+                    rtn[contract_expiry_date].append(x)
         return rtn, count
         
     def get_option_chain_data(self, underlier, date_strikes):
@@ -315,14 +320,15 @@ class ETradeMarket(object):
                 LOGGER.error('Return from get_quote not expected; got %s', x)
         return rtn
     
-    def get_option_strikes(self, underlier, expirationMonth=THIS_MONTH, expirationYear=THIS_YEAR):
-        ''' get_option_strikes(underlier, expirationMonth=THIS_MONTH, expirationYear=THIS_YEAR)
+    def get_option_strikes(self, underlier, expirationYear=THIS_YEAR, expirationMonth=THIS_MONTH):
+        ''' get_option_strikes(underlier, expirationYear=THIS_YEAR, expirationMonth=THIS_MONTH)
         
             Return all put and call dates and strikes as a dictionary.
         
             INPUT:
                 * underlier: a particular symbol
-                * expirationMonth, expirationYear: integers
+                * expirationYear: integer year; e.g., 2018
+                * expirationMonth: integer month 1-12
                 
             RETURN:
                 * dictionary with keys('put','call'), each of which has a list of (dt.dates, strike_price) tuples
@@ -395,7 +401,7 @@ class ETradeMarket(object):
         else:
             return(req.text)  
 
-    def get_optionexpiredate(self, underlier, resp_format=None):
+    def get_option_expire_date(self, underlier, resp_format=None):
         ''' get_option_expiry_dates(underlier, resp_format, **kwargs)
         
             if resp_format is None, return a list of datetime.date objects, which seem to be
@@ -417,6 +423,7 @@ class ETradeMarket(object):
             
         '''
 
+        assert resp_format in (None,'json')
         args_str = 'underlier=%s' % underlier
         uri = (r'market/sandbox/rest/optionexpiredate' if self.dev_environment else r'market/rest/optionexpiredate')
         api_url = '%s/%s?%s' % (self.base_url, uri, args_str)

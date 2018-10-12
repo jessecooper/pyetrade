@@ -225,11 +225,12 @@ class ETradeMarket(object):
             '''
             
         assert resp_format in ('json','xml')
+        assert isinstance(args,list)
         if len(args) > 25: LOGGER.warning('get_quote asked for %d requests; only first 25 returned' % len(args))
         
-        args_25 = ','.join(args[:25])       # ensure that a max of 25 symbols are sent
+        args_str = ','.join(args[:25])       # ensure that a max of 25 symbols are sent
         uri = (r'market/sandbox/rest/quote/' if self.dev_environment else r'market/rest/quote/')
-        api_url = '%s/%s%s' % (self.base_url, uri, args_25)
+        api_url = '%s/%s%s' % (self.base_url, uri, args_str)
         if resp_format == 'json': api_url += '.json'
         
         LOGGER.debug(api_url)
@@ -331,7 +332,7 @@ class ETradeMarket(object):
         assert expirationYear >= 2010
         date_strikes = dict()
         for opt_type in ('put','call'):
-            xml_text = self.get_optionchains(underlier, expirationMonth, expirationYear, chainType=opt_type, resp_format=None)
+            xml_text = self.get_optionchains(underlier, expirationMonth, expirationYear, chainType=opt_type)
             date_strikes[opt_type] = decode_option_xml(xml_text)
             
         return date_strikes
@@ -385,8 +386,8 @@ class ETradeMarket(object):
             req = self.session.get(api_url + '.json')
         else:
             req = self.session.get(api_url)
-        LOGGER.debug(api_url)
         req.raise_for_status()
+        LOGGER.debug(api_url)
         LOGGER.debug(req.text)
 
         if resp_format == 'json':

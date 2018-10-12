@@ -30,7 +30,11 @@ from requests_oauthlib import OAuth1Session
 LOGGER = logging.getLogger(__name__)
 TODAY = dt.date.today()
 (THIS_YEAR, THIS_MONTH, THIS_DAY) = (TODAY.year, TODAY.month, TODAY.day)
-
+if TODAY.weekday()<=4:              # before Friday
+    days_to_Friday = 4 - TODAY.weekday()
+else:                               # after Friday
+    days_to_Friday = 11 - TODAY.weekday()
+NEXT_FRIDAY = TODAY + dt.timedelta(days=days_to_Friday)
         
 def decode_option_xml(xml_text):
     ''' decode_option_xml(xml_text)
@@ -266,19 +270,12 @@ class ETradeMarket(object):
             raise
             
         # grab option_chain data by month, as this is the approach that ETrade API returns options_chain_data
-        rtn = dict.fromkeys(expiry_dates, list())
-        grabbed_month = list()
+        rtn = dict()
         count = 0
         for this_date in expiry_dates:
-            this_month = '%04d-%02d' % (this_date.year, this_date.month)
-            if this_month not in grabbed_month:
-                grabbed_month.append(this_month)
-                date_strikes = self.get_option_strikes(underlier, this_date.year, this_date.month)
-                option_data = self.get_option_chain_data(underlier,date_strikes)
-                count += len(option_data)
-                for x in option_data:
-                    contract_expiry_date = dt.date(x['product']['expirationYear'], x['product']['expirationMonth'], x['product']['expirationDay'])
-                    rtn[contract_expiry_date].append(x)
+            date_strikes = self.get_option_strikes(underlier, this_date.year, this_date.month, this_date.day)
+            rtn[this_date] = self.get_option_chain_data(underlier,date_strikes)
+            count += len(rtn[this_date])
         return rtn, count
         
     def get_option_chain_data(self, underlier, date_strikes):
@@ -320,8 +317,8 @@ class ETradeMarket(object):
                 LOGGER.error('Return from get_quote not expected; got %s', x)
         return rtn
     
-    def get_option_strikes(self, underlier, expirationYear=THIS_YEAR, expirationMonth=THIS_MONTH):
-        ''' get_option_strikes(underlier, expirationYear=THIS_YEAR, expirationMonth=THIS_MONTH)
+    def get_option_strikes(self, underlier, expirationYear, expirationMonth, expirationDay):
+        ''' get_option_strikes(underlier, expirationYear, expirationMonth, expirationDay)
         
             Return all put and call dates and strikes as a dictionary.
         
@@ -334,19 +331,18 @@ class ETradeMarket(object):
                 * dictionary with keys('put','call'), each of which has a list of (dt.dates, strike_price) tuples
                 
         '''
+        assert 0 < expirationDay <= 31
         assert 0 < expirationMonth <= 12
         assert expirationYear >= 2010
         date_strikes = dict()
         for opt_type in ('put','call'):
-            xml_text = self.get_optionchains(underlier, expirationMonth, expirationYear, chainType=opt_type)
+            xml_text = self.get_optionchains(underlier, expirationYear, expirationMonth, expirationDay, chainType=opt_type)
             date_strikes[opt_type] = decode_option_xml(xml_text)
             
         return date_strikes
     
-    def get_optionchains(self, underlier, expirationMonth=THIS_MONTH, expirationYear=THIS_YEAR, skipAdjusted=True,
-                         chainType='callput', resp_format=None):
-        '''get_optionchains(underlier, expirationMonth=THIS_MONTH, expirationYear=THIS_YEAR, skipAdjusted=True,
-                            chainType='callput', resp_format=None)
+    def get_optionchains(self, underlier, expirationYear, expirationMonth, expirationDay, skipAdjusted=True, chainType='callput', resp_format=None):
+        '''get_optionchains(underlier, expirationYear, expirationMonth, expirationDay, skipAdjusted=True, chainType='callput', resp_format=None)
         
            param: underlier
            type: str
@@ -355,6 +351,10 @@ class ETradeMarket(object):
            param: chainType
            type: str
            description: put, call, or callput
+           
+           param: expirationDay
+           type: int
+           description: contract expiration day; number between 1 and 31
            
            param: expirationMonth
            type: int
@@ -377,13 +377,14 @@ class ETradeMarket(object):
            GET https://etws.etrade.com/market/rest/optionchains?expirationMonth=04&expirationYear=2011&chainType=PUT&skipAdjusted=true&underlier=GOOG
 
         '''
+        assert 0 < expirationDay <= 31
         assert 0 < expirationMonth <= 12
         assert expirationYear >= 2010
         assert (resp_format in ('json', None))
         assert chainType in ('put', 'call', 'callput')
         
-        args_str = 'expirationMonth=%02d&expirationYear=%04d&underlier=%s&skipAdjusted=%s&chainType=%s' % (expirationMonth,
-                   expirationYear, underlier, str(skipAdjusted), chainType.upper())
+        args_str = 'expirationDay=%02d&expirationMonth=%02d&expirationYear=%04d&underlier=%s&skipAdjusted=%s&chainType=%s' % (expirationDay,
+                    expirationMonth, expirationYear, underlier, str(skipAdjusted), chainType.upper())
         
         uri = (r'market/sandbox/rest/optionchains' if self.dev_environment else r'market/rest/optionchains')
         api_url = '%s/%s?%s' % (self.base_url, uri, args_str)
@@ -404,10 +405,14 @@ class ETradeMarket(object):
     def get_option_expire_date(self, underlier, resp_format=None):
         ''' get_option_expiry_dates(underlier, resp_format, **kwargs)
         
-            if resp_format is None, return a list of datetime.date objects, which seem to be
-            sorted in ascending order.
+            Return a list of datetime.date objects, for the underlier. Some of the returned dates may not actually
+            have any options.
             
             if resp_format is 'json', return the python object <== this currently doesn't work as described by the eTrade API
+            
+            Another problem is the etrade API only returns monthlies, not weeklies. Therefore, invent some weeklies which occur on Fridays
+            for the present month and one month out, generally. These may not exist, but there is no way to know without asking
+            for option_chain data and getting a NULL response.
             
             param: underlier
             type: str
@@ -443,8 +448,16 @@ class ETradeMarket(object):
             try:
                 xmlobj = jxmlease.parse(req.text)
                 z = xmlobj['OptionExpireDateGetResponse']['ExpirationDate']
-                return [ dt.date(int(this_date['year']), int(this_date['month']), int(this_date['day'])) for this_date in z ]
+                dates = [ dt.date(int(this_date['year']), int(this_date['month']), int(this_date['day'])) for this_date in z ]
             except Exception as err:
                 LOGGER.error(err)
                 raise
+
+# add weeklies for this month and the following month
+        friday = NEXT_FRIDAY
+        for i in range(8):
+            if friday not in dates: dates.append(friday)
+            friday += dt.timedelta(days=7)
         
+        return dates
+    

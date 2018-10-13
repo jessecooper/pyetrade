@@ -14,8 +14,8 @@
                     dev = False)
     
     option_dates = me.get_option_expire_date('aapl', None)
-    date_strikes = me.get_option_strikes('aapl', 2018, 5)
-    option_data = me.get_option_chain_data('aapl',date_strikes)
+    strikes = me.get_option_strikes('aapl', 2018, 10, 12)
+    option_data = me.get_option_chain_data('aapl',strikes)
     
     or, all in one get all strikes for all future dates:
     (option_data,count) = me.get_all_option_data('aapl')
@@ -25,6 +25,7 @@
 import logging
 import jxmlease
 import datetime as dt
+import dateutil.parser
 from requests_oauthlib import OAuth1Session
 
 LOGGER = logging.getLogger(__name__)
@@ -36,8 +37,8 @@ else:                               # after Friday
     days_to_Friday = 11 - TODAY.weekday()
 NEXT_FRIDAY = TODAY + dt.timedelta(days=days_to_Friday)
         
-def decode_option_xml(xml_text):
-    ''' decode_option_xml(xml_text)
+def strikes_from_optionchains_XML(xml_text):
+    ''' strikes_from_optionchains_XML(xml_text)
     
         Given xml_text from an option chains download, return list of option chain dates and strikes
         return list of (dt.date,strikePrice) tuples
@@ -54,8 +55,12 @@ def decode_option_xml(xml_text):
         }
           
     '''
-    xmlobj = jxmlease.parse(xml_text)
-    z = xmlobj['OptionChainResponse']['optionPairs']
+    rtn = list()
+    try:
+        xmlobj = jxmlease.parse(xml_text)
+        z = xmlobj['OptionChainResponse']['optionPairs']
+    except:
+        return rtn
     
 # determine whether call or put from first item in list
     if 'call' in z[0]:
@@ -63,13 +68,17 @@ def decode_option_xml(xml_text):
     else:
         option_type = 'put'
         
-    x = list()
-    for this_opt in z:
-        q = this_opt[option_type]['expireDate']
-        strikePrice = float(this_opt[option_type]['strikePrice'])
-        x.append((dt.date(int(q['year']),int(q['month']),int(q['day'])),strikePrice))        
-    return x
-    
+    rtn = [ float(this_opt[option_type]['strikePrice']) for this_opt in z ]    
+    return rtn
+
+def settlement_datetime(opt):
+    ''' Extract the datetime the option data was acquired.
+        This is simply a helper function.
+    '''
+    try:
+        return dateutil.parser.parse(opt['all']['askTime'],ignoretz=True)
+    except:
+        raise
 
 class ETradeMarket(object):
     '''ETradeMarket'''
@@ -249,7 +258,7 @@ class ETradeMarket(object):
         else:
             return req.text
         
-    def get_all_option_data(self, underlier):
+    def get_all_option_data(self, underlier, verbose=False):
         ''' get_all_option_data(underlier)
         
             Given the underling symbol, return all option_chain_data as a dictionary of lists
@@ -259,8 +268,8 @@ class ETradeMarket(object):
                 * underlying symbol
             
             RETURN
-                * dictionary of lists (the key being the option_expiry dt.date)
-                * count of total options downloaded
+                * dictionary of lists (the dictionary key is the option_expiry dt.date)
+                * total count of options downloaded
                 
         '''
         try:
@@ -268,47 +277,54 @@ class ETradeMarket(object):
         except Exception as err:
             LOGGER.error(err)
             raise
-            
-        # grab option_chain data by month, as this is the approach that ETrade API returns options_chain_data
+
         rtn = dict()
         count = 0
         for this_date in expiry_dates:
-            date_strikes = self.get_option_strikes(underlier, this_date.year, this_date.month, this_date.day)
-            rtn[this_date] = self.get_option_chain_data(underlier,date_strikes)
-            count += len(rtn[this_date])
+            strikes = self.get_option_strikes(underlier, this_date.year, this_date.month, this_date.day)
+            if len(strikes['put']):
+                rtn[this_date] = self.get_option_chain_data(underlier,this_date,strikes)
+                count += len(rtn[this_date])
+                if verbose: print('downloaded %d options for expiry %s' % (len(rtn[this_date]),str(this_date) ))
         return rtn, count
         
-    def get_option_chain_data(self, underlier, date_strikes):
+    def get_option_chain_data(self, underlier, this_date, strikes):
         ''' get_option_chain_data(underlier, date_strikes)
             
-            Return a list of dictionary objects, one for each option_chain entry for the underlyier
+            Return a list of dictionary objects, one for each option_chain entry for the underlier
             
             INPUT:
                 * underlier: a particular symbol
-                * date_strikes is a dictionary with two keys ('put','call') that each
-                            contains a list of (dt.dates, strike_price) tuples
+                * this_date: a particular expiry date
+                * strikes is a dictionary with two keys ('put','call') that each
+                            contains a list of strike_price
             RETURN:
                 * list of dictionary objects with all the option data in it
             
             For each option, get_quote using format underlier:year:month:day:optionType:strikePrice.
             Package the requests up in groups of 25 to minimize the number of Etrade API calls.
+            Create a list of dictionary objects to return based on the requests.
             
         '''
-        assert 'put' in date_strikes
-        assert 'call' in date_strikes
+        assert 'put' in strikes
+        assert 'call' in strikes
         
         # create request strings
         reqs = list()
         for opt_type in ('put','call'):
-            for (this_dt,this_strike) in date_strikes[opt_type]:
-                reqs.append('%s:%04d:%02d:%02d:%s:%.2f' % (underlier, this_dt.year, this_dt.month, this_dt.day,
+            for this_strike in strikes[opt_type]:
+                reqs.append('%s:%04d:%02d:%02d:%s:%.2f' % (underlier, this_date.year, this_date.month, this_date.day,
                                                            opt_type, this_strike))
         
         # send off requests in batches of 25; add to return list
         rtn = list()
         for n in range(0,len(reqs),25):
-            x = self.get_quote(reqs[n:n+25])
-            y = x['quoteResponse']['quoteData']
+            try:
+                x = self.get_quote(reqs[n:n+25])
+                y = x['quoteResponse']['quoteData']
+            except Exception as err:
+                LOGGER.error('underlier %s expiry date %s failed', underlier.upper(), str(this_date))
+                continue
             if isinstance(y,dict):
                 rtn.append(y)
             elif isinstance(y,list):
@@ -320,26 +336,32 @@ class ETradeMarket(object):
     def get_option_strikes(self, underlier, expirationYear, expirationMonth, expirationDay):
         ''' get_option_strikes(underlier, expirationYear, expirationMonth, expirationDay)
         
-            Return all put and call dates and strikes as a dictionary.
+            Return a dictionary with a list of puts and a list of call option tuples. Each tuple contains
+            the date and strike price. If an invalid date is passed (one that has no options), then
+            that particular date with have no entries (0 length list).
         
             INPUT:
                 * underlier: a particular symbol
                 * expirationYear: integer year; e.g., 2018
                 * expirationMonth: integer month 1-12
+                * expirationDay: integer day 1-31
                 
             RETURN:
-                * dictionary with keys('put','call'), each of which has a list of (dt.dates, strike_price) tuples
+                * dictionary with keys('put','call'), each of which has a list of strike_price
                 
         '''
         assert 0 < expirationDay <= 31
         assert 0 < expirationMonth <= 12
         assert expirationYear >= 2010
-        date_strikes = dict()
+        strikes = dict.fromkeys(('put','call'), list())
         for opt_type in ('put','call'):
-            xml_text = self.get_optionchains(underlier, expirationYear, expirationMonth, expirationDay, chainType=opt_type)
-            date_strikes[opt_type] = decode_option_xml(xml_text)
+            try:
+                xml_text = self.get_optionchains(underlier, expirationYear, expirationMonth, expirationDay, chainType=opt_type)
+                strikes[opt_type] = strikes_from_optionchains_XML(xml_text)
+            except:             # fails get_optionchains if options don't exist for year-month-day
+                pass
             
-        return date_strikes
+        return strikes
     
     def get_optionchains(self, underlier, expirationYear, expirationMonth, expirationDay, skipAdjusted=True, chainType='callput', resp_format=None):
         '''get_optionchains(underlier, expirationYear, expirationMonth, expirationDay, skipAdjusted=True, chainType='callput', resp_format=None)
@@ -405,7 +427,7 @@ class ETradeMarket(object):
     def get_option_expire_date(self, underlier, resp_format=None):
         ''' get_option_expiry_dates(underlier, resp_format, **kwargs)
         
-            Return a list of datetime.date objects, for the underlier. Some of the returned dates may not actually
+            Return a sorted list of datetime.date objects for the underlier. Some of the returned dates may not actually
             have any options.
             
             if resp_format is 'json', return the python object <== this currently doesn't work as described by the eTrade API
@@ -428,7 +450,7 @@ class ETradeMarket(object):
             
         '''
 
-        assert resp_format in (None,'json')
+        assert resp_format in (None,'json','xml')
         args_str = 'underlier=%s' % underlier
         uri = (r'market/sandbox/rest/optionexpiredate' if self.dev_environment else r'market/rest/optionexpiredate')
         api_url = '%s/%s?%s' % (self.base_url, uri, args_str)
@@ -459,5 +481,5 @@ class ETradeMarket(object):
             if friday not in dates: dates.append(friday)
             friday += dt.timedelta(days=7)
         
-        return dates
+        return sorted(dates)
     

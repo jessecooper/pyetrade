@@ -68,6 +68,12 @@ option_response = {'2018-10': {'all': {'adjNonAdjFlag': False,
                       'symbol': 'AAPL',
                       'type': 'OPTN' }}}
 
+'''
+def test_decode_option_xml(xml_text):
+    t = unittest.TestCase
+    t.assertTrue()
+'''
+    
 class TestETradeMarket(unittest.TestCase):
     '''TestEtradeMarket Unit Test'''
     # Mock out OAuth1Session

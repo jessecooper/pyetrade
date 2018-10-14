@@ -12,48 +12,17 @@ from pyetrade import market
 
 global option_response, XML_response, date_strikes
 XML_response = r'<xml> returns </xml>'
-date_strikes = { 'put':  [ (dt.date(2018,10,19),100.0), (dt.date(2018,10,19),200.0) ],
-                 'call': [ (dt.date(2018,10,19),100.0), (dt.date(2018,10,19),200.0) ]
-                 }
-option_response = {'2018-10': {'all': {'adjNonAdjFlag': False,
-                      'annualDividend': 0,
-                      'ask': 0.01,
-                      'askExchange': 'N',
+strikes = { 'put':  [ 100.0,200.0 ],
+            'call': [ 100.0,200.0 ]
+          }
+date_response = dt.date(2018,10,19)
+option_response = [ {'all': {'adjNonAdjFlag': False,
                       'askSize': 16,
                       'askTime': '16:00:00 EDT 05-16-2018',
                       'bid': 0,
                       'bidExchange': 'Q',
                       'bidSize': 0,
                       'bidTime': '16:00:00 EDT 05-16-2018',
-                      'chgClose': 0,
-                      'chgClosePrcn': 0,
-                      'companyName': '',
-                      'daysToExpiration': 157,
-                      'dirLast': 'U',
-                      'dividend': 0,
-                      'eps': 0,
-                      'estEarnings': 0,
-                      'exDivDate': '',
-                      'exchgLastTrade': '',
-                      'fsi': ' ',
-                      'high': 0.02,
-                      'high52': 0.02,
-                      'highAsk': 5,
-                      'highBid': 0,
-                      'lastTrade': 0.02,
-                      'low': 0.02,
-                      'low52': 0.02,
-                      'lowAsk': 0.01,
-                      'lowBid': 0,
-                      'numTrades': 0,
-                      'open': 0,
-                      'openInterest': 1,
-                      'optionStyle': 'A',
-                      'optionUnderlier': 'AAPL',
-                      'prevClose': 0.02,
-                      'prevDayVolume': 0,
-                      'primaryExchange': 'Z ',
-                      'symbolDesc': "AAPL Oct 19 '18 $2.50 Put",
                       'todayClose': 0,
                       'totalVolume': 0,
                       'upc': 0,
@@ -66,7 +35,7 @@ option_response = {'2018-10': {'all': {'adjNonAdjFlag': False,
                       'optionType': 'PUT',
                       'strikePrice': '2.500',
                       'symbol': 'AAPL',
-                      'type': 'OPTN' }}}
+                      'type': 'OPTN' }} ]
 
 '''
 def test_decode_option_xml(xml_text):
@@ -147,8 +116,8 @@ class TestETradeMarket(unittest.TestCase):
            description: MagicMock of OAuth1Session'''
         mark = market.ETradeMarket('abc123', 'xyz123', 'abctoken', 'xyzsecret', dev=False)
         sym = 'AAPL'
-        MockOAuthSession().get().return_value = option_response
-        self.assertEqual(mark.get_all_option_data(sym), option_response)
+        MockOAuthSession().get().return_value = ({date_response: option_response},1)
+        self.assertEqual(mark.get_all_option_data(sym, False), {date_response: option_response})
         self.assertTrue(MockOAuthSession().get.called)
         
         self.assertRaises(Exception, mark.get_all_option_data, sym)
@@ -162,7 +131,7 @@ class TestETradeMarket(unittest.TestCase):
         mark = market.ETradeMarket('abc123', 'xyz123', 'abctoken', 'xyzsecret', dev=False)
         sym = 'AAPL'
         MockOAuthSession().get().return_value = option_response
-        self.assertEqual(mark.get_option_chain_data(sym,date_strikes), option_response)
+        self.assertEqual(mark.get_option_chain_data(sym,date_response,strikes), option_response)
         self.assertTrue(MockOAuthSession().get.called)
         
     @patch('pyetrade.market.OAuth1Session')
@@ -173,8 +142,8 @@ class TestETradeMarket(unittest.TestCase):
            description: MagicMock of OAuth1Session'''
         mark = market.ETradeMarket('abc123', 'xyz123', 'abctoken', 'xyzsecret', dev=False)
         sym = 'AAPL'
-        MockOAuthSession().get().return_value = date_strikes
-        self.assertEqual(mark.get_option_strikes(sym,2018,10), date_strikes)
+        MockOAuthSession().get().return_value = strikes
+        self.assertEqual(mark.get_option_strikes(sym,date_response), strikes)
         self.assertTrue(MockOAuthSession().get.called)
         
     # Mock out OAuth1Session
@@ -192,11 +161,11 @@ class TestETradeMarket(unittest.TestCase):
         mark = market.ETradeMarket('abc123', 'xyz123', 'abctoken', 'xyzsecret', dev=False)
         
         # Test prod Get Qoute
-        self.assertEqual(mark.get_optionchains('AAPL', 10, 2018, skipAdjusted=True, chainType='callput', resp_format='json'), option_response)
+        self.assertEqual(mark.get_optionchains('AAPL', date_response, skipAdjusted=True, chainType='put', resp_format='json'), option_response)
         self.assertTrue(MockOAuthSession().get().json.called)
         self.assertTrue(MockOAuthSession().get.called)
         # Test prod Get Qoute xml
-        self.assertEqual(mark.get_optionchains('AAPL'), XML_response)
+        self.assertEqual(mark.get_optionchains('AAPL', date_response, skipAdjusted=True, chainType='put', resp_format=None), XML_response)
         self.assertTrue(MockOAuthSession().get.called)
         
     # Mock out OAuth1Session

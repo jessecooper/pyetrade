@@ -259,7 +259,7 @@ class ETradeMarket(object):
             return req.text
         
     def get_all_option_data(self, underlier, verbose=False):
-        ''' get_all_option_data(underlier)
+        ''' get_all_option_data(underlier, verbose=False)
         
             Given the underling symbol, return all option_chain_data as a dictionary of lists
             and the total count options chains returned
@@ -281,21 +281,21 @@ class ETradeMarket(object):
         rtn = dict()
         count = 0
         for this_date in expiry_dates:
-            strikes = self.get_option_strikes(underlier, this_date.year, this_date.month, this_date.day)
+            strikes = self.get_option_strikes(underlier, this_date)
             if len(strikes['put']):
                 rtn[this_date] = self.get_option_chain_data(underlier,this_date,strikes)
                 count += len(rtn[this_date])
                 if verbose: print('downloaded %d options for expiry %s' % (len(rtn[this_date]),str(this_date) ))
         return rtn, count
         
-    def get_option_chain_data(self, underlier, this_date, strikes):
+    def get_option_chain_data(self, underlier, expiry_date, strikes):
         ''' get_option_chain_data(underlier, date_strikes)
             
             Return a list of dictionary objects, one for each option_chain entry for the underlier
             
             INPUT:
                 * underlier: a particular symbol
-                * this_date: a particular expiry date
+                * expiry_date: a particular expiry date
                 * strikes is a dictionary with two keys ('put','call') that each
                             contains a list of strike_price
             RETURN:
@@ -313,7 +313,7 @@ class ETradeMarket(object):
         reqs = list()
         for opt_type in ('put','call'):
             for this_strike in strikes[opt_type]:
-                reqs.append('%s:%04d:%02d:%02d:%s:%.2f' % (underlier, this_date.year, this_date.month, this_date.day,
+                reqs.append('%s:%04d:%02d:%02d:%s:%.2f' % (underlier, expiry_date.year, expiry_date.month, expiry_date.day,
                                                            opt_type, this_strike))
         
         # send off requests in batches of 25; add to return list
@@ -323,7 +323,7 @@ class ETradeMarket(object):
                 x = self.get_quote(reqs[n:n+25])
                 y = x['quoteResponse']['quoteData']
             except Exception as err:
-                LOGGER.error('underlier %s expiry date %s failed', underlier.upper(), str(this_date))
+                LOGGER.error('underlier %s expiry date %s failed', underlier.upper(), str(expiry_date))
                 continue
             if isinstance(y,dict):
                 rtn.append(y)
@@ -333,8 +333,8 @@ class ETradeMarket(object):
                 LOGGER.error('Return from get_quote not expected; got %s', x)
         return rtn
     
-    def get_option_strikes(self, underlier, expirationYear, expirationMonth, expirationDay):
-        ''' get_option_strikes(underlier, expirationYear, expirationMonth, expirationDay)
+    def get_option_strikes(self, underlier, expiry_date):
+        ''' get_option_strikes(underlier, expiry_date)
         
             Return a dictionary with a list of puts and a list of call option tuples. Each tuple contains
             the date and strike price. If an invalid date is passed (one that has no options), then
@@ -342,29 +342,25 @@ class ETradeMarket(object):
         
             INPUT:
                 * underlier: a particular symbol
-                * expirationYear: integer year; e.g., 2018
-                * expirationMonth: integer month 1-12
-                * expirationDay: integer day 1-31
+                * expiry_date: the dt.date of contract expiration
                 
             RETURN:
                 * dictionary with keys('put','call'), each of which has a list of strike_price
                 
         '''
-        assert 0 < expirationDay <= 31
-        assert 0 < expirationMonth <= 12
-        assert expirationYear >= 2010
+        assert expiry_date.year >= 2010
         strikes = dict.fromkeys(('put','call'), list())
         for opt_type in ('put','call'):
             try:
-                xml_text = self.get_optionchains(underlier, expirationYear, expirationMonth, expirationDay, chainType=opt_type)
+                xml_text = self.get_optionchains(underlier, expiry_date, chainType=opt_type)
                 strikes[opt_type] = strikes_from_optionchains_XML(xml_text)
             except:             # fails get_optionchains if options don't exist for year-month-day
                 pass
             
         return strikes
     
-    def get_optionchains(self, underlier, expirationYear, expirationMonth, expirationDay, skipAdjusted=True, chainType='callput', resp_format=None):
-        '''get_optionchains(underlier, expirationYear, expirationMonth, expirationDay, skipAdjusted=True, chainType='callput', resp_format=None)
+    def get_optionchains(self, underlier, expiry_date, skipAdjusted=True, chainType='callput', resp_format=None):
+        '''get_optionchains(underlier, expiry_date, skipAdjusted=True, chainType='callput', resp_format=None)
         
            param: underlier
            type: str
@@ -374,17 +370,9 @@ class ETradeMarket(object):
            type: str
            description: put, call, or callput
            
-           param: expirationDay
-           type: int
-           description: contract expiration day; number between 1 and 31
-           
-           param: expirationMonth
-           type: int
-           description: contract expiration month; number between 1 (January) and 12 (December)
-           
-           param: expirationYear
-           type: int
-           description: contract expiration year; number between 2012 and future year
+           param: expiry_date
+           type: dt.date()
+           description: contract expiration date
            
            param: skipAdjusted
            type: bool
@@ -399,14 +387,12 @@ class ETradeMarket(object):
            GET https://etws.etrade.com/market/rest/optionchains?expirationMonth=04&expirationYear=2011&chainType=PUT&skipAdjusted=true&underlier=GOOG
 
         '''
-        assert 0 < expirationDay <= 31
-        assert 0 < expirationMonth <= 12
-        assert expirationYear >= 2010
+        assert expiry_date.year >= 2010
         assert (resp_format in ('json', None))
         assert chainType in ('put', 'call', 'callput')
         
-        args_str = 'expirationDay=%02d&expirationMonth=%02d&expirationYear=%04d&underlier=%s&skipAdjusted=%s&chainType=%s' % (expirationDay,
-                    expirationMonth, expirationYear, underlier, str(skipAdjusted), chainType.upper())
+        args_str = 'expirationDay=%02d&expirationMonth=%02d&expirationYear=%04d&underlier=%s&skipAdjusted=%s&chainType=%s' % (expiry_date.day,
+                    expiry_date.month, expiry_date.year, underlier, str(skipAdjusted), chainType.upper())
         
         uri = (r'market/sandbox/rest/optionchains' if self.dev_environment else r'market/rest/optionchains')
         api_url = '%s/%s?%s' % (self.base_url, uri, args_str)

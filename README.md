@@ -16,6 +16,7 @@ Order API -
  
 Market API - 
 * Look Up Product 
+* optionchain
 * Get Quote  
 
 ## TODO

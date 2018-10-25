@@ -6,7 +6,7 @@
 
 import unittest
 from unittest.mock import patch
-from pyetrade import order, etrade_exception
+from pyetrade import order
 
 class TestETradeOrder(unittest.TestCase):
     '''TestEtradeOrder Unit Test'''
@@ -19,18 +19,17 @@ class TestETradeOrder(unittest.TestCase):
         # Set Mock returns
         MockOAuthSession().get().json.return_value = "{'accountId': '12345'}"
         MockOAuthSession().get().text = r'<xml> returns </xml>'
-        orders = order.ETradeOrder('abc123', 'xyz123', 'abctoken', 'xyzsecret')
+        orders = order.ETradeOrder('abc123', 'xyz123', 'abctoken', 'xyzsecret', dev=False)
         # Test Dev buy order equity
         self.assertEqual(orders.list_orders('12345'), "{'accountId': '12345'}")
         self.assertTrue(MockOAuthSession().get().json.called)
         self.assertTrue(MockOAuthSession().get.called)
         # Test Prod buy order equity
-        self.assertEqual(orders.list_orders('12345', dev=False),
+        self.assertEqual(orders.list_orders('12345'),
                          "{'accountId': '12345'}")
         self.assertTrue(MockOAuthSession().get().json.called)
         self.assertTrue(MockOAuthSession().get.called)
-        self.assertEqual(orders.list_orders('12345', dev=False,
-                                            resp_format='xml'), r'<xml> returns </xml>')
+        self.assertEqual(orders.list_orders('12345', resp_format='xml'), r'<xml> returns </xml>')
         self.assertTrue(MockOAuthSession().get().json.called)
         self.assertTrue(MockOAuthSession().get.called)
     # Mock out OAuth1Session
@@ -43,7 +42,7 @@ class TestETradeOrder(unittest.TestCase):
         # Set Mock returns
         MockOAuthSession().post().json.return_value = "{'accountId': '12345'}"
         MockOAuthSession().post().text = r'<xml> returns </xml>'
-        orders = order.ETradeOrder('abc123', 'xyz123', 'abctoken', 'xyzsecret')
+        orders = order.ETradeOrder('abc123', 'xyz123', 'abctoken', 'xyzsecret', dev=False)
         # Test Dev buy order equity
         self.assertEqual(orders.place_equity_order(accountId=12345,
                                                    symbol='ABC',
@@ -57,8 +56,7 @@ class TestETradeOrder(unittest.TestCase):
         self.assertTrue(MockOAuthSession().post().json.called)
         self.assertTrue(MockOAuthSession().post.called)
         # Test prod buy order equity
-        self.assertEqual(orders.place_equity_order(dev=False,
-                                                   accountId=12345,
+        self.assertEqual(orders.place_equity_order(accountId=12345,
                                                    symbol='ABC',
                                                    orderAction='BUY',
                                                    clientOrderId='1a2b3c',
@@ -70,8 +68,7 @@ class TestETradeOrder(unittest.TestCase):
         self.assertTrue(MockOAuthSession().post().json.called)
         self.assertTrue(MockOAuthSession().post.called)
         # Test prod buy order equity
-        self.assertEqual(orders.place_equity_order(dev=False,
-                                                   resp_format='text',
+        self.assertEqual(orders.place_equity_order(resp_format='xml',
                                                    accountId=12345,
                                                    symbol='ABC',
                                                    orderAction='BUY',
@@ -90,13 +87,13 @@ class TestETradeOrder(unittest.TestCase):
            param: MockOAuthSession
            type: mock.MagicMock
            description: MagicMock of OAuth1Session'''
-        orders = order.ETradeOrder('abc123', 'xyz123', 'abctoken', 'xyzsecret')
+        orders = order.ETradeOrder('abc123', 'xyz123', 'abctoken', 'xyzsecret', dev=False)
 
         # Test exception class
-        with self.assertRaises(etrade_exception.OrderException):
+        with self.assertRaises(order.OrderException):
             orders.place_equity_order()
         # Test STOP
-        with self.assertRaises(etrade_exception.OrderException):
+        with self.assertRaises(order.OrderException):
             orders.place_equity_order(accountId=12345,
                                       symbol='ABC',
                                       orderAction='BUY',
@@ -106,7 +103,7 @@ class TestETradeOrder(unittest.TestCase):
                                       orderTerm='GOOD_UNTIL_CANCEL',
                                       marketSession='REGULAR')
         #Test LIMIT
-        with self.assertRaises(etrade_exception.OrderException):
+        with self.assertRaises(order.OrderException):
             orders.place_equity_order(accountId=12345,
                                       symbol='ABC',
                                       orderAction='BUY',
@@ -116,7 +113,7 @@ class TestETradeOrder(unittest.TestCase):
                                       orderTerm='GOOD_UNTIL_CANCEL',
                                       marketSession='REGULAR')
         #Test STOP_LIMIT
-        with self.assertRaises(etrade_exception.OrderException):
+        with self.assertRaises(order.OrderException):
             orders.place_equity_order(accountId=12345,
                                       symbol='ABC',
                                       orderAction='BUY',
@@ -126,7 +123,7 @@ class TestETradeOrder(unittest.TestCase):
                                       orderTerm='GOOD_UNTIL_CANCEL',
                                       marketSession='REGULAR')
         # Test Prod JSON
-        #self.assertEqual(orders.place_equity_order(dev=False), "{'account': 'abc123'}")
+        #self.assertEqual(orders.place_equity_order(), "{'account': 'abc123'}")
         # Test Dev XML
         #self.assertEqual(orders.place_equity_order(resp_format='xml'), r'<xml> returns </xml>')
         #self.assertTrue(MockOAuthSession().get().text.called)
@@ -138,38 +135,10 @@ class TestETradeOrder(unittest.TestCase):
            description: MagicMock of OAuth1Session'''
         MockOAuthSession().post().json.return_value = "{'accountId': '12345'}"
         MockOAuthSession().post().text = r'<xml> returns </xml>'
-        orders = order.ETradeOrder(
-            'abc123',
-            'xyz123',
-            'abctoken',
-            'xyzsecret'
-            )
-        # Dev
-        self.assertEqual(
-            orders.cancel_order(12345, 42),
-            "{'accountId': '12345'}"
-            )
-        MockOAuthSession().post.assert_called_with(
-            ('https://etwssandbox.etrade.com'
-             '/order/sandbox/rest/cancelorder.json'),
-            json={
-                'cancelOrder': {
-                    'cancelOrderRequest': {
-                        'accountId': 12345, 'orderNum': 42
-                        },
-                    '-xmlns': 'https://etwssandbox.etrade.com'
-                    }
-                }
-            )
-        self.assertTrue(MockOAuthSession().post().json.called)
-        self.assertTrue(MockOAuthSession().post.called)
-        self.assertEqual(
-            orders.cancel_order(12345, 42, resp_format='xml'),
-            "<xml> returns </xml>"
-            )
+        orders = order.ETradeOrder('abc123','xyz123','abctoken','xyzsecret', dev=False)
         # Prod
         self.assertEqual(
-            orders.cancel_order(12345, 42, dev=False),
+            orders.cancel_order(12345, 42),
             "{'accountId': '12345'}"
             )
         MockOAuthSession().post.assert_called_with(
@@ -190,7 +159,6 @@ class TestETradeOrder(unittest.TestCase):
             orders.cancel_order(
                 12345,
                 42,
-                dev=False,
                 resp_format='xml'
                 ),
             "<xml> returns </xml>"

@@ -7,7 +7,7 @@ Python E-Trade API Wrapper
 [![Build Status](https://travis-ci.org/jessecooper/pyetrade.svg?branch=master)](https://travis-ci.org/jessecooper/pyetrade)
 [![codecov](https://codecov.io/gh/jessecooper/pyetrade/branch/master/graph/badge.svg)](https://codecov.io/gh/jessecooper/pyetrade)
 ## Completed
-v0 API - Will be sunset by etrade on 12/31/2018 an effert is underway to move pyetrade over to v1  
+NOTICE: v0 API - Will be sunset by etrade on 12/31/2018 an effert is underway to move pyetrade over to v1  
 Authorization API - ALL  
 Accounts API - ALL  
 Order API - 

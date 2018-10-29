@@ -28,11 +28,11 @@ class ETradeOAuth(object):
 
         self.consumer_key = consumer_key
         self.consumer_secret = consumer_secret
-        self.base_url_prod = r'https://etws.etrade.com'
-        self.base_url_dev = r'https://etwssandbox.etrade.com'
-        self.req_token_url = r'https://etws.etrade.com/oauth/request_token'
+        self.base_url_prod = r'https://api.etrade.com'
+        self.base_url_dev = r'https://apisb.etrade.com'
+        self.req_token_url = r'https://api.etrade.com/oauth/request_token'
         self.auth_token_url = r'https://us.etrade.com/e/t/etws/authorize'
-        self.access_token_url = r'https://etws.etrade.com/oauth/access_token'
+        self.access_token_url = r'https://api.etrade.com/oauth/access_token'
         self.callback_url = callback_url
         self.access_token = None
         self.resource_owner_key = None
@@ -162,8 +162,8 @@ class ETradeAccessManager(object):
         self.client_secret = client_secret
         self.resource_owner_key = resource_owner_key
         self.resource_owner_secret = resource_owner_secret
-        self.renew_access_token_url = r'https://etws.etrade.com/oauth/renew_access_token'
-        self.revoke_access_token_url = r'https://etws.etrade.com/oauth/revoke_access_token'
+        self.renew_access_token_url = r'https://api.etrade.com/oauth/renew_access_token'
+        self.revoke_access_token_url = r'https://api.etrade.com/oauth/revoke_access_token'
         self.session = OAuth1Session(self.client_key,
                                      self.client_secret,
                                      self.resource_owner_key,

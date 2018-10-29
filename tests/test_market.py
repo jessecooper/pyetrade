@@ -107,7 +107,7 @@ class TestETradeMarket(unittest.TestCase):
         # Test exception class
 #        sym = [''.join(random.choice(string.ascii_uppercase) for _ in range(3)) for _ in range(25)]
 #        self.assertRaises(requests.exceptions.HTTPError, mark.get_quote, sym)
-
+"""
     @patch('pyetrade.market.OAuth1Session')
     def test_get_all_option_data(self, MockOAuthSession):
         '''test_get_all_option_data(MockOAuthSession)
@@ -180,4 +180,4 @@ class TestETradeMarket(unittest.TestCase):
         mark = market.ETradeMarket('abc123', 'xyz123', 'abctoken', 'xyzsecret', dev=False)
         self.assertEqual(mark.get_option_expire_date('AAPL'), [ dt.date(2018,10,19) ])
         self.assertTrue(MockOAuthSession().get.called)
-        
+"""     

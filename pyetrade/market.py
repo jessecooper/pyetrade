@@ -25,7 +25,6 @@
 import logging
 import jxmlease
 import datetime as dt
-import dateutil.parser
 from requests_oauthlib import OAuth1Session
 
 LOGGER = logging.getLogger(__name__)

@@ -1,3 +1,6 @@
 pylint
 coverage
 Sphinx
+pytest
+pytest-cov
+tox

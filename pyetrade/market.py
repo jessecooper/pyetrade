@@ -2,19 +2,12 @@
 
 '''Market - ETrade Market API V1
 
-    Requests that require detailed input, such as an order to buy or sell stock,
-    use an HTTP POST request, with the parameters included as either XML or JSON data
-    
-    Generally, three different types of response that one can get from the routines based on the requested resp_format
+    Generally, three different types of response that one can get from these routines are based on the requested resp_format
         * None - return a python object
         * XML - return XML text straight from the Etrade API
         * JSON - return JSON text straight from the Etrade API
 
-   TODO:
-    * Look Up Product
-    * Get Quote - Doc String'''
-
-''' Calling sequence to get all option chains for a particular month
+    Calling sequence to get all option chains for a particular month
     me = pyetrade.market.ETradeMarket(
                     consumer_key,
                     consumer_secret, 
@@ -23,26 +16,17 @@
                     dev = False)
     
     option_dates = me.get_option_expire_date('aapl', None)
-    option_data = me.get_option_chain_data('aapl',strikes)
+    (put_chains,call_chains) = me.get_option_chain_data('aapl',option_dates)
     
     or, all in one get all strikes for all future dates:
-    (option_data,count) = me.get_all_option_data('aapl')
+    (put_chains,call_chains) = me.get_option_chain_data('aapl')
 
 '''
 
 import datetime as dt
 from requests_oauthlib import OAuth1Session
 import logging
-from logging.handlers import RotatingFileHandler
-
-# logger settings
-LOGGER = logging.getLogger('my_logger')
-LOGGER.setLevel(logging.DEBUG)
-handler = RotatingFileHandler("etrade.log", maxBytes=5 * 1024 * 1024, backupCount=3)
-FORMAT = "%(asctime)-15s %(message)s"
-fmt = logging.Formatter(FORMAT, datefmt='%m/%d/%Y %I:%M:%S %p')
-handler.setFormatter(fmt)
-LOGGER.addHandler(handler)
+LOGGER = logging.getLogger(__name__)
 
 
 class ETradeMarket(object):
@@ -94,19 +78,18 @@ class ETradeMarket(object):
         return '\n'.join(ret)
 
     def look_up_product(self, search_str, resp_format=None):
-        '''look_up_product(company, s_type, resp_format='json')
+        '''look_up_product(company, search_str, resp_format=None)
         
            param: search_str
            type: str
            description: full or partial name of the company. Note
            that the system extensivly abbreviates common words
            such as company, industry and systems and generally
-           skips punctuation
+           skips punctuation.
            
            param: resp_format
-           type: str or None
+           type: 'json', 'xml' or None
            description: Response format json, xml, or None (python object)
-           
            
            '''
            
@@ -123,16 +106,21 @@ class ETradeMarket(object):
         else:
             return req.text
 
-    def get_quote(self, args, resp_format=None, detail_flag='ALL'):
-        ''' get_quote(resp_format, detail_flag, **kwargs)
+    def get_quote(self, symbols, resp_format=None, detail_flag=None, requireEarningsDate=None, skipMiniOptionsCheck=None):
+        ''' get_quote(symbols, resp_format=None, detail_flag=None, requireEarningsDate=None, skipMiniOptionsCheck=None)
         
             Get quote data on all symbols provided in the list args.
             the eTrade API is limited to 25 requests per call. Issue
             warning if more than 25 are requested. Only process the first 25.
         
             param: resp_format
-            type: str
+            type: 'json', 'xml' or None
             description: Response format JSON text, XML test, or None for python object
+        
+            param: skipMiniOptionsCheck
+            type: True, False, None
+            description: If value is true, no call is made to the service to check whether the symbol has mini options.
+            If value is false or if the field is not specified, a service call is made to check if the symbol has mini options
            
             param: detailFlag
             type: enum
@@ -150,8 +138,9 @@ class ETradeMarket(object):
                         lowest low
                     * ALL (default) - All of the above information and
                         more
-            kwargs:
-            param: symbol
+                    * MF_DETAIL - MutualFund structure gets displayed.
+                        
+            param: symbols
             type: list
             required: true
             description: One or more symobols
@@ -161,39 +150,33 @@ class ETradeMarket(object):
                 by colons, in this format:
                 underlier:year:month:day:optionType:strikePrice
                 
-             param: adjNonAdjFlag
-             type: bool
-             description: Indicates whether an option has been adjusted
-                due to a corporate action (e.g. a dividend or stock
-                split). Possible values are TRUE, FALSE
-                
-             param: annualDividend
-             type: double
-             description: Cash amount paid per share over the past year
-             
-             param: ask
-             type: double
-             description: The current ask price for a security
-             type: askExchange
-                
-                y=self.get_quote(['googl','aapl'])
-                y['quoteResponse']['quoteData'][0]['all'] ==> dictionary for 1st element in return list
-                
-                y=self.get_quote(['AAPL:2018:05:18:put:150'])
+            Example Etrade API call:
+                https://api.etrade.com/v1/market/quote/AAPL,GOOGL.json
                 
             '''
             
         assert resp_format in ('json','xml', None)
-        assert isinstance(args,list)
-        if len(args) > 25: LOGGER.warning('get_quote asked for %d requests; only first 25 returned' % len(args))
+        assert detail_flag in ('fundamental','intraday','options','week_52','all','mf_detail', None)
+        assert requireEarningsDate in (True, False, None)
+        assert skipMiniOptionsCheck in (True, False, None)
+        assert isinstance(symbols,list)
+        if len(symbols) > 25: LOGGER.warning('get_quote asked for %d requests; only first 25 returned' % len(symbols))
         
-        args_str = ','.join(args[:25])       # ensure that a max of 25 symbols are sent
-        api_url = '%s/quote/%s' % (self.base_url, args_str)
+        args = list()
+        if detail_flag is not None:
+            args.append('detail_flag=%s'%detail_flag.upper())
+        if requireEarningsDate is not None:
+            args.append('requireEarningsDate=%s'%str(requireEarningsDate))
+        if skipMiniOptionsCheck is not None:
+            args.append('skipMiniOptionsCheck=%s'%str(skipMiniOptionsCheck))
+        
+        api_url = self.base_url + 'quote/' + ','.join(symbols[:25])
+        if len(args):
+            api_url += '&' + '&'.join(args)
         if resp_format in ('json',None): api_url += '.json'
-        
         LOGGER.debug(api_url)
-        payload = {'detailFlag': detail_flag}
-        req = self.session.get(api_url, params=payload)
+        
+        req = self.session.get(api_url)
         req.raise_for_status()
         LOGGER.debug(req.text)
 
@@ -204,33 +187,45 @@ class ETradeMarket(object):
 
     def get_option_chains(self, underlier, expiry_date=None, skipAdjusted=None, chainType=None, resp_format=None,
                           strikePriceNear=None, noOfStrikes=None, optionCategory=None, priceType=None):
-        ''' get_optionchains(underlier, expiry_date, skipAdjusted=True, chainType='callput', resp_format=None)
+        ''' get_optionchains(underlier, expiry_date=None, skipAdjusted=None, chainType=None, resp_format=None,
+                             strikePriceNear=None, noOfStrikes=None, optionCategory=None, priceType=None)
         
             Returns the option chain information for the requested expiry_date and chaintype in the desired format.
         
-           param: underlier
-           type: str
-           description: market symbol
+            param: underlier
+            type: str
+            description: market symbol
            
-           param: chainType
-           type: str
-           description: put, call, or callput
+            param: chainType
+            type: str
+            description: put, call, or callput
+            Default: callput
            
-           param: expiry_date
-           type: dt.date()
-           description: contract expiration date
+            param: priceType
+            type: 'atmn', 'all', None
+            description: The price type
+            Default: ATNM
            
-           param: skipAdjusted
-           type: bool
-           description: Specifies whether to show (TRUE) or not show (FALSE) adjusted options, i.e., options 
+            param: expiry_date
+            type: dt.date()
+            description: contract expiration date
+           
+            param: optionCategory
+            type: 'standard', 'all', 'mini', None
+            description: what type of option data to return
+            Default: standard
+           
+            param: skipAdjusted
+            type: bool
+            description: Specifies whether to show (TRUE) or not show (FALSE) adjusted options, i.e., options 
                         that have undergone a change resulting in a modification of the option contract.
            
-           param: resp_format
-           type: str
-           description: Response format json, xml, or None (python object)
+            param: resp_format
+            type: 'json', 'xml' or None
+            description: Response format json, xml, or None (python object)
            
-           Sample Request
-           GET https://api.etrade.com/v1/market/optionchains?expirationDay=03&expirationMonth=04&expirationYear=2011&chainType=PUT&skipAdjusted=true&symbol=GOOGL
+            Sample Request
+            GET https://api.etrade.com/v1/market/optionchains?expirationDay=03&expirationMonth=04&expirationYear=2011&chainType=PUT&skipAdjusted=true&symbol=GOOGL
 
         '''
 #        assert expiry_date.year >= 2010
@@ -271,7 +266,7 @@ class ETradeMarket(object):
             return req.text
 
     def get_option_expire_date(self, underlier, resp_format=None):
-        ''' get_option_expiry_dates(underlier, resp_format, **kwargs)
+        ''' get_option_expiry_dates(underlier, resp_format=None)
         
             If resp_format is None, return a list of datetime.date objects for the underlier, as returned by the Etrade API.
             Otherwise, return the XML or JSON text as appropriate for resp_format.
@@ -281,7 +276,7 @@ class ETradeMarket(object):
             description: market symbol
            
             param: resp_format
-            type: str or None
+            type: 'json', 'xml' or None
             description: Response format json, xml, or None (python object)
            
             https://api.etrade.com/v1/market/optionexpiredate?symbol={symbol}

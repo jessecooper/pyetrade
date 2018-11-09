@@ -102,7 +102,8 @@ class ETradeMarket(object):
         LOGGER.debug(req.text)
 
         if resp_format is None:
-            return req.json()
+            x = req.json()['LookupResponse']
+            return [ y['Data'] for y in x ]
         else:
             return req.text
 
@@ -180,7 +181,7 @@ class ETradeMarket(object):
         LOGGER.debug(req.text)
 
         if resp_format is None:
-            return req.json()
+            return req.json()['QuoteResponse']['QuoteData']
         else:
             return req.text
 
@@ -260,7 +261,7 @@ class ETradeMarket(object):
         LOGGER.debug(req.text)
 
         if resp_format is None:
-            return req.json()['OptionChainResponse']['OptionPair']
+            return req.json()['OptionChainResponse']
         else:
             return req.text
 

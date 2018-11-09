@@ -7,6 +7,7 @@
 import unittest
 from unittest.mock import patch
 import datetime as dt
+import json
 from pyetrade import market
 
   
@@ -25,9 +26,17 @@ class TestETradeMarket(unittest.TestCase):
            test exception raised when resp_format is something different from three choices
         '''
            
-        response = ['interesting article']
+        response = [ { 'symbol': 'AAPL',
+                       'description': 'interesting article',
+                       'type': 'EQUITY'
+                       },
+                     { 'symbol': 'GOOGL',
+                       'description': 'another interesting article',
+                       'type': 'EQUITY'
+                       }]
+        response_array = [ {'Data': x} for x in response ]
+        JSON_response = json.dumps({'LookupResponse': response_array} )
         XML_response = r'<xml>interesting article</xml>'
-        JSON_response = r'["interesting article"]'
         
         # Set Mock returns for resp_format=None
         MockOAuthSession().get().return_value = JSON_response
@@ -65,15 +74,20 @@ class TestETradeMarket(unittest.TestCase):
            description: MagicMock of OAuth1Session
         '''
            
-        response = {'BAC': 32.1}
+        response =  [ { 'dateTime': '15:17:00 EDT 06-20-2018',
+                        'dateTimeUTC': 1529522220,
+                        'All': { 'open': 1188.34 },
+                        'Product': { 'symbol': 'AAPL' }
+                      } ]
+        response_dict =  { 'QuoteData': response }
+        JSON_response = json.dumps({'QuoteResponse': response_dict})
         XML_response = r'<xml> xml text </xml>'
-        JSON_response = r'{"BAC": 32.1}'
         
         # Set Mock returns for resp_format=None
         MockOAuthSession().get().return_value = JSON_response
         mark = market.ETradeMarket('abc123', 'xyz123', 'abctoken', 'xyzsecret', dev=False)
         # Test prod Get Qoute
-        self.assertEqual(mark.get_quote(['BAC']), response)
+        self.assertEqual(mark.get_quote(['AAPL']), response)
         self.assertTrue(MockOAuthSession().get.called)
         
         # Set Mock returns for resp_format=xml
@@ -114,12 +128,14 @@ class TestETradeMarket(unittest.TestCase):
            description: MagicMock of OAuth1Session
         '''
            
-        response = [ dt.date(2018,10,19) ]
+        response = [ dt.date(2018,11,16), dt.date(2018,12,18) ]
+        date_list = [ {'ExpirationDate': { 'year': str(x.year), 'month': str(x.month), 'day': str(x.day), 'expiryType': 'MONTHLY' }} for x in response ]
+        json_obj = { 'OptionExpireDateResponse': date_list }
+        JSON_response = json.dumps(json_obj)
         XML_response = r'<xml> xml text </xml>'
-        JSON_response = r'"JSON text"'
         
         # Set Mock returns for resp_format=None
-        MockOAuthSession().get().return_value = response
+        MockOAuthSession().get().return_value = JSON_response
         mark = market.ETradeMarket('abc123', 'xyz123', 'abctoken', 'xyzsecret', dev=False)
         self.assertEqual(mark.get_option_expire_date('AAPL', resp_format=None), response)
         self.assertTrue(MockOAuthSession().get.called)
@@ -145,13 +161,16 @@ class TestETradeMarket(unittest.TestCase):
            type: mock.MagicMock
            description: MagicMock of OAuth1Session
         '''
-           
-        response = [ { 'this_date': 32.1 } ]
+        
+        option_pairs =  [ { 'Call': { 'symbol': 'AAPL', 'volume': 23 }, 'Put': { 'symbol': 'AAPL', 'volume': 45 } },
+                          { 'Call': { 'symbol': 'GOOGL', 'volume': 15 }, 'Put': { 'symbol': 'GOOGL', 'volume': 111 } }
+                        ]
+        response = [ {'OptionPair': x} for x in option_pairs ]
+        JSON_response = json.dumps(response)
         XML_response = r'<xml> xml text </xml>'
-        JSON_response = r'"JSON text"'
         
         # Set Mock returns for resp_format=None
-        MockOAuthSession().get().return_value = response
+        MockOAuthSession().get().return_value = JSON_response
         mark = market.ETradeMarket('abc123', 'xyz123', 'abctoken', 'xyzsecret', dev=False)
         self.assertEqual(mark.get_option_chains('AAPL', expiry_date=None, resp_format=None), response)
         self.assertTrue(MockOAuthSession().get.called)

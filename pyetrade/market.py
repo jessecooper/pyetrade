@@ -143,14 +143,13 @@ class ETradeMarket(object):
             param: symbols
             type: list
             required: true
-            description: One or more symobols
-                for equities or options, up to a maximum of 25 symbols
-                for equities are simple, e.g. GOOG. Symbols for options
-                are more complex, consisting of six elements separated
+            description: One or more symobols for equities or options, up to a maximum of 25 symbols.
+                For equities, the symbol name alone, e.g. GOOGL.
+                Symbols for options are more complex, consisting of six elements separated
                 by colons, in this format:
                 underlier:year:month:day:optionType:strikePrice
                 
-            Example Etrade API call:
+            Example Etrade API call with JSON return format:
                 https://api.etrade.com/v1/market/quote/AAPL,GOOGL.json
                 
             '''
@@ -191,6 +190,7 @@ class ETradeMarket(object):
                              strikePriceNear=None, noOfStrikes=None, optionCategory=None, priceType=None)
         
             Returns the option chain information for the requested expiry_date and chaintype in the desired format.
+            This should be a list of dictionaries, one for each option chain.
         
             param: underlier
             type: str
@@ -228,7 +228,6 @@ class ETradeMarket(object):
             GET https://api.etrade.com/v1/market/optionchains?expirationDay=03&expirationMonth=04&expirationYear=2011&chainType=PUT&skipAdjusted=true&symbol=GOOGL
 
         '''
-#        assert expiry_date.year >= 2010
         assert resp_format in ('json', 'xml', None)
         assert chainType in ('put', 'call', 'callput', None)
         assert optionCategory in ('standard', 'all', 'mini', None)

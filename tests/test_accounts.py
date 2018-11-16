@@ -24,15 +24,13 @@ class TestETradeAccounts(unittest.TestCase):
         self.assertEqual(account.list_accounts(), "{'account': 'abc123'}")
         # Test API URL
         MockOAuthSession().get.assert_called_with(
-            ('https://etwssandbox.etrade.com/accounts/'
-             'sandbox/rest/accountlist.json')
+            ('https://apisb.etrade.com/v1/accounts/list.json')
             )
         # Test Prod JSON
         self.assertEqual(account.list_accounts(dev=False), "{'account': 'abc123'}")
         # Test API URL
         MockOAuthSession().get.assert_called_with(
-            ('https://etws.etrade.com/accounts/'
-             'rest/accountlist.json')
+            ('https://api.etrade.com/v1/accounts/list.json')
             )
         # Test Dev XML
         self.assertEqual(account.list_accounts(resp_format='xml'), r'<xml> returns </xml>')

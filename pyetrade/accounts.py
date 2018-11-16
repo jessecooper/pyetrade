@@ -3,6 +3,10 @@
 '''Accounts - ETrade Accounts API
    Calls
    TODO:
+       * get account balances APIv1
+       * list transactions APIv1
+       * list transaction details APIv1
+       * view portfolio APIv1
        * Fix init doc string
        * Check request response for error'''
 
@@ -21,8 +25,8 @@ class ETradeAccounts(object):
         self.client_secret = client_secret
         self.resource_owner_key = resource_owner_key
         self.resource_owner_secret = resource_owner_secret
-        self.base_url_prod = r'https://etws.etrade.com'
-        self.base_url_dev = r'https://etwssandbox.etrade.com'
+        self.base_url_prod = r'https://api.etrade.com/v1'
+        self.base_url_dev = r'https://apisb.etrade.com/v1'
         self.session = OAuth1Session(self.client_key,
                                      self.client_secret,
                                      self.resource_owner_key,
@@ -43,10 +47,10 @@ class ETradeAccounts(object):
            rtype: str'''
 
         if dev:
-            uri = r'accounts/sandbox/rest/accountlist'
+            uri = r'accounts/list'
             api_url = '%s/%s.%s' % (self.base_url_dev, uri, resp_format)
         else:
-            uri = r'accounts/rest/accountlist'
+            uri = r'accounts/list'
             api_url = '%s/%s.%s' % (self.base_url_prod, uri, resp_format)
 
         LOGGER.debug(api_url)

@@ -28,6 +28,28 @@ from requests_oauthlib import OAuth1Session
 import logging
 LOGGER = logging.getLogger(__name__)
 
+        
+def decode_optionchains_XML(xml_text):
+    ''' strikes_from_optionchains_XML(xml_text)
+    
+        Given xml_text from an option chains download, return list of option chain data.
+        Raise exception if XML text is not compliant.
+        
+          
+    '''
+    rtn = list()
+    try:
+        xmlobj = jxmlease.parse(xml_text)
+        z = xmlobj['OptionChainResponse']['OptionPairs']        # returns dict with keys 'Call' and 'Put'
+    except:
+        raise
+        
+    p = dict(z['Put'].items())
+    q = { x:p[x].get_cdata() for x in p.keys() }
+    for x in ('timeStamp','volume','askSize','bidSize','openInterest'): q[x] = int(q[x])
+    for x in ('bid','ask','strikePrice','netChange','lastPrice'): q[x] = float(q[x])
+
+
 
 class ETradeMarket(object):
     '''ETradeMarket'''
@@ -91,6 +113,8 @@ class ETradeMarket(object):
            type: 'json', 'xml' or None
            description: Response format json, xml, or None (python object)
            
+           json response doesn't return correctly, but it appears to be good json text
+           
            '''
            
         assert resp_format in ('json','xml',None)
@@ -103,7 +127,7 @@ class ETradeMarket(object):
 
         if resp_format is None:
             x = req.json()['LookupResponse']
-            return [ y['Data'] for y in x ]
+            return [ y['Data'] for y in x ]     # problem here!!!
         else:
             return req.text
 
@@ -153,6 +177,7 @@ class ETradeMarket(object):
             Example Etrade API call with JSON return format:
                 https://api.etrade.com/v1/market/quote/AAPL,GOOGL.json
                 
+            JSON response: '{"QuoteResponse":{"QuoteData":[{"dateTime":"16:00:00 EDT 06-20-2012","dateTimeUTC":1340222400,"quoteStatus":"REALTIME","ahFlag":"false","All":{"adjustedFlag":false,"annualDividend":0.0,"ask":579.73,"askExchange":"","askSize":100,"askTime":"16:00:00 EDT 06-20-2012","bid":574.04,"bidExchange":"","bidSize":100,"bidTime":"16:00:00 EDT 06-20-2012","changeClose":0.0,"changeClosePercentage":0.0,"companyName":"GOOGLE INC CL A","daysToExpiration":0,"dirLast":"1","dividend":0.0,"eps":32.99727,"estEarnings":43.448,"exDividendDate":1344947183,"exchgLastTrade":"","fsi":"","high":0.0,"high52":670.25,"highAsk":0.0,"highBid":0.0,"lastTrade":577.51,"low":0.0,"low52":473.02,"lowAsk":0.0,"lowBid":0.0,"numberOfTrades":0,"open":0.0,"openInterest":0,"optionStyle":"","previousClose":577.51,"previousDayVolume":2433786,"primaryExchange":"NASDAQ NM","symbolDescription":"GOOGLE INC CL A","todayClose":0.0,"totalVolume":0,"upc":0,"volume10Day":0,"cashDeliverable":0,"marketCap":188282697750.000000,"sharesOutstanding":326025,"nextEarningDate":"","beta":0.93,"yield":0.0,"declaredDividend":0.0,"dividendPayableDate":0,"pe":17.5017,"marketCloseBidSize":0,"marketCloseAskSize":0,"marketCloseVolume":0,"week52LowDate":1308908670,"week52HiDate":1325673870,"intrinsicValue":0.0,"timePremium":0.0,"optionMultiplier":0.0,"contractSize":0.0,"expirationDate":0,"timeOfLastTrade":1341334800,"averageVolume":13896435},"Product":{"symbol":"GOOG","securityType":"EQ"}}]}}'
             '''
             
         assert resp_format in ('json','xml', None)
@@ -181,7 +206,7 @@ class ETradeMarket(object):
         LOGGER.debug(req.text)
 
         if resp_format is None:
-            return req.json()['QuoteResponse']['QuoteData']
+            return req.json()
         else:
             return req.text
 
@@ -224,6 +249,9 @@ class ETradeMarket(object):
             param: resp_format
             type: 'json', 'xml' or None
             description: Response format json, xml, or None (python object)
+            
+                ==> json response doesn't seem to be valid JSON
+                'https://apisb.etrade.com/v1/market/optionchains?symbol=GOOGL.json' produces JSON response
            
             Sample Request
             GET https://api.etrade.com/v1/market/optionchains?expirationDay=03&expirationMonth=04&expirationYear=2011&chainType=PUT&skipAdjusted=true&symbol=GOOGL
@@ -265,11 +293,14 @@ class ETradeMarket(object):
         else:
             return req.text
 
-    def get_option_expire_date(self, underlier, resp_format=None):
+    def get_option_expire_date(self, underlier, resp_format='json'):
         ''' get_option_expiry_dates(underlier, resp_format=None)
         
             If resp_format is None, return a list of datetime.date objects for the underlier, as returned by the Etrade API.
             Otherwise, return the XML or JSON text as appropriate for resp_format.
+            
+            JSON formatted return does not work as documented.
+            However, the XML formatted response correctly returns the weekly and monthly option dates
             
             param: underlier
             type: str
@@ -283,11 +314,21 @@ class ETradeMarket(object):
                 
             Sample Request
             GET https://api.etrade.com/v1/market/optionexpiredate?symbol=GOOG&expiryType=ALL
-            or  https://api.etrade.com/v1/market/optionexpiredate?symbol=GOOG&expiryType=ALL.json
+            or  https://api.etrade.com/v1/market/optionexpiredate?symbol=GOOG&expiryType=ALL.json <=== does not work
             
+            XML response: '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><OptionExpireDateResponse><ExpirationDate><year>2012</year><month>11</month><day>23</day><expiryType>WEEKLY</expiryType></ExpirationDate><ExpirationDate><year>2012</year><month>12</month><day>22</day><expiryType>MONTHLY</expiryType></ExpirationDate><ExpirationDate><year>2013</year><month>1</month><day>19</day><expiryType>MONTHLY</expiryType></ExpirationDate><ExpirationDate><year>2013</year><month>3</month><day>16</day><expiryType>MONTHLY</expiryType></ExpirationDate><ExpirationDate><year>2013</year><month>6</month><day>22</day></ExpirationDate><ExpirationDate><year>2014</year><month>1</month><day>18</day><expiryType>MONTHLY</expiryType></ExpirationDate><ExpirationDate><year>2015</year><month>1</month><day>17</day><expiryType>DAILY</expiryType></ExpirationDate></OptionExpireDateResponse>'
+            
+            another way to do this is with lxml:
+                import lxml.etree as etree
+                r = etree.parse(xml).getroot()
+                date_list = list()
+                for this_one in r:
+                    q = {a.tag: a.text for a in this_one.getchildren()}
+                    date_list.append(dt.date(int(q['year']), int(q['month']), int(q['day'])))
         '''
 
-        assert resp_format in (None,'json','xml')
+#        assert resp_format in (None,'json','xml')      JSON format does not work
+        assert resp_format == 'json'
         api_url = self.base_url + 'optionexpiredate?symbol=%s&expiryType=ALL' % underlier
         if resp_format in ('json',None): api_url += '.json'
         LOGGER.debug(api_url)
@@ -296,8 +337,19 @@ class ETradeMarket(object):
         req.raise_for_status()
         LOGGER.debug(req.text)
 
+'''  This should work, but .json return doesn't seem to work as documented
         if resp_format is None:
             z = req.json()['OptionExpireDateResponse']
             return [ dt.date(int(x['ExpirationDate']['year']), int(x['ExpirationDate']['month']), int(x['ExpirationDate']['day'])) for x in z ]
         else:
             return req.text
+'''
+        try:
+            xmlobj = jxmlease.parse(req.text)
+            z = xmlobj['OptionExpireDateResponse']['ExpirationDate']
+            dates = [ dt.date(int(this_date['year']), int(this_date['month']), int(this_date['day'])) for this_date in z ]
+        except Exception as err:
+            LOGGER.error(err)
+            raise
+        return dates
+    

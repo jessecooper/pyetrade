@@ -26,6 +26,7 @@
 import datetime as dt
 from requests_oauthlib import OAuth1Session
 import logging
+import jxmlease
 LOGGER = logging.getLogger(__name__)
 
         
@@ -49,6 +50,7 @@ def decode_optionchains_XML(xml_text):
     for x in ('timeStamp','volume','askSize','bidSize','openInterest'): q[x] = int(q[x])
     for x in ('bid','ask','strikePrice','netChange','lastPrice'): q[x] = float(q[x])
 
+    return rtn
 
 
 class ETradeMarket(object):
@@ -327,8 +329,8 @@ class ETradeMarket(object):
                     date_list.append(dt.date(int(q['year']), int(q['month']), int(q['day'])))
         '''
 
-#        assert resp_format in (None,'json','xml')      JSON format does not work
-        assert resp_format == 'json'
+#        assert resp_format in (None,'json','xml')
+        assert resp_format == 'xml'
         api_url = self.base_url + 'optionexpiredate?symbol=%s&expiryType=ALL' % underlier
         if resp_format in ('json',None): api_url += '.json'
         LOGGER.debug(api_url)
@@ -337,13 +339,12 @@ class ETradeMarket(object):
         req.raise_for_status()
         LOGGER.debug(req.text)
 
-'''  This should work, but .json return doesn't seem to work as documented
-        if resp_format is None:
-            z = req.json()['OptionExpireDateResponse']
-            return [ dt.date(int(x['ExpirationDate']['year']), int(x['ExpirationDate']['month']), int(x['ExpirationDate']['day'])) for x in z ]
-        else:
-            return req.text
-'''
+#  This should work, but .json return doesn't seem to work as documented
+#        if resp_format is None:
+#            z = req.json()['OptionExpireDateResponse']
+#            return [ dt.date(int(x['ExpirationDate']['year']), int(x['ExpirationDate']['month']), int(x['ExpirationDate']['day'])) for x in z ]
+#        else:
+#            return req.text
         try:
             xmlobj = jxmlease.parse(req.text)
             z = xmlobj['OptionExpireDateResponse']['ExpirationDate']

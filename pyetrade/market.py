@@ -109,7 +109,7 @@ class ETradeMarket(object):
                 raise
             
             rtn = list()
-            for a in root.getchildren():
+            for a in root.findall('Data'):
                 rtn.append({i.tag:i.text for i in a.getchildren() })
             return rtn
 
@@ -190,21 +190,15 @@ class ETradeMarket(object):
                 raise
             
             rtn = list()
-            for a in root.getchildren():        # each individual symbol returned as child of root
-                this_rtn = dict()
-                for i in a.getchildren():
-                    if i.tag=='dateTimeUTC':
-                        this_rtn['dateTimeUTC'] = int(i.text)
-                    elif i.tag=='All':
-                        for j in i.getchildren():
-                            try:
-                                this_rtn[j.tag] = float(j.text)
-                            except:
-                                this_rtn[j.tag] = j.text
-                    elif i.tag=='Product':
-                        for j in i.getchildren():
-                            this_rtn[j.tag] = j.text
-                    rtn.append(this_rtn)
+            for a in root.findall('QuoteData'):
+                this_rtn = { j.tag: j.text for j in a.find('Product') }
+                this_rtn['dateTimeUTC'] = int(a.find('dateTimeUTC').text)
+                for j in a.find('All').getchildren():
+                    try:
+                        this_rtn[j.tag] = float(j.text)
+                    except:
+                        this_rtn[j.tag] = j.text
+                rtn.append(this_rtn)
             return rtn
 
     def get_all_option_chains(self, underlier):
@@ -307,33 +301,19 @@ class ETradeMarket(object):
             
 # should be put and calls in the OptionPair leafs; just in case, expect one, and not the second
             rtn = list()
-            for a in root.getchildren():
-                if a.tag=='OptionPair':
-                    b = {i.tag:i.text for i in a[0].getchildren() }
+            for pair in root.findall('OptionPair'):
+                for a in pair.getchildren():
+                    b = {i.tag:i.text for i in a.getchildren() }
                     for x in ('timeStamp','volume','askSize','bidSize','openInterest'): b[x] = int(b[x])
                     for x in ('bid','ask','strikePrice','netChange','lastPrice'): b[x] = float(b[x])
                     greeks = dict()
-                    for i in a[0].find('OptionGreeks'):
+                    for i in a.find('OptionGreeks'):
                         try:
                             greeks[i.tag] = float(i.text)
                         except:
                             pass
                     b['OptionGreeks'] = greeks
                     rtn.append(b)
-                    try:
-                        b = {i.tag:i.text for i in a[1].getchildren() }
-                        for x in ('timeStamp','volume','askSize','bidSize','openInterest'): b[x] = int(b[x])
-                        for x in ('bid','ask','strikePrice','netChange','lastPrice'): b[x] = float(b[x])
-                        greeks = dict()
-                        for i in a[0].find('OptionGreeks'):
-                            try:
-                                greeks[i.tag] = float(i.text)
-                            except:
-                                pass
-                        b['OptionGreeks'] = greeks
-                        rtn.append(b)
-                    except:
-                        pass
             return rtn
 
     def get_option_expire_date(self, underlier, resp_format=None):
@@ -386,7 +366,7 @@ class ETradeMarket(object):
             except Exception as err:
                 LOGGER.error(err)
                 raise
-            for a in root.getchildren():
+            for a in root.findall('ExpirationDate'):
                 this_date = { i.tag: i.text for i in a.getchildren() }
                 dates.append(dt.date(int(this_date['year']), int(this_date['month']), int(this_date['day'])))
             return dates

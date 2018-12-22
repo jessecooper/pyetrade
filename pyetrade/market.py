@@ -166,24 +166,23 @@ class ETradeMarket(object):
         
         args = list()
         if detail_flag is not None:
-            args.append('detail_flag=%s'%detail_flag.upper())
-        if requireEarningsDate is not None:
-            args.append('requireEarningsDate=%s'%str(requireEarningsDate))
+            args.append('detailflag=%s'%detail_flag.upper())
+        if requireEarningsDate:
+            args.append('requireEarningsDate=true')
         if skipMiniOptionsCheck is not None:
             args.append('skipMiniOptionsCheck=%s'%str(skipMiniOptionsCheck))
         
         api_url = self.base_url + 'quote/' + ','.join(symbols[:25])
         if len(args):
-            api_url += '&' + '&'.join(args)
+            api_url += '?' + '&'.join(args)
         LOGGER.debug(api_url)
         
         req = self.session.get(api_url)
         req.raise_for_status()
         LOGGER.debug(req.text)
 
-        if resp_format=='xml':
-            return req.text
-        else:
+# decoding XML if "all" requested
+        if resp_format is None and detail_flag in (None,'all'):
             try:
                 root = ET.fromstring(req.text)
             except:
@@ -200,6 +199,8 @@ class ETradeMarket(object):
                         this_rtn[j.tag] = j.text
                 rtn.append(this_rtn)
             return rtn
+        else:
+            return req.text
 
     def get_all_option_chains(self, underlier):
         ''' Returns the expiration_dates and all the option chains for the underlier. This requires two calls, one to get_option_expire_date

@@ -300,7 +300,7 @@ class ETradeMarket(object):
             except:
                 raise
             
-# should be put and calls in the OptionPair leafs; just in case, expect one, and not the second
+# should be put and calls in the OptionPair leaves
             rtn = list()
             for pair in root.findall('OptionPair'):
                 for a in pair.getchildren():

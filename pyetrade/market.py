@@ -203,7 +203,8 @@ class ETradeMarket(object):
             return req.text
 
     def get_all_option_chains(self, underlier):
-        ''' Returns the expiration_dates and all the option chains for the underlier. This requires two calls, one to get_option_expire_date
+        ''' Returns the all the option chains for the underlier with expiration_dates as the key.
+            This requires two calls, one to get_option_expire_date, then
             to get all the expiration_dates and multiple calls to get_option_chains with defaults.
         
             param: underlier
@@ -215,12 +216,12 @@ class ETradeMarket(object):
             expiration_dates = self.get_option_expire_date(underlier,resp_format=None)
         except:
             raise
-        rtn = list()
+        rtn = dict()
         for this_expiry_date in expiration_dates:
-           rtn += self.get_option_chains(underlier, this_expiry_date, resp_format=None)
-        return (expiration_dates, rtn)
+           rtn[this_expiry_date] = self.get_option_chains(underlier, this_expiry_date, resp_format=None)
+        return rtn
 
-    def get_option_chains(self, underlier, expiry_date=None, skipAdjusted=None, chainType=None, resp_format=None,
+    def get_option_chains(self, underlier, expiry_date, skipAdjusted=None, chainType=None, resp_format=None,
                           strikePriceNear=None, noOfStrikes=None, optionCategory=None, priceType=None):
         ''' get_optionchains(underlier, expiry_date=None, skipAdjusted=None, chainType=None, resp_format=None,
                              strikePriceNear=None, noOfStrikes=None, optionCategory=None, priceType=None)
@@ -261,7 +262,7 @@ class ETradeMarket(object):
             description: Response format json, xml, or None (python object)
            
             Sample Request
-            GET https://api.etrade.com/v1/market/optionchains?expirationDay=03&expirationMonth=04&expirationYear=2011&chainType=PUT&skipAdjusted=true&symbol=GOOGL
+            GET https://api.etrade.com/v1/market/optionchains?expiryDay=03&expiryMonth=04&expiryYear=2011&chainType=PUT&skipAdjusted=true&symbol=GOOGL
 
         '''
         assert resp_format in ('xml', None)
@@ -272,7 +273,7 @@ class ETradeMarket(object):
         
         args = ['symbol=%s' % underlier ]
         if expiry_date is not None:
-            args.append('expirationDay=%02d&expirationMonth=%02d&expirationYear=%04d' % (expiry_date.day,expiry_date.month, expiry_date.year))
+            args.append('expiryDay=%02d&expiryMonth=%02d&expiryYear=%04d' % (expiry_date.day, expiry_date.month, expiry_date.year))
         if strikePriceNear is not None:
             args.append('strikePriceNear=%0.2f' % strikePriceNear)
         if chainType is not None:

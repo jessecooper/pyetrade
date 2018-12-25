@@ -182,7 +182,9 @@ class ETradeMarket(object):
         LOGGER.debug(req.text)
 
 # decoding XML if "all" requested
-        if resp_format is None and detail_flag in (None,'all'):
+        if resp_format == 'xml':
+            return req.text
+        else:
             try:
                 root = ET.fromstring(req.text)
             except:
@@ -199,8 +201,6 @@ class ETradeMarket(object):
                         this_rtn[j.tag] = j.text
                 rtn.append(this_rtn)
             return rtn
-        else:
-            return req.text
 
     def get_all_option_chains(self, underlier):
         ''' Returns the all the option chains for the underlier with expiration_dates as the key.

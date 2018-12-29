@@ -366,7 +366,7 @@ class ETradeMarket(object):
             try:
                 root = ET.fromstring(req.text)
             except Exception as err:
-                LOGGER.error(err)
+                LOGGER.error('XML parsing %s text %s failed\n%s', underlier, req.text, err)
                 raise
             for a in root.findall('ExpirationDate'):
                 this_date = { i.tag: i.text for i in a.getchildren() }

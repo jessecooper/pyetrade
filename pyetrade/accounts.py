@@ -5,7 +5,6 @@
    TODO:
        * list transactions APIv1
        * list transaction details APIv1
-       * view portfolio APIv1
        * Fix init doc string
        * Check request response for error'''
 
@@ -129,9 +128,9 @@ class ETradeAccounts(object):
     def get_account_positions(self, account_id, dev=True, resp_format='json'):
         '''get_account_positions(dev, account_id, resp_format) -> resp
            param: account_id
-           type: int
+           type: string
            required: true
-           description: Numeric account id
+           description: account id key
            param: dev
            type: bool
            description: API enviornment
@@ -144,36 +143,13 @@ class ETradeAccounts(object):
            rtype: str'''
 
         if dev:
-            uri = r'accounts/sandbox/rest/accountpositions'
-            if resp_format == 'json':
-                api_url = '%s/%s/%s.%s' % (
-                    self.base_url_dev,
-                    uri,
-                    account_id,
-                    resp_format
-                    )
-            elif resp_format == 'xml':
-                api_url = '%s/%s/%s' % (
-                    self.base_url_dev,
-                    uri,
-                    account_id
-                    )
-
+            api_url = self.base_url_dev
         else:
-            uri = r'accounts/rest/accountpositions'
-            if resp_format == 'json':
-                api_url = '%s/%s/%s.%s' % (
-                    self.base_url_prod,
-                    uri,
-                    account_id,
-                    resp_format
-                    )
-            elif resp_format == 'xml':
-                api_url = '%s/%s/%s' % (
-                    self.base_url_prod,
-                    uri,
-                    account_id
-                    )
+            api_url = self.base_url_prod
+
+        api_url += '/' + account_id + '/portfolio'
+        if resp_format == 'json':
+            api_url += '.json'
 
         LOGGER.debug(api_url)
         req = self.session.get(api_url)
@@ -182,7 +158,7 @@ class ETradeAccounts(object):
 
         if resp_format == 'json':
             return req.json()
-        return req.text
+        return jxmlease.parse(req.text)
 
     def list_alerts(self, dev=True, resp_format='json'):
         '''list_alerts(dev, resp_format) -> resp

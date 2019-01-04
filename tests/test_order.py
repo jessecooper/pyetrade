@@ -7,6 +7,7 @@
 import unittest
 from unittest.mock import patch
 from pyetrade import order
+from collections import OrderedDict
 
 class TestETradeOrder(unittest.TestCase):
     '''TestEtradeOrder Unit Test'''
@@ -40,36 +41,12 @@ class TestETradeOrder(unittest.TestCase):
            type: mock.MagicMock
            description: MagicMock of OAuth1Session'''
         # Set Mock returns
-        MockOAuthSession().post().json.return_value = "{'accountId': '12345'}"
-        MockOAuthSession().post().text = r'<xml> returns </xml>'
+        ret_val = r'<PreviewOrderResponse><PreviewIds><previewId>321</previewId></PreviewIds></PreviewOrderResponse>'
+        MockOAuthSession().post().text = r'<PreviewOrderResponse><PreviewIds><previewId>321</previewId></PreviewIds></PreviewOrderResponse>'
         orders = order.ETradeOrder('abc123', 'xyz123', 'abctoken', 'xyzsecret', dev=False)
-        # Test Dev buy order equity
-        self.assertEqual(orders.place_equity_order(accountId=12345,
-                                                   symbol='ABC',
-                                                   orderAction='BUY',
-                                                   clientOrderId='1a2b3c',
-                                                   priceType='MARKET',
-                                                   quantity=100,
-                                                   orderTerm='GOOD_UNTIL_CANCEL',
-                                                   marketSession='REGULAR'),
-                         "{'accountId': '12345'}")
-        self.assertTrue(MockOAuthSession().post().json.called)
-        self.assertTrue(MockOAuthSession().post.called)
-        # Test prod buy order equity
-        self.assertEqual(orders.place_equity_order(accountId=12345,
-                                                   symbol='ABC',
-                                                   orderAction='BUY',
-                                                   clientOrderId='1a2b3c',
-                                                   priceType='MARKET',
-                                                   quantity=100,
-                                                   orderTerm='GOOD_UNTIL_CANCEL',
-                                                   marketSession='REGULAR'),
-                         "{'accountId': '12345'}")
-        self.assertTrue(MockOAuthSession().post().json.called)
-        self.assertTrue(MockOAuthSession().post.called)
-        # Test prod buy order equity
+        # Test xml buy order equity
         self.assertEqual(orders.place_equity_order(resp_format='xml',
-                                                   accountId=12345,
+                                                   accountId='12345',
                                                    symbol='ABC',
                                                    orderAction='BUY',
                                                    clientOrderId='1a2b3c',
@@ -77,7 +54,34 @@ class TestETradeOrder(unittest.TestCase):
                                                    quantity=100,
                                                    orderTerm='GOOD_UNTIL_CANCEL',
                                                    marketSession='REGULAR'),
-                         "<xml> returns </xml>")
+                         ret_val)
+        #self.assertTrue(MockOAuthSession().post().json.called)
+        self.assertTrue(MockOAuthSession().post.called)
+        # Test OrderedDict buy order equity
+        self.assertEqual(orders.place_equity_order(accountId='12345',
+                                                   symbol='ABC',
+                                                   orderAction='BUY',
+                                                   clientOrderId='1a2b3c',
+                                                   priceType='MARKET',
+                                                   quantity=100,
+                                                   orderTerm='GOOD_UNTIL_CANCEL',
+                                                   marketSession='REGULAR')['PreviewOrderResponse']['PreviewIds']['previewId'],
+                         '321')
+        self.assertTrue(MockOAuthSession().post.called)
+        # Test json buy order equity
+        ret_val = { 'PreviewOrderResponse' : {'PreviewIds' : {'previewId' : 321 }}}
+
+        MockOAuthSession().post().json.return_value = ret_val
+        self.assertEqual(orders.place_equity_order(resp_format='json',
+                                                   accountId='12345',
+                                                   symbol='ABC',
+                                                   orderAction='BUY',
+                                                   clientOrderId='1a2b3c',
+                                                   priceType='MARKET',
+                                                   quantity=100,
+                                                   orderTerm='GOOD_UNTIL_CANCEL',
+                                                   marketSession='REGULAR'),
+                         ret_val)
         self.assertTrue(MockOAuthSession().post().json.called)
         self.assertTrue(MockOAuthSession().post.called)
 
@@ -92,9 +96,13 @@ class TestETradeOrder(unittest.TestCase):
         # Test exception class
         with self.assertRaises(order.OrderException):
             orders.place_equity_order()
+        try:
+            orders.place_equity_order()
+        except order.OrderException as e:
+            print(e)
         # Test STOP
         with self.assertRaises(order.OrderException):
-            orders.place_equity_order(accountId=12345,
+            orders.place_equity_order(accountId='12345',
                                       symbol='ABC',
                                       orderAction='BUY',
                                       clientOrderId='1a2b3c',
@@ -104,7 +112,7 @@ class TestETradeOrder(unittest.TestCase):
                                       marketSession='REGULAR')
         #Test LIMIT
         with self.assertRaises(order.OrderException):
-            orders.place_equity_order(accountId=12345,
+            orders.place_equity_order(accountId='12345',
                                       symbol='ABC',
                                       orderAction='BUY',
                                       clientOrderId='1a2b3c',
@@ -114,7 +122,7 @@ class TestETradeOrder(unittest.TestCase):
                                       marketSession='REGULAR')
         #Test STOP_LIMIT
         with self.assertRaises(order.OrderException):
-            orders.place_equity_order(accountId=12345,
+            orders.place_equity_order(accountId='12345',
                                       symbol='ABC',
                                       orderAction='BUY',
                                       clientOrderId='1a2b3c',
@@ -133,31 +141,29 @@ class TestETradeOrder(unittest.TestCase):
            param: MockOAuthSession
            type: mock.MagicMock
            description: MagicMock of OAuth1Session'''
-        MockOAuthSession().post().json.return_value = "{'accountId': '12345'}"
-        MockOAuthSession().post().text = r'<xml> returns </xml>'
+        MockOAuthSession().put().json.return_value = "{'accountId': '12345'}"
+        MockOAuthSession().put().text = r'<xml> returns </xml>'
         orders = order.ETradeOrder('abc123','xyz123','abctoken','xyzsecret', dev=False)
         # Prod
         self.assertEqual(
-            orders.cancel_order(12345, 42),
+            orders.cancel_order('12345', 42, resp_format='json'),
             "{'accountId': '12345'}"
             )
-        MockOAuthSession().post.assert_called_with(
-            ('https://etws.etrade.com'
-             '/order/rest/cancelorder.json'),
+        MockOAuthSession().put.assert_called_with(
+            ('https://api.etrade.com/v1/accounts'
+             '/12345/orders/cancel'),
             json={
-                'cancelOrder': {
-                    'cancelOrderRequest': {
-                        'accountId': 12345, 'orderNum': 42
-                        },
-                    '-xmlns': 'https://etws.etrade.com'
-                    }
-                }
+                    'CancelOrderRequest': {
+                        'orderId': 42
+                        }
+                },
+            timeout=30
             )
-        self.assertTrue(MockOAuthSession().post().json.called)
-        self.assertTrue(MockOAuthSession().post.called)
+        self.assertTrue(MockOAuthSession().put().json.called)
+        self.assertTrue(MockOAuthSession().put.called)
         self.assertEqual(
             orders.cancel_order(
-                12345,
+                '12345',
                 42,
                 resp_format='xml'
                 ),

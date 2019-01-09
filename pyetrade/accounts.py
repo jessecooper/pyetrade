@@ -46,11 +46,19 @@ class ETradeAccounts(object):
            rtype: str'''
 
         if dev:
-            uri = r'list'
-            api_url = '%s/%s.%s' % (self.base_url_dev, uri, resp_format)
+            if resp_format == 'json':
+                uri = r'list'
+                api_url = '%s/%s.%s' % (self.base_url_dev, uri, resp_format)
+            elif resp_format == 'xml':
+                uri = r'list'
+                api_url = '%s/%s' % (self.base_url_dev, uri)
         else:
-            uri = r'list'
-            api_url = '%s/%s.%s' % (self.base_url_prod, uri, resp_format)
+            if resp_format == 'json':
+                uri = r'list'
+                api_url = '%s/%s.%s' % (self.base_url_prod, uri, resp_format)
+            elif resp_format == 'xml':
+                uri = r'list'
+                api_url = '%s/%s' % (self.base_url_prod, uri)
 
         LOGGER.debug(api_url)
         req = self.session.get(api_url)
@@ -59,7 +67,8 @@ class ETradeAccounts(object):
 
         if resp_format == 'json':
             return req.json()
-        return req.text
+        else:
+            return jxmlease.parse(req.text)
 
     def get_account_balance(self, account_id, account_type=None, real_time=True,
             dev=True, resp_format='json'):

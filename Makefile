@@ -7,7 +7,7 @@ test:
 lint:
 	pylint pyetrade tests
 install:
-	pip3 install .
+	pip3 install --upgrade .
 dist:
 	python3 setup.py sdist
 clean:

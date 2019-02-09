@@ -6,10 +6,9 @@
 import sys
 import os
 import unittest
-from unittest.mock import patch
 import datetime as dt
 import xml.etree.ElementTree as ET
-sys.path.insert(0,os.path.expanduser('~/workspace/jessecooper/pyetrade'))
+from unittest.mock import patch
 from pyetrade import market
 
   
@@ -33,16 +32,12 @@ class TestETradeMarket(unittest.TestCase):
                             <LookupResponse>
                                 <Data><symbol>MMM</symbol><description>3M CO COM</description><type>EQUITY</type></Data>
                             </LookupResponse>'''
-#        ET_response = ET.fromstring(XML_response)
-        
         # Set Mock returns for resp_format=None
-        MockOAuthSession().get().return_value = XML_response
-#        MockOAuthSession().fromstring().return_value = ET_response
+        MockOAuthSession().get().text = XML_response
         mark = market.ETradeMarket('abc123', 'xyz123', 'abctoken', 'xyzsecret', dev=False)
         # Test Get Quote returning python list
         self.assertEqual(mark.look_up_product('mmm', resp_format=None), response )
         self.assertTrue(MockOAuthSession().get.called)
-        self.assertTrue(MockOAuthSession().fromstring.called)
         
         # Set Mock returns for resp_format=xml
         MockOAuthSession().get().return_value = XML_response
@@ -82,12 +77,11 @@ class TestETradeMarket(unittest.TestCase):
 #        ET_response = ET.fromstring(XML_response)
         
         # Set Mock returns for resp_format=None
-        MockOAuthSession().get().return_value = XML_response
+        MockOAuthSession().get().text = XML_response
 #        MockOAuthSession().fromstring().return_value = ET_response
         mark = market.ETradeMarket('abc123', 'xyz123', 'abctoken', 'xyzsecret', dev=False)
         self.assertEqual(mark.get_quote(['MMM'], resp_format=None), response)
         self.assertTrue(MockOAuthSession().get.called)
-        self.assertTrue(MockOAuthSession().fromstring.called)
         
         # Set Mock returns for resp_format=xml
         MockOAuthSession().get().return_value = XML_response
@@ -101,15 +95,6 @@ class TestETradeMarket(unittest.TestCase):
         self.assertRaises(AssertionError, mark.get_quote, ['MMM'], resp_format='idiot')
         
         # test the assertion failure of detail_flag, requireEarningsDate, skipMiniOptionsCheck
-        
-        # Test log message if more than 25 quotes are requested
-        # Generate 30 symbols; response should only be 25 symbols
-        symbols = 30*['MMM']
-        retn = 25*[response]
-        MockOAuthSession().get().return_value = retn
-        self.assertEqual(mark.get_quote(symbols, resp_format=None), retn)
-        self.assertTrue(MockOAuthSession().get.called)
-        
         
     # Mock out OAuth1Session
     @patch('pyetrade.market.OAuth1Session')
@@ -126,25 +111,20 @@ class TestETradeMarket(unittest.TestCase):
                            <OptionGreeks><iv>0.435700</iv></OptionGreeks></Call>
                            </OptionPair></OptionChainResponse>
                         '''
-#        ET_response = ET.fromstring(XML_response)
-        
+
         # Set Mock returns for resp_format=None
-        MockOAuthSession().get().return_value = XML_response
-#        MockOAuthSession().fromstring().return_value = ET_response
+        MockOAuthSession().get().text = XML_response
         mark = market.ETradeMarket('abc123', 'xyz123', 'abctoken', 'xyzsecret', dev=False)
         self.assertEqual(mark.get_option_chains('AAPL', expiry_date=dt.date(2019, 2, 15), resp_format=None), response)
         self.assertTrue(MockOAuthSession().get.called)
-        self.assertTrue(MockOAuthSession().fromstring.called)
         
         # Set Mock returns for resp_format=xml
-        MockOAuthSession().get().return_value = XML_response
+        MockOAuthSession().get().text = XML_response
         mark = market.ETradeMarket('abc123', 'xyz123', 'abctoken', 'xyzsecret', dev=False)
         self.assertEqual(mark.get_option_chains('AAPL', expiry_date=dt.date(2019, 2, 15), resp_format='xml'), XML_response)
         self.assertTrue(MockOAuthSession().get.called)
         
         # test the assertion failure of chainType, optionCategory, priceType, skipAdjusted
-            # Mock out OAuth1Session
-            
             
     @patch('pyetrade.market.OAuth1Session')
     def test_get_option_expire_date(self, MockOAuthSession):
@@ -160,18 +140,14 @@ class TestETradeMarket(unittest.TestCase):
                           <ExpirationDate><year>2019</year><month>1</month><day>25</day><expiryType>WEEKLY</expiryType></ExpirationDate>
                           </OptionExpireDateResponse>
                        '''
- #       ET_response = ET.fromstring(XML_response)
-        
         # Set Mock returns for resp_format=None
-        MockOAuthSession().get().return_value = XML_response
-#        MockOAuthSession().fromstring().return_value = ET_response
+        MockOAuthSession().get().text = XML_response
         mark = market.ETradeMarket('abc123', 'xyz123', 'abctoken', 'xyzsecret', dev=False)
         self.assertEqual(mark.get_option_expire_date('AAPL', resp_format=None), response)
         self.assertTrue(MockOAuthSession().get.called)
-        self.assertTrue(MockOAuthSession().fromstring.called)
         
         # Set Mock returns for resp_format=xml
-        MockOAuthSession().get().return_value = XML_response
+        MockOAuthSession().get().text = XML_response
         mark = market.ETradeMarket('abc123', 'xyz123', 'abctoken', 'xyzsecret', dev=False)
         self.assertEqual(mark.get_option_expire_date('AAPL', resp_format='xml'), XML_response)
         self.assertTrue(MockOAuthSession().get.called)

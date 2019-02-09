@@ -161,8 +161,11 @@ class ETradeMarket(object):
         assert detail_flag in ('fundamental','intraday','options','week_52','all','mf_detail', None)
         assert requireEarningsDate in (True, False, None)
         assert skipMiniOptionsCheck in (True, False, None)
-        assert isinstance(symbols,list)
-        if len(symbols) > 25: LOGGER.warning('get_quote asked for %d requests; only first 25 returned' % len(symbols))
+        assert isinstance(symbols, list)
+        if len(symbols) > 25: 
+            LOGGER.warning(
+                'get_quote asked for %d requests; only first 25 returned' % len(symbols)
+            )
         
         args = list()
         if detail_flag is not None:

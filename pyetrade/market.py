@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 
-'''Market - ETrade Market API V1
+"""Market - ETrade Market API V1
 
     Generally, three different types of response that one can get from these routines are based on the requested resp_format
         * None - return a python object
@@ -20,19 +20,28 @@
     OR all inclusive:
         (option_dates,option_chains) = me.get_all_option_chains('aapl')
     
-'''
+"""
 
 import logging
 import datetime as dt
 import xml.etree.ElementTree as ET
 from requests_oauthlib import OAuth1Session
+
 LOGGER = logging.getLogger(__name__)
 
 
 class ETradeMarket(object):
-    '''ETradeMarket'''
-    def __init__(self, client_key, client_secret, resource_owner_key, resource_owner_secret, dev=True):
-        '''__init__(client_key, client_secret, resource_owner_key, resource_owner_secret, dev=True)
+    """ETradeMarket"""
+
+    def __init__(
+        self,
+        client_key,
+        client_secret,
+        resource_owner_key,
+        resource_owner_secret,
+        dev=True,
+    ):
+        """__init__(client_key, client_secret, resource_owner_key, resource_owner_secret, dev=True)
         
             This is the object initialization routine, which simply sets the various variables to be
             used by the rest of the methods and constructs the OAuth1Session.
@@ -57,28 +66,31 @@ class ETradeMarket(object):
             type: boolean
             description: use the sandbox environment (True) or live (False)
             
-        '''
+        """
         self.client_key = client_key
         self.client_secret = client_secret
         self.resource_owner_key = resource_owner_key
         self.resource_owner_secret = resource_owner_secret
         self.dev_environment = dev
-        suffix = ('apisb' if dev else 'api')
-        self.base_url = r'https://%s.etrade.com/v1/market/' % suffix
-        self.session = OAuth1Session(self.client_key,
-                                     self.client_secret,
-                                     self.resource_owner_key,
-                                     self.resource_owner_secret,
-                                     signature_type='AUTH_HEADER')
-        
+        suffix = "apisb" if dev else "api"
+        self.base_url = r"https://%s.etrade.com/v1/market/" % suffix
+        self.session = OAuth1Session(
+            self.client_key,
+            self.client_secret,
+            self.resource_owner_key,
+            self.resource_owner_secret,
+            signature_type="AUTH_HEADER",
+        )
+
     def __str__(self):
-        ret = [ 'Use development environment: %s' % self.dev_environment,
-                'base URL: %s' % self.base_url
-                ]
-        return '\n'.join(ret)
+        ret = [
+            "Use development environment: %s" % self.dev_environment,
+            "base URL: %s" % self.base_url,
+        ]
+        return "\n".join(ret)
 
     def look_up_product(self, search_str, resp_format=None):
-        '''look_up_product(company, search_str, resp_format=None)
+        """look_up_product(company, search_str, resp_format=None)
         
            param: search_str
            type: str
@@ -91,30 +103,37 @@ class ETradeMarket(object):
            type: 'xml' or None
            description: Response format xml or None (python object)
            
-           '''
-           
-        assert resp_format in ('xml',None)
-        api_url = self.base_url + 'lookup/%s' % search_str
+           """
+
+        assert resp_format in ("xml", None)
+        api_url = self.base_url + "lookup/%s" % search_str
         LOGGER.debug(api_url)
         req = self.session.get(api_url)
         req.raise_for_status()
         LOGGER.debug(req.text)
-        
-        if resp_format=='xml':
+
+        if resp_format == "xml":
             return req.text
         else:
             try:
                 root = ET.fromstring(req.text)
             except:
                 raise
-            
+
             rtn = list()
-            for a in root.findall('Data'):
-                rtn.append({i.tag:i.text for i in a.getchildren() })
+            for a in root.findall("Data"):
+                rtn.append({i.tag: i.text for i in a.getchildren()})
             return rtn
 
-    def get_quote(self, symbols, resp_format=None, detail_flag=None, requireEarningsDate=None, skipMiniOptionsCheck=None):
-        ''' get_quote(symbols, resp_format=None, detail_flag=None, requireEarningsDate=None, skipMiniOptionsCheck=None)
+    def get_quote(
+        self,
+        symbols,
+        resp_format=None,
+        detail_flag=None,
+        requireEarningsDate=None,
+        skipMiniOptionsCheck=None,
+    ):
+        """ get_quote(symbols, resp_format=None, detail_flag=None, requireEarningsDate=None, skipMiniOptionsCheck=None)
         
             Get quote data on all symbols provided in the list args.
             the eTrade API is limited to 25 requests per call. Issue
@@ -155,49 +174,57 @@ class ETradeMarket(object):
                 Symbols for options are more complex, consisting of six elements separated
                 by colons, in this format:
                 underlier:year:month:day:optionType:strikePrice
-            '''
-            
-        assert resp_format in ('xml', None)
-        assert detail_flag in ('fundamental','intraday','options','week_52','all','mf_detail', None)
+            """
+
+        assert resp_format in ("xml", None)
+        assert detail_flag in (
+            "fundamental",
+            "intraday",
+            "options",
+            "week_52",
+            "all",
+            "mf_detail",
+            None,
+        )
         assert requireEarningsDate in (True, False, None)
         assert skipMiniOptionsCheck in (True, False, None)
         assert isinstance(symbols, list)
-        if len(symbols) > 25: 
+        if len(symbols) > 25:
             LOGGER.warning(
-                'get_quote asked for %d requests; only first 25 returned' % len(symbols)
+                "get_quote asked for %d requests; only first 25 returned" % len(symbols)
             )
-        
+
         args = list()
         if detail_flag is not None:
-            args.append('detailflag=%s'%detail_flag.upper())
+            args.append("detailflag=%s" % detail_flag.upper())
         if requireEarningsDate:
-            args.append('requireEarningsDate=true')
+            args.append("requireEarningsDate=true")
         if skipMiniOptionsCheck is not None:
-            args.append('skipMiniOptionsCheck=%s'%str(skipMiniOptionsCheck))
-        
-        api_url = self.base_url + 'quote/' + ','.join(symbols[:25])
+            args.append("skipMiniOptionsCheck=%s" % str(skipMiniOptionsCheck))
+
+        api_url = self.base_url + "quote/" + ",".join(symbols[:25])
         if len(args):
-            api_url += '?' + '&'.join(args)
+            api_url += "?" + "&".join(args)
         LOGGER.debug(api_url)
-        
+
         req = self.session.get(api_url)
         req.raise_for_status()
         LOGGER.debug(req.text)
 
-# decoding XML if "all" requested
-        if resp_format == 'xml':
+        # decoding XML if "all" requested
+        if resp_format == "xml":
             return req.text
         else:
             try:
                 root = ET.fromstring(req.text)
             except:
                 raise
-            
+
             rtn = list()
-            for a in root.findall('QuoteData'):
-                this_rtn = { j.tag: j.text for j in a.find('Product') }
-                this_rtn['dateTimeUTC'] = int(a.find('dateTimeUTC').text)
-                for j in a.find('All').getchildren():
+            for a in root.findall("QuoteData"):
+                this_rtn = {j.tag: j.text for j in a.find("Product")}
+                this_rtn["dateTimeUTC"] = int(a.find("dateTimeUTC").text)
+                for j in a.find("All").getchildren():
                     try:
                         this_rtn[j.tag] = float(j.text)
                     except:
@@ -206,7 +233,7 @@ class ETradeMarket(object):
             return rtn
 
     def get_all_option_chains(self, underlier):
-        ''' Returns the all the option chains for the underlier with expiration_dates as the key.
+        """ Returns the all the option chains for the underlier with expiration_dates as the key.
             This requires two calls, one to get_option_expire_date, then
             to get all the expiration_dates and multiple calls to get_option_chains with defaults.
         
@@ -214,11 +241,9 @@ class ETradeMarket(object):
             type: str
             description: market symbol
             
-        '''
+        """
         try:
-            expiration_dates = self.get_option_expire_date(
-                underlier, resp_format=None
-            )
+            expiration_dates = self.get_option_expire_date(underlier, resp_format=None)
         except:
             raise
         rtn = dict()
@@ -229,9 +254,19 @@ class ETradeMarket(object):
 
         return rtn
 
-    def get_option_chains(self, underlier, expiry_date, skipAdjusted=None, chainType=None, resp_format=None,
-                          strikePriceNear=None, noOfStrikes=None, optionCategory=None, priceType=None):
-        ''' get_optionchains(underlier, expiry_date=None, skipAdjusted=None, chainType=None, resp_format=None,
+    def get_option_chains(
+        self,
+        underlier,
+        expiry_date,
+        skipAdjusted=None,
+        chainType=None,
+        resp_format=None,
+        strikePriceNear=None,
+        noOfStrikes=None,
+        optionCategory=None,
+        priceType=None,
+    ):
+        """ get_optionchains(underlier, expiry_date=None, skipAdjusted=None, chainType=None, resp_format=None,
                              strikePriceNear=None, noOfStrikes=None, optionCategory=None, priceType=None)
         
             Returns the option chain information for the requested expiry_date and chaintype in the desired format.
@@ -272,62 +307,73 @@ class ETradeMarket(object):
             Sample Request
             GET https://api.etrade.com/v1/market/optionchains?expiryDay=03&expiryMonth=04&expiryYear=2011&chainType=PUT&skipAdjusted=true&symbol=GOOGL
 
-        '''
-        assert resp_format in ('xml', None)
-        assert chainType in ('put', 'call', 'callput', None)
-        assert optionCategory in ('standard', 'all', 'mini', None)
-        assert priceType in ('atmn', 'all', None)
+        """
+        assert resp_format in ("xml", None)
+        assert chainType in ("put", "call", "callput", None)
+        assert optionCategory in ("standard", "all", "mini", None)
+        assert priceType in ("atmn", "all", None)
         assert skipAdjusted in (True, False, None)
-        
-        args = ['symbol=%s' % underlier ]
+
+        args = ["symbol=%s" % underlier]
         if expiry_date is not None:
-            args.append('expiryDay=%02d&expiryMonth=%02d&expiryYear=%04d' % (expiry_date.day, expiry_date.month, expiry_date.year))
+            args.append(
+                "expiryDay=%02d&expiryMonth=%02d&expiryYear=%04d"
+                % (expiry_date.day, expiry_date.month, expiry_date.year)
+            )
         if strikePriceNear is not None:
-            args.append('strikePriceNear=%0.2f' % strikePriceNear)
+            args.append("strikePriceNear=%0.2f" % strikePriceNear)
         if chainType is not None:
-            args.append('chainType=%s' % chainType.upper())
+            args.append("chainType=%s" % chainType.upper())
         if optionCategory is not None:
-            args.append('optionCategory=%s' % optionCategory.upper())
+            args.append("optionCategory=%s" % optionCategory.upper())
         if priceType is not None:
-            args.append('priceType=%s' % priceType.upper())
+            args.append("priceType=%s" % priceType.upper())
         if skipAdjusted is not None:
-            args.append('skipAdjusted=%s' % str(skipAdjusted))
+            args.append("skipAdjusted=%s" % str(skipAdjusted))
         if noOfStrikes is not None:
-            args.append('noOfStrikes=%d' % noOfStrikes.upper())
-        api_url = self.base_url + 'optionchains?' + '&'.join(args)
-        
+            args.append("noOfStrikes=%d" % noOfStrikes.upper())
+        api_url = self.base_url + "optionchains?" + "&".join(args)
+
         req = self.session.get(api_url)
         req.raise_for_status()
         LOGGER.debug(api_url)
         LOGGER.debug(req.text)
 
-        if resp_format=='xml':
+        if resp_format == "xml":
             return req.text
         else:
             try:
                 root = ET.fromstring(req.text)
             except:
                 raise
-            
-# should be put and calls in the OptionPair leaves
+
+            # should be put and calls in the OptionPair leaves
             rtn = list()
-            for pair in root.findall('OptionPair'):
+            for pair in root.findall("OptionPair"):
                 for a in pair.getchildren():
-                    b = {i.tag:i.text for i in a.getchildren() }
-                    for x in ('timeStamp','volume','askSize','bidSize','openInterest'): b[x] = int(b[x])
-                    for x in ('bid','ask','strikePrice','netChange','lastPrice'): b[x] = float(b[x])
+                    b = {i.tag: i.text for i in a.getchildren()}
+                    for x in (
+                        "timeStamp",
+                        "volume",
+                        "askSize",
+                        "bidSize",
+                        "openInterest",
+                    ):
+                        b[x] = int(b[x])
+                    for x in ("bid", "ask", "strikePrice", "netChange", "lastPrice"):
+                        b[x] = float(b[x])
                     greeks = dict()
-                    for i in a.find('OptionGreeks'):
+                    for i in a.find("OptionGreeks"):
                         try:
                             greeks[i.tag] = float(i.text)
                         except:
                             pass
-                    b['OptionGreeks'] = greeks
+                    b["OptionGreeks"] = greeks
                     rtn.append(b)
             return rtn
 
     def get_option_expire_date(self, underlier, resp_format=None):
-        ''' get_option_expiry_dates(underlier, resp_format=None)
+        """ get_option_expiry_dates(underlier, resp_format=None)
         
             If resp_format is None, return a list of datetime.date objects for the underlier, as returned by the Etrade API.
             Otherwise, return the XML or JSON text as appropriate for resp_format.
@@ -357,27 +403,36 @@ class ETradeMarket(object):
                 for this_one in r:
                     q = {a.tag: a.text for a in this_one.getchildren()}
                     date_list.append(dt.date(int(q['year']), int(q['month']), int(q['day'])))
-        '''
+        """
 
-        assert resp_format in (None,'xml')
-        api_url = self.base_url + 'optionexpiredate?symbol=%s&expiryType=ALL' % underlier
+        assert resp_format in (None, "xml")
+        api_url = (
+            self.base_url + "optionexpiredate?symbol=%s&expiryType=ALL" % underlier
+        )
         LOGGER.debug(api_url)
-        
+
         req = self.session.get(api_url)
         req.raise_for_status()
         LOGGER.debug(req.text)
-        
-        if resp_format=='xml':
+
+        if resp_format == "xml":
             return req.text
         else:
             dates = list()
             try:
                 root = ET.fromstring(req.text)
             except Exception as err:
-                LOGGER.error('XML parsing %s text %s failed\n%s', underlier, req.text, err)
+                LOGGER.error(
+                    "XML parsing %s text %s failed\n%s", underlier, req.text, err
+                )
                 raise
-            for a in root.findall('ExpirationDate'):
-                this_date = { i.tag: i.text for i in a.getchildren() }
-                dates.append(dt.date(int(this_date['year']), int(this_date['month']), int(this_date['day'])))
+            for a in root.findall("ExpirationDate"):
+                this_date = {i.tag: i.text for i in a.getchildren()}
+                dates.append(
+                    dt.date(
+                        int(this_date["year"]),
+                        int(this_date["month"]),
+                        int(this_date["day"]),
+                    )
+                )
             return dates
-    

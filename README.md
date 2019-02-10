@@ -64,7 +64,10 @@ accounts.list_accounts()
 ```
 * Lint  
 ```
-make lint #Lint score should be >=8
+# Run Black
+black pyetrade/
+# Run Linter
+pylint pyetrade/  #Lint score should be >=8
 ```
 * Test  
 ```

@@ -22,10 +22,10 @@
     
 '''
 
-import datetime as dt
-from requests_oauthlib import OAuth1Session
-import xml.etree.ElementTree as ET
 import logging
+import datetime as dt
+import xml.etree.ElementTree as ET
+from requests_oauthlib import OAuth1Session
 LOGGER = logging.getLogger(__name__)
 
 
@@ -216,12 +216,17 @@ class ETradeMarket(object):
             
         '''
         try:
-            expiration_dates = self.get_option_expire_date(underlier,resp_format=None)
+            expiration_dates = self.get_option_expire_date(
+                underlier, resp_format=None
+            )
         except:
             raise
         rtn = dict()
         for this_expiry_date in expiration_dates:
-           rtn[this_expiry_date] = self.get_option_chains(underlier, this_expiry_date, resp_format=None)
+            rtn[this_expiry_date] = self.get_option_chains(
+                underlier, this_expiry_date, resp_format=None
+            )
+
         return rtn
 
     def get_option_chains(self, underlier, expiry_date, skipAdjusted=None, chainType=None, resp_format=None,

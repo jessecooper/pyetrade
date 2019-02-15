@@ -2,10 +2,6 @@
 
 '''Market - ETrade Market API V1
 
-    Generally, three different types of response that one can get from these routines are based on the requested resp_format
-        * None - return a python object
-        * XML - return XML text straight from the Etrade API
-
     Calling sequence to get all option chains for a particular month
     me = pyetrade.market.ETradeMarket(
                     consumer_key,
@@ -14,8 +10,8 @@
                     tokens['oauth_token_secret'],
                     dev = False)
     
-    option_dates = me.get_option_expire_date('aapl', None)
-    option_chains = me.get_option_chains('aapl', None)
+    option_dates = me.get_option_expire_date('aapl')
+    option_chains = me.get_option_chains('aapl')
     
     OR all inclusive:
         (option_dates,option_chains) = me.get_all_option_chains('aapl')
@@ -77,8 +73,8 @@ class ETradeMarket(object):
                 ]
         return '\n'.join(ret)
 
-    def look_up_product(self, search_str, resp_format=None):
-        '''look_up_product(company, search_str, resp_format=None)
+    def look_up_product(self, search_str):
+        '''look_up_product(company, search_str)
         
            param: search_str
            type: str
@@ -87,42 +83,30 @@ class ETradeMarket(object):
            such as company, industry and systems and generally
            skips punctuation.
            
-           param: resp_format
-           type: 'xml' or None
-           description: Response format xml or None (python object)
-           
            '''
            
-        assert resp_format in ('xml',None)
         api_url = self.base_url + 'lookup/%s' % search_str
         LOGGER.debug(api_url)
         req = self.session.get(api_url)
         req.raise_for_status()
         LOGGER.debug(req.text)
-        
-        if resp_format=='xml':
-            return req.text
-        else:
-            try:
-                root = ET.fromstring(req.text)
-            except:
-                raise
-            
-            rtn = list()
-            for a in root.findall('Data'):
-                rtn.append({i.tag:i.text for i in a.getchildren() })
-            return rtn
 
-    def get_quote(self, symbols, resp_format=None, detail_flag=None, requireEarningsDate=None, skipMiniOptionsCheck=None):
-        ''' get_quote(symbols, resp_format=None, detail_flag=None, requireEarningsDate=None, skipMiniOptionsCheck=None)
+        try:
+            root = ET.fromstring(req.text)
+        except:
+            raise
+        
+        rtn = list()
+        for a in root.findall('Data'):
+            rtn.append({i.tag:i.text for i in a.getchildren() })
+        return rtn
+
+    def get_quote(self, symbols, detail_flag=None, requireEarningsDate=None, skipMiniOptionsCheck=None):
+        ''' get_quote(symbols, detail_flag=None, requireEarningsDate=None, skipMiniOptionsCheck=None)
         
             Get quote data on all symbols provided in the list args.
             the eTrade API is limited to 25 requests per call. Issue
             warning if more than 25 are requested. Only process the first 25.
-        
-            param: resp_format
-            type: 'json', 'xml' or None
-            description: Response format JSON text, XML test, or None for python object
         
             param: skipMiniOptionsCheck
             type: True, False, None
@@ -156,12 +140,11 @@ class ETradeMarket(object):
                 by colons, in this format:
                 underlier:year:month:day:optionType:strikePrice
             '''
-            
-        assert resp_format in ('xml', None)
+
         assert detail_flag in ('fundamental','intraday','options','week_52','all','mf_detail', None)
         assert requireEarningsDate in (True, False, None)
         assert skipMiniOptionsCheck in (True, False, None)
-        assert isinstance(symbols,list)
+        assert isinstance(symbols,list or tuple)
         if len(symbols) > 25: LOGGER.warning('get_quote asked for %d requests; only first 25 returned' % len(symbols))
         
         args = list()
@@ -181,26 +164,22 @@ class ETradeMarket(object):
         req.raise_for_status()
         LOGGER.debug(req.text)
 
-# decoding XML if "all" requested
-        if resp_format == 'xml':
-            return req.text
-        else:
-            try:
-                root = ET.fromstring(req.text)
-            except:
-                raise
-            
-            rtn = list()
-            for a in root.findall('QuoteData'):
-                this_rtn = { j.tag: j.text for j in a.find('Product') }
-                this_rtn['dateTimeUTC'] = int(a.find('dateTimeUTC').text)
-                for j in a.find('All').getchildren():
-                    try:
-                        this_rtn[j.tag] = float(j.text)
-                    except:
-                        this_rtn[j.tag] = j.text
-                rtn.append(this_rtn)
-            return rtn
+        try:
+            root = ET.fromstring(req.text)
+        except:
+            raise
+        
+        rtn = list()
+        for a in root.findall('QuoteData'):
+            this_rtn = { j.tag: j.text for j in a.find('Product') }
+            this_rtn['dateTimeUTC'] = int(a.find('dateTimeUTC').text)
+            for j in a.find('All').getchildren():
+                try:
+                    this_rtn[j.tag] = float(j.text)
+                except:
+                    this_rtn[j.tag] = j.text
+            rtn.append(this_rtn)
+        return rtn
 
     def get_all_option_chains(self, underlier):
         ''' Returns the all the option chains for the underlier with expiration_dates as the key.
@@ -213,17 +192,17 @@ class ETradeMarket(object):
             
         '''
         try:
-            expiration_dates = self.get_option_expire_date(underlier,resp_format=None)
+            expiration_dates = self.get_option_expire_date(underlier)
         except:
             raise
         rtn = dict()
         for this_expiry_date in expiration_dates:
-           rtn[this_expiry_date] = self.get_option_chains(underlier, this_expiry_date, resp_format=None)
+           rtn[this_expiry_date] = self.get_option_chains(underlier, this_expiry_date)
         return rtn
 
-    def get_option_chains(self, underlier, expiry_date, skipAdjusted=None, chainType=None, resp_format=None,
+    def get_option_chains(self, underlier, expiry_date, skipAdjusted=None, chainType=None,
                           strikePriceNear=None, noOfStrikes=None, optionCategory=None, priceType=None):
-        ''' get_optionchains(underlier, expiry_date=None, skipAdjusted=None, chainType=None, resp_format=None,
+        ''' get_optionchains(underlier, expiry_date=None, skipAdjusted=None, chainType=None,
                              strikePriceNear=None, noOfStrikes=None, optionCategory=None, priceType=None)
         
             Returns the option chain information for the requested expiry_date and chaintype in the desired format.
@@ -257,15 +236,10 @@ class ETradeMarket(object):
             description: Specifies whether to show (TRUE) or not show (FALSE) adjusted options, i.e., options 
                         that have undergone a change resulting in a modification of the option contract.
            
-            param: resp_format
-            type: 'json', 'xml' or None
-            description: Response format json, xml, or None (python object)
-           
             Sample Request
             GET https://api.etrade.com/v1/market/optionchains?expiryDay=03&expiryMonth=04&expiryYear=2011&chainType=PUT&skipAdjusted=true&symbol=GOOGL
 
         '''
-        assert resp_format in ('xml', None)
         assert chainType in ('put', 'call', 'callput', None)
         assert optionCategory in ('standard', 'all', 'mini', None)
         assert priceType in ('atmn', 'all', None)
@@ -293,36 +267,30 @@ class ETradeMarket(object):
         LOGGER.debug(api_url)
         LOGGER.debug(req.text)
 
-        if resp_format=='xml':
-            return req.text
-        else:
-            try:
-                root = ET.fromstring(req.text)
-            except:
-                raise
+        try:
+            root = ET.fromstring(req.text)
+        except:
+            raise
             
 # should be put and calls in the OptionPair leaves
-            rtn = list()
-            for pair in root.findall('OptionPair'):
-                for a in pair.getchildren():
-                    b = {i.tag:i.text for i in a.getchildren() }
-                    for x in ('timeStamp','volume','askSize','bidSize','openInterest'): b[x] = int(b[x])
-                    for x in ('bid','ask','strikePrice','netChange','lastPrice'): b[x] = float(b[x])
-                    greeks = dict()
-                    for i in a.find('OptionGreeks'):
-                        try:
-                            greeks[i.tag] = float(i.text)
-                        except:
-                            pass
-                    b['OptionGreeks'] = greeks
-                    rtn.append(b)
-            return rtn
+        rtn = list()
+        for pair in root.findall('OptionPair'):
+            for a in pair.getchildren():
+                b = {i.tag:i.text for i in a.getchildren() }
+                for x in ('timeStamp','volume','askSize','bidSize','openInterest'): b[x] = int(b[x])
+                for x in ('bid','ask','strikePrice','netChange','lastPrice'): b[x] = float(b[x])
+                greeks = dict()
+                for i in a.find('OptionGreeks'):
+                    try:
+                        greeks[i.tag] = float(i.text)
+                    except:
+                        pass
+                b['OptionGreeks'] = greeks
+                rtn.append(b)
+        return rtn
 
-    def get_option_expire_date(self, underlier, resp_format=None):
-        ''' get_option_expiry_dates(underlier, resp_format=None)
-        
-            If resp_format is None, return a list of datetime.date objects for the underlier, as returned by the Etrade API.
-            Otherwise, return the XML or JSON text as appropriate for resp_format.
+    def get_option_expire_date(self, underlier):
+        ''' get_option_expiry_dates(underlier)
             
             JSON formatted return does not work as documented.
             However, the XML formatted response correctly returns the weekly and monthly option dates
@@ -330,10 +298,6 @@ class ETradeMarket(object):
             param: underlier
             type: str
             description: market symbol
-           
-            param: resp_format
-            type: 'json', 'xml' or None
-            description: Response format json, xml, or None (python object)
            
             https://api.etrade.com/v1/market/optionexpiredate?symbol={symbol}
                 
@@ -351,7 +315,6 @@ class ETradeMarket(object):
                     date_list.append(dt.date(int(q['year']), int(q['month']), int(q['day'])))
         '''
 
-        assert resp_format in (None,'xml')
         api_url = self.base_url + 'optionexpiredate?symbol=%s&expiryType=ALL' % underlier
         LOGGER.debug(api_url)
         
@@ -359,17 +322,14 @@ class ETradeMarket(object):
         req.raise_for_status()
         LOGGER.debug(req.text)
         
-        if resp_format=='xml':
-            return req.text
-        else:
-            dates = list()
-            try:
-                root = ET.fromstring(req.text)
-            except Exception as err:
-                LOGGER.error('XML parsing %s text %s failed\n%s', underlier, req.text, err)
-                raise
-            for a in root.findall('ExpirationDate'):
-                this_date = { i.tag: i.text for i in a.getchildren() }
-                dates.append(dt.date(int(this_date['year']), int(this_date['month']), int(this_date['day'])))
-            return dates
+        dates = list()
+        try:
+            root = ET.fromstring(req.text)
+        except Exception as err:
+            LOGGER.error('XML parsing %s text %s failed\n%s', underlier, req.text, err)
+            raise
+        for a in root.findall('ExpirationDate'):
+            this_date = { i.tag: i.text for i in a.getchildren() }
+            dates.append(dt.date(int(this_date['year']), int(this_date['month']), int(this_date['day'])))
+        return dates
     

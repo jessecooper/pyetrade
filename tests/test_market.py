@@ -3,13 +3,9 @@
    TODO:
        * lint
 '''
-import sys
-import os
 import unittest
 from unittest.mock import patch
 import datetime as dt
-import xml.etree.ElementTree as ET
-sys.path.insert(0,os.path.expanduser('~/workspace/jessecooper/pyetrade'))
 from pyetrade import market
 
   
@@ -24,8 +20,6 @@ class TestETradeMarket(unittest.TestCase):
            type: mock.MagicMock
            description: MagicMock of OAuth1Session
            
-           3 tests based on resp_format = (None,'xml')
-           test exception raised when resp_format is something different from two choices
         '''
            
         response = [{'symbol': 'MMM', 'description': '3M CO COM', 'type': 'EQUITY'}]
@@ -33,27 +27,13 @@ class TestETradeMarket(unittest.TestCase):
                             <LookupResponse>
                                 <Data><symbol>MMM</symbol><description>3M CO COM</description><type>EQUITY</type></Data>
                             </LookupResponse>'''
-#        ET_response = ET.fromstring(XML_response)
         
-        # Set Mock returns for resp_format=None
         MockOAuthSession().get().return_value = XML_response
-#        MockOAuthSession().fromstring().return_value = ET_response
         mark = market.ETradeMarket('abc123', 'xyz123', 'abctoken', 'xyzsecret', dev=False)
         # Test Get Quote returning python list
-        self.assertEqual(mark.look_up_product('mmm', resp_format=None), response )
+        self.assertEqual(mark.look_up_product('mmm'), response )
         self.assertTrue(MockOAuthSession().get.called)
         self.assertTrue(MockOAuthSession().fromstring.called)
-        
-        # Set Mock returns for resp_format=xml
-        MockOAuthSession().get().return_value = XML_response
-        mark = market.ETradeMarket('abc123', 'xyz123', 'abctoken', 'xyzsecret', dev=False)
-        # Test Get Quote returning xml
-        self.assertEqual(mark.look_up_product('mmm', resp_format='xml'), XML_response)
-        self.assertTrue(MockOAuthSession().get.called)
-        
-        # test exception when wrong resp_format supplied
-        mark = market.ETradeMarket('abc123', 'xyz123', 'abctoken', 'xyzsecret', dev=False)
-        self.assertRaises(AssertionError, mark.look_up_product, 'mmm', resp_format='idiot')
         
         
     # Mock out OAuth1Session
@@ -64,7 +44,7 @@ class TestETradeMarket(unittest.TestCase):
            type: mock.MagicMock
            description: MagicMock of OAuth1Session
         '''
-           
+        
         response =  [ {'securityType': 'EQ',
                        'symbol': 'MMM',
                        'dateTimeUTC': 1546545180,
@@ -79,27 +59,13 @@ class TestETradeMarket(unittest.TestCase):
                             <Product><securityType>EQ</securityType><symbol>MMM</symbol></Product>
                             </QuoteData></QuoteResponse>
                          '''
-#        ET_response = ET.fromstring(XML_response)
-        
-        # Set Mock returns for resp_format=None
+                         
         MockOAuthSession().get().return_value = XML_response
-#        MockOAuthSession().fromstring().return_value = ET_response
         mark = market.ETradeMarket('abc123', 'xyz123', 'abctoken', 'xyzsecret', dev=False)
-        self.assertEqual(mark.get_quote(['MMM'], resp_format=None), response)
+        self.assertEqual(mark.get_quote(['MMM']), response)
         self.assertTrue(MockOAuthSession().get.called)
         self.assertTrue(MockOAuthSession().fromstring.called)
-        
-        # Set Mock returns for resp_format=xml
-        MockOAuthSession().get().return_value = XML_response
-        mark = market.ETradeMarket('abc123', 'xyz123', 'abctoken', 'xyzsecret', dev=False)
-        # Test prod Get Qoute xml
-        self.assertEqual(mark.get_quote(['MMM'], resp_format='xml'), XML_response)
-        self.assertTrue(MockOAuthSession().get.called)
-
-        # test exception when wrong resp_format supplied
-        mark = market.ETradeMarket('abc123', 'xyz123', 'abctoken', 'xyzsecret', dev=False)
-        self.assertRaises(AssertionError, mark.get_quote, ['MMM'], resp_format='idiot')
-        
+                
         # test the assertion failure of detail_flag, requireEarningsDate, skipMiniOptionsCheck
         
         # Test log message if more than 25 quotes are requested
@@ -107,7 +73,7 @@ class TestETradeMarket(unittest.TestCase):
         symbols = 30*['MMM']
         retn = 25*[response]
         MockOAuthSession().get().return_value = retn
-        self.assertEqual(mark.get_quote(symbols, resp_format=None), retn)
+        self.assertEqual(mark.get_quote(symbols), retn)
         self.assertTrue(MockOAuthSession().get.called)
         
         
@@ -126,24 +92,12 @@ class TestETradeMarket(unittest.TestCase):
                            <OptionGreeks><iv>0.435700</iv></OptionGreeks></Call>
                            </OptionPair></OptionChainResponse>
                         '''
-#        ET_response = ET.fromstring(XML_response)
-        
-        # Set Mock returns for resp_format=None
+                        
         MockOAuthSession().get().return_value = XML_response
-#        MockOAuthSession().fromstring().return_value = ET_response
         mark = market.ETradeMarket('abc123', 'xyz123', 'abctoken', 'xyzsecret', dev=False)
-        self.assertEqual(mark.get_option_chains('AAPL', expiry_date=dt.date(2019, 2, 15), resp_format=None), response)
+        self.assertEqual(mark.get_option_chains('AAPL', expiry_date=dt.date(2019, 2, 15)), response)
         self.assertTrue(MockOAuthSession().get.called)
         self.assertTrue(MockOAuthSession().fromstring.called)
-        
-        # Set Mock returns for resp_format=xml
-        MockOAuthSession().get().return_value = XML_response
-        mark = market.ETradeMarket('abc123', 'xyz123', 'abctoken', 'xyzsecret', dev=False)
-        self.assertEqual(mark.get_option_chains('AAPL', expiry_date=dt.date(2019, 2, 15), resp_format='xml'), XML_response)
-        self.assertTrue(MockOAuthSession().get.called)
-        
-        # test the assertion failure of chainType, optionCategory, priceType, skipAdjusted
-            # Mock out OAuth1Session
             
             
     @patch('pyetrade.market.OAuth1Session')
@@ -160,18 +114,9 @@ class TestETradeMarket(unittest.TestCase):
                           <ExpirationDate><year>2019</year><month>1</month><day>25</day><expiryType>WEEKLY</expiryType></ExpirationDate>
                           </OptionExpireDateResponse>
                        '''
- #       ET_response = ET.fromstring(XML_response)
-        
-        # Set Mock returns for resp_format=None
+                       
         MockOAuthSession().get().return_value = XML_response
-#        MockOAuthSession().fromstring().return_value = ET_response
         mark = market.ETradeMarket('abc123', 'xyz123', 'abctoken', 'xyzsecret', dev=False)
-        self.assertEqual(mark.get_option_expire_date('AAPL', resp_format=None), response)
+        self.assertEqual(mark.get_option_expire_date('AAPL'), response)
         self.assertTrue(MockOAuthSession().get.called)
         self.assertTrue(MockOAuthSession().fromstring.called)
-        
-        # Set Mock returns for resp_format=xml
-        MockOAuthSession().get().return_value = XML_response
-        mark = market.ETradeMarket('abc123', 'xyz123', 'abctoken', 'xyzsecret', dev=False)
-        self.assertEqual(mark.get_option_expire_date('AAPL', resp_format='xml'), XML_response)
-        self.assertTrue(MockOAuthSession().get.called)

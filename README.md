@@ -7,7 +7,7 @@ Python E-Trade API Wrapper
 [![Build Status](https://travis-ci.org/jessecooper/pyetrade.svg?branch=master)](https://travis-ci.org/jessecooper/pyetrade)
 [![codecov](https://codecov.io/gh/jessecooper/pyetrade/branch/master/graph/badge.svg)](https://codecov.io/gh/jessecooper/pyetrade)
 ## Completed
-v10 API  
+v1 API  
 Authorization API - ALL  
 Accounts  
 * list accounts
@@ -64,7 +64,10 @@ accounts.list_accounts()
 ```
 * Lint  
 ```
-make lint #Lint score should be >=8
+# Run Black
+black pyetrade/
+# Run Linter
+pylint pyetrade/  #Lint score should be >=8
 ```
 * Test  
 ```

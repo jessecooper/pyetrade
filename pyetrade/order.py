@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 
-'''Order - ETrade Order API
+"""Order - ETrade Order API
    TODO:
        * Preview equity order change
        * Place equity order change
@@ -8,34 +8,43 @@
        * Place option order
        * Preview option order change
        * Place option order change
-'''
+"""
 
 import logging
 import jxmlease
 from requests_oauthlib import OAuth1Session
+
 LOGGER = logging.getLogger(__name__)
 
 
 class OrderException(Exception):
-    '''
+    """
     Exception raised when giving bad args to a method
     not from Etrade calls
-    '''
+    """
+
     def __init__(self, explanation=None, params=None):
         super().__init__()
         self.required = params
         self.args = (explanation, params)
 
     def __str__(self):
-        return 'Missing required parameters'
+        return "Missing required parameters"
 
 
-class ETradeOrder():
-    '''ETradeOrder'''
+class ETradeOrder:
+    """ETradeOrder"""
 
-    def __init__(self, client_key, client_secret, resource_owner_key,
-                 resource_owner_secret, dev=True, timeout=30):
-        '''__init__(client_key, client_secret, resource_owner_key, resource_owner_secret, dev=True)
+    def __init__(
+        self,
+        client_key,
+        client_secret,
+        resource_owner_key,
+        resource_owner_secret,
+        dev=True,
+        timeout=30,
+    ):
+        """__init__(client_key, client_secret, resource_owner_key, resource_owner_secret, dev=True)
 
            param: client_key
            type: str
@@ -61,20 +70,24 @@ class ETradeOrder():
            type: int
            description: request timeout, default 30s
 
-        '''
+        """
         self.base_url = (
-            r'https://apisb.etrade.com/v1/accounts' if dev else
-            r'https://api.etrade.com/v1/accounts')
+            r"https://apisb.etrade.com/v1/accounts"
+            if dev
+            else r"https://api.etrade.com/v1/accounts"
+        )
         self.dev_environment = dev
         self.timeout = timeout
-        self.session = OAuth1Session(client_key,
-                                     client_secret,
-                                     resource_owner_key,
-                                     resource_owner_secret,
-                                     signature_type='AUTH_HEADER')
+        self.session = OAuth1Session(
+            client_key,
+            client_secret,
+            resource_owner_key,
+            resource_owner_secret,
+            signature_type="AUTH_HEADER",
+        )
 
-    def list_orders(self, account_id, resp_format='json', **kwargs):
-        ''' list_orders(dev, resp_format='json', **kwargs) -> resp
+    def list_orders(self, account_id, resp_format="json", **kwargs):
+        """ list_orders(dev, resp_format='json', **kwargs) -> resp
 
             param: account_id
             type: string
@@ -83,113 +96,114 @@ class ETradeOrder():
 
             description: see ETrade API docs
 
-        '''
-        assert resp_format in ('json', 'xml')
-        api_url = self.base_url + '/' + account_id + '/orders'
-        if resp_format == 'json':
-            api_url += '.json'
+        """
+        assert resp_format in ("json", "xml")
+        api_url = self.base_url + "/" + account_id + "/orders"
+        if resp_format == "json":
+            api_url += ".json"
 
         # Build Params
         params = kwargs
-        LOGGER.debug('query string params: %s', params)
+        LOGGER.debug("query string params: %s", params)
 
         LOGGER.debug(api_url)
         req = self.session.get(api_url, params=params, timeout=self.timeout)
         LOGGER.debug(req.text)
         req.raise_for_status()
 
-        if resp_format == 'json':
+        if resp_format == "json":
             return req.json()
         return req.text
 
     def check_order(self, **kwargs):
-        '''
+        """
         check that required params
         for preview or place order are there
         and correct
-        '''
-        mandatory = ['accountId', 'symbol', 'orderAction',
-                     'clientOrderId', 'priceType', 'quantity',
-                     'orderTerm', 'marketSession']
+        """
+        mandatory = [
+            "accountId",
+            "symbol",
+            "orderAction",
+            "clientOrderId",
+            "priceType",
+            "quantity",
+            "orderTerm",
+            "marketSession",
+        ]
         if not all(param in kwargs for param in mandatory):
             raise OrderException
 
-        if kwargs['priceType'] == 'STOP' and \
-           'stopPrice' not in kwargs:
+        if kwargs["priceType"] == "STOP" and "stopPrice" not in kwargs:
             raise OrderException
-        if kwargs['priceType'] == 'LIMIT' and \
-           'limitPrice' not in kwargs:
+        if kwargs["priceType"] == "LIMIT" and "limitPrice" not in kwargs:
             raise OrderException
-        if kwargs['priceType'] == 'STOP_LIMIT' and \
-           'limitPrice' not in kwargs and \
-           'stopPrice' not in kwargs:
+        if (
+            kwargs["priceType"] == "STOP_LIMIT"
+            and "limitPrice" not in kwargs
+            and "stopPrice" not in kwargs
+        ):
             raise OrderException
 
     def build_order_payload(self, order_type, **kwargs):
-        '''
+        """
         build the POST payload of a preview or place order
 
             param: order_type
             type: string
             required: true
             description: PreviewOrderRequest or PlaceOrderRequest
-        '''
+        """
         instrument = {
-            'Product': {
-                'securityType': 'EQ',
-                'symbol': kwargs['symbol']
-            },
-            'orderAction': kwargs['orderAction'],
-            'quantityType': 'QUANTITY',
-            'quantity': kwargs['quantity']
-            }
+            "Product": {"securityType": "EQ", "symbol": kwargs["symbol"]},
+            "orderAction": kwargs["orderAction"],
+            "quantityType": "QUANTITY",
+            "quantity": kwargs["quantity"],
+        }
         order = kwargs
-        order['Instrument'] = instrument
-        order['stopPrice'] = ''
+        order["Instrument"] = instrument
+        order["stopPrice"] = ""
         payload = {
             order_type: {
-                'orderType': 'EQ',
-                'clientOrderId': kwargs['clientOrderId'],
-                'Order': order
+                "orderType": "EQ",
+                "clientOrderId": kwargs["clientOrderId"],
+                "Order": order,
             }
         }
 
-        if 'previewId' in kwargs:
-            payload[order_type]['PreviewIds'] = {'previewId': kwargs['previewId']}
+        if "previewId" in kwargs:
+            payload[order_type]["PreviewIds"] = {"previewId": kwargs["previewId"]}
 
         return payload
 
     def perform_request(self, method, resp_format, api_url, payload):
-        '''
+        """
         run a post or put request
         with json or xml
         used by preview, place and cancel
-        '''
+        """
 
         LOGGER.debug(api_url)
-        LOGGER.debug('payload: %s', payload)
-        if resp_format == 'json':
-            req = method(
-                api_url, json=payload, timeout=self.timeout)
+        LOGGER.debug("payload: %s", payload)
+        if resp_format == "json":
+            req = method(api_url, json=payload, timeout=self.timeout)
         else:
-            headers = {'Content-Type': 'application/xml'}
+            headers = {"Content-Type": "application/xml"}
             payload = jxmlease.emit_xml(payload)
-            LOGGER.debug('xml payload: %s', payload)
-            req = method(
-                api_url, data=payload, headers=headers, timeout=self.timeout)
+            LOGGER.debug("xml payload: %s", payload)
+            req = method(api_url, data=payload, headers=headers, timeout=self.timeout)
 
         LOGGER.debug(req.text)
         req.raise_for_status()
 
-        if resp_format == 'json':
+        if resp_format == "json":
             return req.json()
         if resp_format is None:
             return jxmlease.parse(req.text)
         return req.text
 
-
     def preview_equity_order(self, resp_format=None, **kwargs):
-        '''preview_equity_order(dev, resp_format, **kwargs) -> resp
+        """preview_equity_order(dev, resp_format, **kwargs) -> resp
 
            param: resp_format
            type: str
@@ -457,53 +471,58 @@ class ETradeOrder():
                              * NSDQ
                              * NYSE
 
-        '''
-        assert resp_format in (None, 'json', 'xml')
+        """
+        assert resp_format in (None, "json", "xml")
         LOGGER.debug(kwargs)
 
         # Test required values
         self.check_order(**kwargs)
 
-        api_url = self.base_url + '/' + kwargs['accountId'] + '/orders/preview'
+        api_url = self.base_url + "/" + kwargs["accountId"] + "/orders/preview"
         # payload creation
-        payload = self.build_order_payload('PreviewOrderRequest', **kwargs)
+        payload = self.build_order_payload("PreviewOrderRequest", **kwargs)
 
         return self.perform_request(self.session.post, resp_format, api_url, payload)
 
     def place_equity_order(self, resp_format=None, **kwargs):
-        '''place_equity_order(dev, resp_format, **kwargs) -> resp
+        """place_equity_order(dev, resp_format, **kwargs) -> resp
 
            param: resp_format
            type: str
            description: Response format JSON or None = XML
 
            kwargs: see preview_equity_order
-        '''
+        """
 
-        assert resp_format in (None, 'json', 'xml')
+        assert resp_format in (None, "json", "xml")
         LOGGER.debug(kwargs)
 
         # Test required values
         self.check_order(**kwargs)
 
-        if 'previewId' not in kwargs:
-            LOGGER.debug('No previewId given, previewing before placing order '
-                         'because of an Etrade bug as of 1/1/2019')
+        if "previewId" not in kwargs:
+            LOGGER.debug(
+                "No previewId given, previewing before placing order "
+                "because of an Etrade bug as of 1/1/2019"
+            )
             preview = self.preview_equity_order(resp_format, **kwargs)
-            if resp_format == 'xml':
+            if resp_format == "xml":
                 preview = jxmlease.parse(preview)
-            kwargs['previewId'] = preview['PreviewOrderResponse']['PreviewIds']['previewId']
-            LOGGER.debug('Got a successful preview with previewId: %s',
-                         kwargs['previewId'])
+            kwargs["previewId"] = preview["PreviewOrderResponse"]["PreviewIds"][
+                "previewId"
+            ]
+            LOGGER.debug(
+                "Got a successful preview with previewId: %s", kwargs["previewId"]
+            )
 
-        api_url = self.base_url + '/' + kwargs['accountId'] + '/orders/place'
+        api_url = self.base_url + "/" + kwargs["accountId"] + "/orders/place"
         # payload creation
-        payload = self.build_order_payload('PlaceOrderRequest', **kwargs)
+        payload = self.build_order_payload("PlaceOrderRequest", **kwargs)
 
         return self.perform_request(self.session.post, resp_format, api_url, payload)
 
     def cancel_order(self, account_id, order_num, resp_format=None):
-        ''' cancel_order(account_id, order_num, dev, resp_format)
+        """ cancel_order(account_id, order_num, dev, resp_format)
             param: account_id
             type: string
             description: account id key
@@ -520,13 +539,9 @@ class ETradeOrder():
             type: str
             description: Response format JSON or None = XML
 
-        '''
-        assert resp_format in (None, 'json', 'xml')
-        api_url = self.base_url + '/' + account_id + '/orders/cancel'
-        payload = {
-            'CancelOrderRequest': {
-                'orderId': order_num
-            }
-        }
+        """
+        assert resp_format in (None, "json", "xml")
+        api_url = self.base_url + "/" + account_id + "/orders/cancel"
+        payload = {"CancelOrderRequest": {"orderId": order_num}}
 
         return self.perform_request(self.session.put, resp_format, api_url, payload)

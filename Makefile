@@ -6,7 +6,7 @@ devel:
 test:
 	tox
 lint:
-	pylint pyetrade tests
+	flake8 pyetrade tests
 install:
 	pip install --upgrade .
 dist:

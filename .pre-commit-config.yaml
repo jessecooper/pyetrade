@@ -1,0 +1,7 @@
+defualt_stages: [commit, push]
+fail_fast: true
+repos:
+- repo: https://github.com/ambv/black
+  rev: stable
+  hooks:
+  - id: black

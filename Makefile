@@ -1,15 +1,16 @@
 init:
-	pip3 install -r requirements.txt
+	pip install -r requirements.txt
 devel:
-	pip3 install -r requirements_dev.txt
+	pip install -r requirements_dev.txt
+	pre-commit install
 test:
 	tox
 lint:
 	pylint pyetrade tests
 install:
-	pip3 install --upgrade .
+	pip install --upgrade .
 dist:
-	python3 setup.py sdist
+	python setup.py sdist
 clean:
 	find . -iname *.pyc -exec rm -f {} +
-	pip3 uninstall -y pyetrade
+	pip uninstall -y pyetrade

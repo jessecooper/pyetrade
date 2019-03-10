@@ -15,13 +15,16 @@
 
     OR all inclusive:
         (option_dates,option_chains) = me.get_all_option_chains('aapl')
+    TODO:
+    * move logger into object under self.logger
 
 """
 
 import datetime as dt
-from requests_oauthlib import OAuth1Session
 import xml.etree.ElementTree as ET
 import logging
+import xmltodict
+from requests_oauthlib import OAuth1Session
 
 LOGGER = logging.getLogger(__name__)
 
@@ -87,40 +90,35 @@ class ETradeMarket(object):
         ]
         return "\n".join(ret)
 
-    def look_up_product(self, search_str):
-        """look_up_product(company, search_str)
+    def look_up_product(self, search_str: str, resp_format="xml") -> dict:
+        """Look up product
+           Args:
+            search_str (str): full or partial name of the company. Note
+                that the system extensivly abbreviates common words
+                such as company, industry and systems and generally
+                skips punctuation.
+            resp_format (str): the api endpoint to hit (json or xml)
+        """
 
-           param: search_str
-           type: str
-           description: full or partial name of the company. Note
-           that the system extensivly abbreviates common words
-           such as company, industry and systems and generally
-           skips punctuation.
-           """
-
-        api_url = self.base_url + "lookup/%s" % search_str
+        # api_url = self.base_url + "lookup/%s" % search_str
+        api_url = "%slookup/%s" % (
+            self.base_url,
+            search_str if resp_format.lower() == "xml" else search_str + ".json",
+        )
         LOGGER.debug(api_url)
         req = self.session.get(api_url)
         req.raise_for_status()
         LOGGER.debug(req.text)
-
-        try:
-            root = ET.fromstring(req.text)
-        except Exception:
-            raise
-
-        rtn = list()
-        for a in root.findall("Data"):
-            rtn.append({i.tag: i.text for i in a.getchildren()})
-        return rtn
+        return xmltodict.parse(req.text) if resp_format.lower() == "xml" else req.json()
 
     def get_quote(
         self,
         symbols,
         detail_flag=None,
-        requireEarningsDate=None,
-        skipMiniOptionsCheck=None,
-    ):
+        require_earnings_date=None,
+        skip_mini_options_check=None,
+        resp_format="xml",
+    ) -> dict:
         """ get_quote(symbols, detail_flag=None, requireEarningsDate=None,
                       skipMiniOptionsCheck=None)
 
@@ -173,8 +171,8 @@ class ETradeMarket(object):
             "mf_detail",
             None,
         )
-        assert requireEarningsDate in (True, False, None)
-        assert skipMiniOptionsCheck in (True, False, None)
+        assert require_earnings_date in (True, False, None)
+        assert skip_mini_options_check in (True, False, None)
         assert isinstance(symbols, list or tuple)
         if len(symbols) > 25:
             LOGGER.warning(
@@ -184,12 +182,14 @@ class ETradeMarket(object):
         args = list()
         if detail_flag is not None:
             args.append("detailflag=%s" % detail_flag.upper())
-        if requireEarningsDate:
+        if require_earnings_date:
             args.append("requireEarningsDate=true")
-        if skipMiniOptionsCheck is not None:
-            args.append("skipMiniOptionsCheck=%s" % str(skipMiniOptionsCheck))
+        if skip_mini_options_check is not None:
+            args.append("skipMiniOptionsCheck=%s" % str(skip_mini_options_check))
 
-        api_url = self.base_url + "quote/" + ",".join(symbols[:25])
+        api_url = "%s%s%s" % (self.base_url, "quote/", ",".join(symbols[:25]))
+        if resp_format.lower() == "json":
+            api_url += ".json"
         if len(args):
             api_url += "?" + "&".join(args)
         LOGGER.debug(api_url)
@@ -198,22 +198,7 @@ class ETradeMarket(object):
         req.raise_for_status()
         LOGGER.debug(req.text)
 
-        try:
-            root = ET.fromstring(req.text)
-        except Exception:
-            raise
-
-        rtn = list()
-        for a in root.findall("QuoteData"):
-            this_rtn = {j.tag: j.text for j in a.find("Product")}
-            this_rtn["dateTimeUTC"] = int(a.find("dateTimeUTC").text)
-            for j in a.find("All").getchildren():
-                try:
-                    this_rtn[j.tag] = float(j.text)
-                except Exception:
-                    this_rtn[j.tag] = j.text
-            rtn.append(this_rtn)
-        return rtn
+        return xmltodict.parse(req.text) if resp_format.lower() == "xml" else req.json()
 
     def get_all_option_chains(self, underlier):
         """ Returns the all the option chains for the underlier with expiration_dates

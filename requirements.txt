@@ -1,3 +1,4 @@
 requests
 requests_oauthlib
+xmltodict
 jxmlease

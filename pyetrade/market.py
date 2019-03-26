@@ -200,7 +200,7 @@ class ETradeMarket(object):
 
         return xmltodict.parse(req.text) if resp_format.lower() == "xml" else req.json()
 
-    def get_all_option_chains(self, underlier):
+    def get_all_option_chains(self, underlier, resp_format="xml") -> dict:
         """ Returns the all the option chains for the underlier with expiration_dates
             as the key. This requires two calls, one to get_option_expire_date, then
             to get all the expiration_dates and multiple calls to get_option_chains
@@ -222,15 +222,16 @@ class ETradeMarket(object):
 
     def get_option_chains(
         self,
-        underlier,
+        underlier: str,
         expiry_date,
-        skipAdjusted=None,
-        chainType=None,
-        strikePriceNear=None,
-        noOfStrikes=None,
-        optionCategory=None,
-        priceType=None,
-    ):
+        skip_adjusted=None,
+        chain_type=None,
+        strike_price_near=None,
+        no_of_strikes=None,
+        option_category=None,
+        price_type=None,
+        resp_format="xml",
+    ) -> dict:
         """ get_optionchains(underlier, expiry_date=None, skipAdjusted=None,
                              chainType=None, strikePriceNear=None, noOfStrikes=None,
                              optionCategory=None, priceType=None)
@@ -240,7 +241,6 @@ class ETradeMarket(object):
             one for each option chain.
 
             param: underlier
-            type: str
             description: market symbol
 
             param: chainType
@@ -275,10 +275,11 @@ class ETradeMarket(object):
             &chainType=PUT&skipAdjusted=true&symbol=GOOGL
 
         """
-        assert chainType in ("put", "call", "callput", None)
-        assert optionCategory in ("standard", "all", "mini", None)
-        assert priceType in ("atmn", "all", None)
-        assert skipAdjusted in (True, False, None)
+        assert chain_type in ("put", "call", "callput", None)
+        assert option_category in ("standard", "all", "mini", None)
+        assert price_type in ("atmn", "all", None)
+        assert skip_adjusted in (True, False, None)
+        assert isinstance(resp_format, str)
 
         args = ["symbol=%s" % underlier]
         if expiry_date is not None:
@@ -286,48 +287,30 @@ class ETradeMarket(object):
                 "expiryDay=%02d&expiryMonth=%02d&expiryYear=%04d"
                 % (expiry_date.day, expiry_date.month, expiry_date.year)
             )
-        if strikePriceNear is not None:
-            args.append("strikePriceNear=%0.2f" % strikePriceNear)
-        if chainType is not None:
-            args.append("chainType=%s" % chainType.upper())
-        if optionCategory is not None:
-            args.append("optionCategory=%s" % optionCategory.upper())
-        if priceType is not None:
-            args.append("priceType=%s" % priceType.upper())
-        if skipAdjusted is not None:
-            args.append("skipAdjusted=%s" % str(skipAdjusted))
-        if noOfStrikes is not None:
-            args.append("noOfStrikes=%d" % noOfStrikes.upper())
-        api_url = self.base_url + "optionchains?" + "&".join(args)
+        if strike_price_near is not None:
+            args.append("strikePriceNear=%0.2f" % strike_price_near)
+        if chain_type is not None:
+            args.append("chainType=%s" % chain_type.upper())
+        if option_category is not None:
+            args.append("optionCategory=%s" % option_category.upper())
+        if price_type is not None:
+            args.append("priceType=%s" % price_type.upper())
+        if skip_adjusted is not None:
+            args.append("skipAdjusted=%s" % str(skip_adjusted))
+        if no_of_strikes is not None:
+            args.append("noOfStrikes=%d" % no_of_strikes.upper())
+        api_url = "%s%s%s" % (
+            self.base_url,
+            "optionchains?" if resp_format.lower() == "xml" else "optionchains.json?",
+            "&".join(args),
+        )
 
         req = self.session.get(api_url)
         req.raise_for_status()
         LOGGER.debug(api_url)
         LOGGER.debug(req.text)
 
-        try:
-            root = ET.fromstring(req.text)
-        except Exception:
-            raise
-
-        # should be put and calls in the OptionPair leaves
-        rtn = list()
-        for pair in root.findall("OptionPair"):
-            for a in pair.getchildren():
-                b = {i.tag: i.text for i in a.getchildren()}
-                for x in ("timeStamp", "volume", "askSize", "bidSize", "openInterest"):
-                    b[x] = int(b[x])
-                for x in ("bid", "ask", "strikePrice", "netChange", "lastPrice"):
-                    b[x] = float(b[x])
-                greeks = dict()
-                for i in a.find("OptionGreeks"):
-                    try:
-                        greeks[i.tag] = float(i.text)
-                    except Exception:
-                        pass
-                b["OptionGreeks"] = greeks
-                rtn.append(b)
-        return rtn
+        return xmltodict.parse(req.text) if resp_format.lower() == "xml" else req.json()
 
     def get_option_expire_date(self, underlier):
         """ get_option_expiry_dates(underlier)

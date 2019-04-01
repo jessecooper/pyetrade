@@ -198,26 +198,6 @@ class ETradeMarket(object):
 
         return xmltodict.parse(req.text) if resp_format.lower() == "xml" else req.json()
 
-    def get_all_option_chains(self, underlier, resp_format="xml") -> dict:
-        """ Returns the all the option chains for the underlier with expiration_dates
-            as the key. This requires two calls, one to get_option_expire_date, then
-            to get all the expiration_dates and multiple calls to get_option_chains
-            with defaults.
-
-            param: underlier
-            type: str
-            description: market symbol
-
-        """
-        try:
-            expiration_dates = self.get_option_expire_date(underlier)
-        except Exception:
-            raise
-        rtn = dict()
-        for this_expiry_date in expiration_dates:
-            rtn[this_expiry_date] = self.get_option_chains(underlier, this_expiry_date)
-        return rtn
-
     def get_option_chains(
         self,
         underlier: str,

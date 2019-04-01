@@ -20,8 +20,6 @@
 
 """
 
-import datetime as dt
-import xml.etree.ElementTree as ET
 import logging
 import xmltodict
 from requests_oauthlib import OAuth1Session
@@ -312,15 +310,10 @@ class ETradeMarket(object):
 
         return xmltodict.parse(req.text) if resp_format.lower() == "xml" else req.json()
 
-    def get_option_expire_date(self, underlier):
+    def get_option_expire_date(self, underlier: str, resp_format="xml") -> dict:
         """ get_option_expiry_dates(underlier)
 
-            JSON formatted return does not work as documented.
-            However, the XML formatted response correctly returns the weekly and monthly
-            option dates
-
             param: underlier
-            type: str
             description: market symbol
 
             https://api.etrade.com/v1/market/optionexpiredate?symbol={symbol}
@@ -328,39 +321,21 @@ class ETradeMarket(object):
             Sample Request
             GET https://api.etrade.com/v1/market/optionexpiredate?
                symbol=GOOG&expiryType=ALL
-
-            another way to do this is with lxml:
-                import lxml.etree as etree
-                r = etree.parse(xml).getroot()
-                date_list = list()
-                for this_one in r:
-                    q = {a.tag: a.text for a in this_one.getchildren()}
-                    date_list.append(
-                    dt.date(int(q['year']), int(q['month']), int(q['day'])))
         """
 
-        api_url = (
-            self.base_url + "optionexpiredate?symbol=%s&expiryType=ALL" % underlier
+        assert isinstance(resp_format, str)
+        assert resp_format in ["xml", "json"]
+        api_url = "%s%s" % (
+            self.base_url,
+            "optionexpiredate"
+            if resp_format.lower() == "xml"
+            else "optionexpiredate.json",
         )
+        payload = {"symbol": underlier, "expiryType": "ALL"}
         LOGGER.debug(api_url)
 
-        req = self.session.get(api_url)
+        req = self.session.get(api_url, params=payload)
         req.raise_for_status()
         LOGGER.debug(req.text)
 
-        dates = list()
-        try:
-            root = ET.fromstring(req.text)
-        except Exception as err:
-            LOGGER.error("XML parsing %s text %s failed\n%s", underlier, req.text, err)
-            raise
-        for a in root.findall("ExpirationDate"):
-            this_date = {i.tag: i.text for i in a.getchildren()}
-            dates.append(
-                dt.date(
-                    int(this_date["year"]),
-                    int(this_date["month"]),
-                    int(this_date["day"]),
-                )
-            )
-        return dates
+        return xmltodict.parse(req.text) if resp_format.lower() == "xml" else req.json()

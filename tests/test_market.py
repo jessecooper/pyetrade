@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """pyetrade market unit tests
+   TODO:
+    * pyetrade.market fixture
 """
-import unittest
-import pytest
 import datetime as dt
 from unittest.mock import patch
 from pyetrade import market
@@ -149,46 +149,28 @@ def test_get_option_chains(MockOAuthSession):
     # priceType, skipAdjusted
 
 
-class TestETradeMarket(unittest.TestCase):
-    """TestEtradeMarket Unit Test"""
+@patch("pyetrade.market.OAuth1Session")
+def test_get_option_expire_date(MockOAuthSession):
+    """test_get_optionexpiredate(MockOAuthSession)
+       param: MockOAuthSession
+       type: mock.MagicMock
+       description: MagicMock of OAuth1Session
+    """
 
-    @pytest.mark.skip(reason="skip while fixing tests")
-    @patch("pyetrade.market.OAuth1Session")
-    def test_get_option_expire_date(self, MockOAuthSession):
-        """test_get_optionexpiredate(MockOAuthSession)
-           param: MockOAuthSession
-           type: mock.MagicMock
-           description: MagicMock of OAuth1Session
-        """
+    # response = [dt.date(2019, 1, 18), dt.date(2019, 1, 25)]
+    XML_response = (
+        r'<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+        r"<ExpirationDate></ExpirationDate>"
+    )
+    # Set Mock returns for resp_format=None
+    MockOAuthSession().get().text = XML_response
+    mark = market.ETradeMarket("abc123", "xyz123", "abctoken", "xyzsecret", dev=False)
+    resp = mark.get_option_expire_date("AAPL", resp_format="xml")
+    assert isinstance(resp, dict)
+    assert MockOAuthSession().get.called
 
-        response = [dt.date(2019, 1, 18), dt.date(2019, 1, 25)]
-        XML_response = """<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-        <OptionExpireDateResponse>
-                          <ExpirationDate><year>2019</year>
-                          <month>1</month><day>18</day>
-                          <expiryType>MONTHLY</expiryType></ExpirationDate>
-                          <ExpirationDate><year>2019</year>
-                          <month>1</month>
-                          <day>25</day><expiryType>WEEKLY</expiryTpe>
-                          </ExpirationDate>
-                          </OptionExpireDateResponse>
-                       """
-        # Set Mock returns for resp_format=None
-        MockOAuthSession().get().text = XML_response
-        mark = market.ETradeMarket(
-            "abc123", "xyz123", "abctoken", "xyzsecret", dev=False
-        )
-        self.assertEqual(
-            mark.get_option_expire_date("AAPL", resp_format=None), response
-        )
-        self.assertTrue(MockOAuthSession().get.called)
-
-        # Set Mock returns for resp_format=xml
-        MockOAuthSession().get().text = XML_response
-        mark = market.ETradeMarket(
-            "abc123", "xyz123", "abctoken", "xyzsecret", dev=False
-        )
-        self.assertEqual(
-            mark.get_option_expire_date("AAPL", resp_format="xml"), XML_response
-        )
-        self.assertTrue(MockOAuthSession().get.called)
+    MockOAuthSession().get().text = XML_response
+    mark = market.ETradeMarket("abc123", "xyz123", "abctoken", "xyzsecret", dev=True)
+    resp = mark.get_option_expire_date("AAPL", resp_format="xml")
+    assert isinstance(resp, dict)
+    assert MockOAuthSession().get.called

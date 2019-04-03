@@ -24,21 +24,32 @@ class TestETradeAccounts(unittest.TestCase):
         MockOAuthSession().get().text = r"<xml> returns </xml>"
         account = accounts.ETradeAccounts("abc123", "xyz123", "abctoken", "xyzsecret")
         # Test Dev JSON
-        self.assertEqual(account.list_accounts(), "{'account': 'abc123'}")
+        self.assertEqual(
+            account.list_accounts(resp_format="json"), "{'account': 'abc123'}"
+        )
         # Test API URL
         MockOAuthSession().get.assert_called_with(
             ("https://apisb.etrade.com/v1/accounts/list.json")
         )
+        # Test Dev XML
+        result = account.list_accounts(resp_format="xml")
+        self.assertTrue(isinstance(result, dict))
+        self.assertTrue(MockOAuthSession().get.called)
+
         # Test Prod JSON
-        self.assertEqual(account.list_accounts(dev=False), "{'account': 'abc123'}")
+        account = accounts.ETradeAccounts(
+            "abc123", "xyz123", "abctoken", "xyzsecret", dev=False
+        )
+        self.assertEqual(
+            account.list_accounts(resp_format="json"), "{'account': 'abc123'}"
+        )
         # Test API URL
         MockOAuthSession().get.assert_called_with(
             ("https://api.etrade.com/v1/accounts/list.json")
         )
-        # Test Dev XML
-        result = str(account.list_accounts(resp_format="xml"))
-        self.assertEqual(result, "{'xml': 'returns'}")
-        self.assertTrue(MockOAuthSession().get().json.called)
+        # Test XML
+        result = account.list_accounts(resp_format="xml")
+        self.assertTrue(isinstance(result, dict))
         self.assertTrue(MockOAuthSession().get.called)
 
     # Mock out OAuth1Session
@@ -49,32 +60,40 @@ class TestETradeAccounts(unittest.TestCase):
            type: mock.MagicMock
            description: MagicMock object for OAuth1Sessions"""
         # Set Mock returns
-        MockOAuthSession().get().json.return_value = "{'account': 'abc123'}"
+        MockOAuthSession().get().json.return_value = {"account": "abc123"}
         MockOAuthSession().get().text = r"<xml> returns </xml>"
         account = accounts.ETradeAccounts("abc123", "xyz123", "abctoken", "xyzsecret")
+        # Test Dev XML
+        result = account.get_account_balance("12345", resp_format="xml")
+        self.assertTrue(isinstance(result, dict))
         # Test Dev JSON
-        self.assertEqual(account.get_account_balance(12345), "{'account': 'abc123'}")
+        result = account.get_account_balance("12345", resp_format="json")
+        self.assertTrue(isinstance(result, dict))
         # Test API URL
         MockOAuthSession().get.assert_called_with(
             "https://apisb.etrade.com/v1/accounts/12345/balance.json",
             params={"instType": "BROKERAGE", "realTimeNAV": True},
         )
-        # Test Prod JSON
-        self.assertEqual(
-            account.get_account_balance(12345, dev=False), "{'account': 'abc123'}"
+        account = accounts.ETradeAccounts(
+            "abc123", "xyz123", "abctoken", "xyzsecret", dev=False
         )
+        # Test Prod JSON
+        result = account.get_account_balance("12345", resp_format="json")
+        self.assertTrue(isinstance(result, dict))
         # Test API URL
         MockOAuthSession().get.assert_called_with(
             "https://api.etrade.com/v1/accounts/12345/balance.json",
             params={"instType": "BROKERAGE", "realTimeNAV": True},
         )
-        # Test Dev XML
-        result = str(account.get_account_balance(12345, resp_format="xml"))
-        self.assertEqual(result, "{'xml': 'returns'}")
-        # MockOAuthSession().get.assert_called_with(
-        #        ('https://etws.etrade.com/accounts/'
-        #        'rest/accountbalance/12345')
-        #        )
+        # xml prod
+        result = account.get_account_balance("12345", resp_format="xml")
+        self.assertTrue(isinstance(result, dict))
+
+        # Test API URL
+        MockOAuthSession().get.assert_called_with(
+            "https://api.etrade.com/v1/accounts/12345/balance",
+            params={"instType": "BROKERAGE", "realTimeNAV": True},
+        )
 
         self.assertTrue(MockOAuthSession().get().json.called)
         self.assertTrue(MockOAuthSession().get.called)

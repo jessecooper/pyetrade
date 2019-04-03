@@ -10,6 +10,7 @@
 
 import logging
 import jxmlease
+import xmltodict
 from requests_oauthlib import OAuth1Session
 
 # Set up logging
@@ -20,7 +21,12 @@ class ETradeAccounts(object):
     """ETradeAccounts:"""
 
     def __init__(
-        self, client_key, client_secret, resource_owner_key, resource_owner_secret
+        self,
+        client_key,
+        client_secret,
+        resource_owner_key,
+        resource_owner_secret,
+        dev=True,
     ):
         """__init_()
            """
@@ -28,8 +34,10 @@ class ETradeAccounts(object):
         self.client_secret = client_secret
         self.resource_owner_key = resource_owner_key
         self.resource_owner_secret = resource_owner_secret
-        self.base_url_prod = r"https://api.etrade.com/v1/accounts"
-        self.base_url_dev = r"https://apisb.etrade.com/v1/accounts"
+        suffix = "apisb" if dev else "api"
+        self.base_url = r"https://%s.etrade.com/v1/accounts" % suffix
+        # self.base_url_prod = r"https://api.etrade.com/v1/accounts"
+        # self.base_url_dev = r"https://apisb.etrade.com/v1/accounts"
         self.session = OAuth1Session(
             self.client_key,
             self.client_secret,
@@ -38,102 +46,50 @@ class ETradeAccounts(object):
             signature_type="AUTH_HEADER",
         )
 
-    def list_accounts(self, dev=True, resp_format="json"):
+    def list_accounts(self, resp_format="xml") -> dict:
         """list_account(dev, resp_format)
-           param: dev
-           type: bool
-           description: API enviornment
            param: resp_format
-           type: str
            description: Response format
-           rformat: json
-           rtype: dict
-           rformat: other than json
-           rtype: str"""
+        """
 
-        if dev:
-            if resp_format == "json":
-                uri = r"list"
-                api_url = "%s/%s.%s" % (self.base_url_dev, uri, resp_format)
-            elif resp_format == "xml":
-                uri = r"list"
-                api_url = "%s/%s" % (self.base_url_dev, uri)
-        else:
-            if resp_format == "json":
-                uri = r"list"
-                api_url = "%s/%s.%s" % (self.base_url_prod, uri, resp_format)
-            elif resp_format == "xml":
-                uri = r"list"
-                api_url = "%s/%s" % (self.base_url_prod, uri)
+        api_url = "%s/list%s" % (
+            self.base_url,
+            ".json" if resp_format == "json" else "",
+        )
 
         LOGGER.debug(api_url)
         req = self.session.get(api_url)
         req.raise_for_status()
         LOGGER.debug(req.text)
 
-        if resp_format == "json":
-            return req.json()
-        else:
-            return jxmlease.parse(req.text)
+        return xmltodict.parse(req.text) if resp_format.lower() == "xml" else req.json()
 
     def get_account_balance(
-        self,
-        account_id,
-        account_type=None,
-        real_time=True,
-        dev=True,
-        resp_format="json",
-    ):
+        self, account_id_key: str, account_type=None, real_time=True, resp_format="xml"
+    ) -> dict:
         """get_account_balance(dev, resp_format)
            param: account_id
-           type: int
            required: true
            description: Numeric account id
-           param: dev
-           type: bool
-           description: API enviornment
            param: resp_format
-           type: str
            description: Response format
-           rformat: json
-           rtype: dict
-           rformat: other than json
-           rtype: str"""
+        """
 
-        uri = "balance"
+        api_url = "%s/%s/balance%s" % (
+            self.base_url,
+            account_id_key,
+            ".json" if resp_format == "json" else "",
+        )
         payload = {"realTimeNAV": real_time, "instType": "BROKERAGE"}
         if account_type:
             payload["accountType"] = account_type
 
-        if dev:
-            if resp_format == "json":
-                api_url = "%s/%s/%s.%s" % (
-                    self.base_url_dev,
-                    account_id,
-                    uri,
-                    resp_format,
-                )
-            elif resp_format == "xml":
-                api_url = "%s/%s/%s" % (self.base_url_dev, account_id, uri)
-        else:
-            if resp_format == "json":
-                api_url = "%s/%s/%s.%s" % (
-                    self.base_url_prod,
-                    account_id,
-                    uri,
-                    resp_format,
-                )
-            elif resp_format == "xml":
-                api_url = "%s/%s/%s" % (self.base_url_prod, account_id, uri)
         LOGGER.debug(api_url)
         req = self.session.get(api_url, params=payload)
         req.raise_for_status()
         LOGGER.debug(req.text)
 
-        if resp_format == "json":
-            return req.json()
-        else:
-            return jxmlease.parse(req.text)
+        return xmltodict.parse(req.text) if resp_format.lower() == "xml" else req.json()
 
     def get_account_positions(self, account_id, dev=True, resp_format="json"):
         """get_account_positions(dev, account_id, resp_format) -> resp

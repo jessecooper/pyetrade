@@ -99,49 +99,39 @@ class TestETradeAccounts(unittest.TestCase):
         self.assertTrue(MockOAuthSession().get.called)
 
     # Mock out OAuth1Session
-    @pytest.mark.skip(reason="v0 test")
     @patch("pyetrade.accounts.OAuth1Session")
-    def test_get_account_positions(self, MockOAuthSession):
+    def test_get_account_portfolio(self, MockOAuthSession):
         """test_get_account_positions(MockOAuthSession) -> None
            param: MockOAuthSession
            type: mock.MagicMock
            description: MagicMock object for OAuth1Sessions"""
         # Set Mock returns
-        MockOAuthSession().get().json.return_value = "{'account': 'abc123'}"
+        MockOAuthSession().get().json.return_value = {"account": "abc123"}
         MockOAuthSession().get().text = r"<xml> returns </xml>"
         account = accounts.ETradeAccounts("abc123", "xyz123", "abctoken", "xyzsecret")
-        # Test Dev JSON
-        self.assertEqual(
-            account.get_account_positions("12345"), "{'account': 'abc123'}"
-        )
+        # Test Dev
+        result = account.get_account_portfolio("12345")
+        self.assertTrue(isinstance(result, dict))
         # Test API URL
         MockOAuthSession().get.assert_called_with(
-            ("https://apisb.etrade.com/v1/accounts" "/12345/portfolio.json")
+            "https://apisb.etrade.com/v1/accounts/12345/portfolio", params={}
         )
-        # Test Prod JSON
-        self.assertEqual(
-            account.get_account_positions("12345", dev=False), "{'account': 'abc123'}"
+        result = account.get_account_portfolio("12345", resp_format="json")
+        self.assertTrue(isinstance(result, dict))
+        # Test Prod
+        account = accounts.ETradeAccounts(
+            "abc123", "xyz123", "abctoken", "xyzsecret", dev=False
         )
+        result = account.get_account_portfolio("12345")
+        self.assertTrue(isinstance(result, dict))
         # Test API URL
         MockOAuthSession().get.assert_called_with(
-            ("https://api.etrade.com/v1/accounts" "/12345/portfolio.json")
-        )  # Test Dev XML
-        self.assertEqual(
-            account.get_account_positions("12345", resp_format="xml"),
-            r"<xml> returns </xml>",
-        )
-        MockOAuthSession().get.assert_called_with(
-            ("https://apisb.etrade.com/v1/accounts" "/12345/portfolio")
-        )
-        self.assertEqual(
-            account.get_account_positions("12345", dev=False, resp_format="xml"),
-            r"<xml> returns </xml>",
-        )
-        MockOAuthSession().get.assert_called_with(
-            ("https://api.etrade.com/v1/accounts" "/12345/portfolio")
+            "https://api.etrade.com/v1/accounts/12345/portfolio", params={}
         )
         self.assertTrue(MockOAuthSession().get().json.called)
         self.assertTrue(MockOAuthSession().get.called)
+        result = account.get_account_portfolio("12345", resp_format="xml")
+        self.assertTrue(isinstance(result, dict))
 
     # Mock out OAuth1Session
     @pytest.mark.skip(reason="v0 test")

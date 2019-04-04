@@ -9,7 +9,6 @@
        * Check request response for error"""
 
 import logging
-import jxmlease
 import xmltodict
 from requests_oauthlib import OAuth1Session
 
@@ -91,40 +90,32 @@ class ETradeAccounts(object):
 
         return xmltodict.parse(req.text) if resp_format.lower() == "xml" else req.json()
 
-    def get_account_positions(self, account_id, dev=True, resp_format="json"):
-        """get_account_positions(dev, account_id, resp_format) -> resp
-           param: account_id
-           type: string
+    def get_account_portfolio(
+        self, account_id_key: str, resp_format="xml", **kwargs
+    ) -> dict:
+        """get_account_portfolio(dev, account_id, esp_format) -> resp
+           param: account_id_key
            required: true
            description: account id key
-           param: dev
-           type: bool
-           description: API enviornment
            param: resp_format
-           type: str
            description: Response format
-           rformat: json
-           rtype: dict
-           rformat: other than json
-           rtype: str"""
+           param: kwargs
+           description:
+           https://apisb.etrade.com/docs/api/account/api-portfolio-v1.html
+           """
 
-        if dev:
-            api_url = self.base_url_dev
-        else:
-            api_url = self.base_url_prod
-
-        api_url += "/" + account_id + "/portfolio"
-        if resp_format == "json":
-            api_url += ".json"
+        api_url = "%s/%s/portfolio%s" % (
+            self.base_url,
+            account_id_key,
+            ".json" if resp_format == "json" else "",
+        )
 
         LOGGER.debug(api_url)
-        req = self.session.get(api_url)
+        req = self.session.get(api_url, params=kwargs)
         req.raise_for_status()
         LOGGER.debug(req.text)
 
-        if resp_format == "json":
-            return req.json()
-        return jxmlease.parse(req.text)
+        return xmltodict.parse(req.text) if resp_format.lower() == "xml" else req.json()
 
     def list_alerts(self, dev=True, resp_format="json"):
         """list_alerts(dev, resp_format) -> resp

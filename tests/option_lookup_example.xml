@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<LookupResponse>
+   <Data>
+      <symbol>A</symbol>
+      <description>AGILENT TECHNOLOGIES INC COM</description>
+      <type>EQUITY</type>
+   </Data>
+   <Data>
+      <symbol>AA</symbol>
+      <description>ALCOA CORP COM</description>
+      <type>EQUITY</type>
+   </Data>
+   <Data>
+      <symbol>AABA</symbol>
+      <description>ALTABA INC COM</description>
+      <type>EQUITY</type>
+   </Data>
+   <Data>
+      <symbol>AAPL</symbol>
+      <description>APPLE INC COM</description>
+      <type>EQUITY</type>
+   </Data>
+   <Data>
+      <symbol>ABBV</symbol>
+      <description>ABBVIE INC COM</description>
+      <type>EQUITY</type>
+   </Data>
+   <Data>
+      <symbol>ABEV</symbol>
+      <description>AMBEV SA SPONSORED ADR</description>
+      <type>EQUITY</type>
+   </Data>
+   <Data>
+      <symbol>ABT</symbol>
+      <description>ABBOTT LABS COM</description>
+      <type>EQUITY</type>
+   </Data>
+   <Data>
+      <symbol>ACN</symbol>
+      <description>ACCENTURE PLC IRELAND SHS CLASS A</description>
+      <type>EQUITY</type>
+   </Data>
+   <Data>
+      <symbol>ADBE</symbol>
+      <description>ADOBE SYS INC COM</description>
+      <type>EQUITY</type>
+   </Data>
+   <Data>
+      <symbol>ADP</symbol>
+      <description>AUTOMATIC DATA PROCESSING INC COM</description>
+      <type>EQUITY</type>
+   </Data>
+</LookupResponse>

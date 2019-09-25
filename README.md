@@ -9,10 +9,11 @@ Python E-Trade API Wrapper
 ## Completed
 v1 API  
 Authorization API - ALL  
+Accounts  
+* list accounts
   
 NOTICE: v0 API - Will be sunset by etrade on 12/31/2018 an effert is underway to move pyetrade over to v1  
 Authorization API - ALL  
-Accounts API - ALL  
 Order API - 
 * List Orders
 * Place Equity Order 
@@ -63,7 +64,10 @@ accounts.list_accounts()
 ```
 * Lint  
 ```
-make lint #Lint score should be >=8
+# Run Black
+black pyetrade/
+# Run Linter
+pylint pyetrade/  #Lint score should be >=8
 ```
 * Test  
 ```

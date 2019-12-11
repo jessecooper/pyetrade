@@ -7,3 +7,4 @@ Sphinx
 pytest
 pytest-cov
 tox
+bumpversion

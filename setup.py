@@ -8,7 +8,7 @@ with open("requirements.txt") as requirements:
 
 setup(
     name="pyetrade",
-    version="0.8.0",
+    version="1.0.0",
     description="eTrade API wrappers",
     author="Jesse Cooper",
     author_email="jesse_cooper@codeholics.com",

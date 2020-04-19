@@ -483,6 +483,25 @@ class ETradeOrder:
         payload = self.build_order_payload("PreviewOrderRequest", **kwargs)
 
         return self.perform_request(self.session.post, resp_format, api_url, payload)
+   
+    def change_preview_equity_order(self, resp_format=None, **kwargs):
+        """
+        Same as preview_equity_order() above, but with orderId 
+        param: orderId
+           type: str
+           description: The orderId you want to modify
+        """
+        assert resp_format in (None, "json", "xml")
+        LOGGER.debug(kwargs)
+
+        # Test required values
+        self.check_order(**kwargs)
+
+        api_url = self.base_url + "/" + kwargs["accountId"] + "/orders/"+kwargs["orderId"]+"/change/preview"
+        # payload creation
+        payload = self.build_order_payload("PreviewOrderRequest", **kwargs)
+
+        return self.perform_request(self.session.put, resp_format, api_url, payload)
 
     def place_equity_order(self, resp_format=None, **kwargs):
         """place_equity_order(dev, resp_format, **kwargs) -> resp
@@ -520,7 +539,44 @@ class ETradeOrder:
         payload = self.build_order_payload("PlaceOrderRequest", **kwargs)
 
         return self.perform_request(self.session.post, resp_format, api_url, payload)
+      
+    def place_changed_equity_order(self, resp_format=None, **kwargs):
+        """place_changed_equity_order(dev, resp_format, **kwargs) -> resp
 
+           param: resp_format
+           type: str
+           description: Response format JSON or None = XML
+
+           kwargs: see change_preview_equity_order
+        """
+
+        assert resp_format in (None, "json", "xml")
+        LOGGER.debug(kwargs)
+
+        # Test required values
+        self.check_order(**kwargs)
+
+        if "previewId" not in kwargs:
+            LOGGER.debug(
+                "No previewId given, previewing before placing order "
+                "because of an Etrade bug as of 1/1/2019"
+            )
+            preview = self.preview_equity_order(resp_format, **kwargs)
+            if resp_format == "xml":
+                preview = jxmlease.parse(preview)
+            kwargs["previewId"] = preview["PreviewOrderResponse"]["PreviewIds"][
+                "previewId"
+            ]
+            LOGGER.debug(
+                "Got a successful preview with previewId: %s", kwargs["previewId"]
+            )
+
+        api_url = self.base_url + "/" + kwargs["accountId"] + "/orders/"+kwargs["orderId"]+"change/place"
+        # payload creation
+        payload = self.build_order_payload("PlaceOrderRequest", **kwargs)
+
+        return self.perform_request(self.session.put, resp_format, api_url, payload)
+      
     def cancel_order(self, account_id, order_num, resp_format=None):
         """ cancel_order(account_id, order_num, dev, resp_format)
             param: account_id

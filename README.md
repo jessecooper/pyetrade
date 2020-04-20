@@ -38,19 +38,40 @@ sudo make init
 sudo make install
 ```
 ## Example Usage
+
+To create the OAuth tokens:
 ```python
 import pyetrade
+
+consumer_key = "<CONSUMER_KEY>"
+consumer_secret = "<SECRET_KEY>"
+
 oauth = pyetrade.ETradeOAuth(consumer_key, consumer_secret)
-oauth.get_request_token()
-#Follow url and get verification code
+print(oauth.get_request_token())  # Use the printed URL
+
+verifier_code = input("Enter verification code: ")
 tokens = oauth.get_access_token(verifier_code)
+print(tokens)
+```
+
+And then on the example code:
+
+```python
+import pyetrade
+
+consumer_key = "<CONSUMER_KEY>"
+consumer_secret = "<SECRET_KEY>"
+tokens = {'oauth_token': '<TOKEN FROM THE SCRIPT ABOVE>',
+          'oauth_token_secret': '<TOKEN FROM THE SCRIPT ABOVE>'}
+
 accounts = pyetrade.ETradeAccounts(
-        consumer_key,
-        consumer_secret, 
-        tokens['oauth_token'],
-        tokens['oauth_token_secret']
-    )
-accounts.list_accounts()
+    consumer_key,
+    consumer_secret,
+    tokens['oauth_token'],
+    tokens['oauth_token_secret']
+)
+
+print(accounts.list_accounts())
 ```
 ## Documentation
 [PyEtrade Documentation](https://pyetrade.readthedocs.io/en/latest/)

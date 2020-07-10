@@ -1,18 +1,18 @@
 # pyetrade
 
-Python E-Trade API Wrapper
+Python E-Trade API Wrapper  
 [![PyPI](https://img.shields.io/pypi/v/pyetrade.svg)](https://pypi.python.org/pypi/pyetrade)
 [![PyPI](https://img.shields.io/pypi/l/pyetrade.svg)]()
 [![PyPI](https://img.shields.io/pypi/pyversions/pyetrade.svg)](https://pypi.python.org/pypi/pyetrade)
 [![Build Status](https://travis-ci.org/jessecooper/pyetrade.svg?branch=master)](https://travis-ci.org/jessecooper/pyetrade)
 [![codecov](https://codecov.io/gh/jessecooper/pyetrade/branch/master/graph/badge.svg)](https://codecov.io/gh/jessecooper/pyetrade)
+
 ## Completed
 v1 API
 Authorization API - ALL
 Accounts
 * list accounts
 
-NOTICE: v0 API - Will be sunset by etrade on 12/31/2018 an effert is underway to move pyetrade over to v1
 Authorization API - ALL
 Order API -
 * List Orders
@@ -23,10 +23,6 @@ Market API -
 * Look Up Product
 * optionchain
 * Get Quote
-
-## TODO
-* All of v1 API
-* Migrate test suit to pytest
 
 ## Install
 ```

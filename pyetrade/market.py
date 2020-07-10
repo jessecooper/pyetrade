@@ -276,7 +276,7 @@ class ETradeMarket(object):
         if skip_adjusted is not None:
             args.append("skipAdjusted=%s" % str(skip_adjusted))
         if no_of_strikes is not None:
-            args.append("noOfStrikes=%d" % no_of_strikes.upper())
+            args.append("noOfStrikes=%d" % no_of_strikes)
         api_url = "%s%s%s" % (
             self.base_url,
             "optionchains?" if resp_format.lower() == "xml" else "optionchains.json?",

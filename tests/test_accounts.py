@@ -256,7 +256,6 @@ class TestETradeAccounts(unittest.TestCase):
         self.assertTrue(MockOAuthSession().delete.called)
 
     # Mock out OAuth1Session
-    @pytest.mark.skip(reason="v0 test")
     @patch("pyetrade.accounts.OAuth1Session")
     def test_get_transaction_history(self, MockOAuthSession):
         """test_get_transaction_history(MockOAuthSession) -> None

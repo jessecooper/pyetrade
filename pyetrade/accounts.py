@@ -117,242 +117,26 @@ class ETradeAccounts(object):
 
         return xmltodict.parse(req.text) if resp_format.lower() == "xml" else req.json()
 
-    def list_alerts(self, dev=True, resp_format="json"):
-        """list_alerts(dev, resp_format) -> resp
-           param: dev
-           type: bool
-           description: API enviornment
-           param: resp_format
-           type: str
-           description: Response format
-           rformat: json
-           rtype: dict
-           rformat: other than json
-           rtype: str"""
-
-        if dev:
-            uri = r"accounts/sandbox/rest/alerts"
-            if resp_format == "json":
-                api_url = "%s/%s.%s" % (self.base_url_dev, uri, resp_format)
-            elif resp_format == "xml":
-                api_url = "%s/%s" % (self.base_url_dev, uri)
-
-        else:
-            uri = r"accounts/rest/alerts"
-            if resp_format == "json":
-                api_url = "%s/%s.%s" % (self.base_url_prod, uri, resp_format)
-            elif resp_format == "xml":
-                api_url = "%s/%s" % (self.base_url_prod, uri)
-
-        LOGGER.debug(api_url)
-        req = self.session.get(api_url)
-        req.raise_for_status()
-        LOGGER.debug(req.text)
-
-        if resp_format == "json":
-            return req.json()
-        return req.text
-
-    def read_alert(self, alert_id, dev=True, resp_format="json"):
-        """read_alert(alert_id, dev, resp_format) -> resp
-           param: alert_id
-           type: int
-           description: Numaric alert ID
-           param: dev
-           type: bool
-           description: API enviornment
-           param: resp_format
-           type: str
-           description: Response format
-           rformat: json
-           rtype: dict
-           rformat: other than json
-           rtype: str"""
-
-        if dev:
-            uri = r"accounts/sandbox/rest/alerts"
-            if resp_format == "json":
-                api_url = "%s/%s/%s.%s" % (
-                    self.base_url_dev,
-                    uri,
-                    alert_id,
-                    resp_format,
-                )
-            elif resp_format == "xml":
-                api_url = "%s/%s/%s" % (self.base_url_dev, uri, alert_id)
-
-        else:
-            uri = r"accounts/rest/alerts"
-            if resp_format == "json":
-                api_url = "%s/%s/%s.%s" % (
-                    self.base_url_prod,
-                    uri,
-                    alert_id,
-                    resp_format,
-                )
-            elif resp_format == "xml":
-                api_url = "%s/%s/%s" % (self.base_url_prod, uri, alert_id)
-
-        LOGGER.debug(api_url)
-        req = self.session.get(api_url)
-        req.raise_for_status()
-        LOGGER.debug(req.text)
-
-        if resp_format == "json":
-            return req.json()
-        return req.text
-
-    def delete_alert(self, alert_id, dev=True, resp_format="json"):
-        """delete_alert(alert_id, dev, resp_format) -> resp
-           param: alert_id
-           type: int
-           description: Numaric alert ID
-           param: dev
-           type: bool
-           description: API enviornment
-           param: resp_format
-           type: str
-           description: Response format
-           rformat: json
-           rtype: dict
-           rformat: other than json
-           rtype: str"""
-
-        if dev:
-            uri = r"accounts/sandbox/rest/alerts"
-            if resp_format == "json":
-                api_url = "%s/%s/%s.%s" % (
-                    self.base_url_dev,
-                    uri,
-                    alert_id,
-                    resp_format,
-                )
-            elif resp_format == "xml":
-                api_url = "%s/%s/%s" % (self.base_url_dev, uri, alert_id)
-
-        else:
-            uri = r"accounts/rest/alerts"
-            if resp_format == "json":
-                api_url = "%s/%s/%s.%s" % (
-                    self.base_url_prod,
-                    uri,
-                    alert_id,
-                    resp_format,
-                )
-            elif resp_format == "xml":
-                api_url = "%s/%s/%s" % (self.base_url_prod, uri, alert_id)
-
-        LOGGER.debug(api_url)
-        req = self.session.delete(api_url)
-        req.raise_for_status()
-        LOGGER.debug(req.text)
-
-        if resp_format == "json":
-            return req.json()
-        return req.text
-
-    def get_transaction_history(
+    def list_transactions(
         self,
-        account_id,
-        dev=True,
-        group="ALL",
-        asset_type="ALL",
-        transaction_type="ALL",
-        ticker_symbol="ALL",
-        resp_format="json",
+        account_id_key: str,
+        resp_format="xml",
         **kwargs
-    ):
-        """get_transaction_history(account_id, dev, resp_format) -> resp
-           param: account_id
-           type: int
+    ) -> dict:
+        """list_transactions(account_id_key, resp_format) -> resp
+           param: account_id_key
            required: true
            description: Numeric account ID
-           param: group
-           type: string
-           default: 'ALL'
-           description: Possible values are: DEPOSITS, WITHDRAWALS, TRADES.
-           param: asset_type
-           type: string
-           default: 'ALL'
-           description: Only allowed if group is TRADES. Possible values are:
-                EQ (equities), OPTN (options), MMF (money market funds),
-                MF (mutual funds), BOND (bonds). To retrieve all types,
-                use ALL or omit this parameter.
-           param: transaction_type
-           type: string
-           default: 'ALL'
-           description: Transaction type(s) to include, e.g., check, deposit,
-                fee, dividend, etc. A list of types is provided in documentation
-           param: ticker_symbol
-           type: string
-           default: 'ALL'
-           description: Only allowed if group is TRADES. A single market symbol,
-                e.g., GOOG.
-           param: marker
-           type: str
-           description: Specify the desired starting point of the set
-                of items to return. Used for paging.
-           param: count
-           type: int
-           description: The number of orders to return in a response.
-                The default is 25. Used for paging.
-           description: see ETrade API docs"""
-
-        # add each optional argument not equal to 'ALL' to the uri
-        optional_args = [group, asset_type, transaction_type, ticker_symbol]
-        optional_uri = ""
-        for optional_arg in optional_args:
-            if optional_arg.upper() != "ALL":
-                optional_uri = "%s/%s" % (optional_uri, optional_arg)
-        # Set Env
-        if dev:
-            # assemble the following:
-            # self.base_url_dev: https://etws.etrade.com
-            # uri:               /accounts/rest
-            # account_id:        /{accountId}
-            # format string:     /transactions
-            # if not 'ALL' args:
-            #   group:              /{Group}
-            #   asset_type          /{AssetType}
-            #   transaction_type:   /{TransactionType}
-            #   ticker_symbol:      /{TickerSymbol}
-            # resp_format:       {.json}
-            # payload:           kwargs
-            #
-            uri = r"accounts/sandbox/rest"
-            if resp_format == "json":
-                api_url = "%s/%s/%s/transactions%s.%s" % (
-                    self.base_url_dev,
-                    uri,
-                    account_id,
-                    optional_uri,
-                    resp_format,
-                )
-            elif resp_format == "xml":
-                api_url = "%s/%s/%s/transactions%s" % (
-                    self.base_url_dev,
-                    uri,
-                    account_id,
-                    optional_uri,
-                )
-        else:
-            uri = r"accounts/rest"
-            if resp_format == "json":
-                api_url = "%s/%s/%s/transactions%s.%s" % (
-                    self.base_url_prod,
-                    uri,
-                    account_id,
-                    optional_uri,
-                    resp_format,
-                )
-            elif resp_format == "xml":
-                api_url = "%s/%s/%s/transactions%s" % (
-                    self.base_url_prod,
-                    uri,
-                    account_id,
-                    optional_uri,
-                )
-
+           param: kwargs
+           description: see etrade docs for details
+        """
+            
+        api_url = "%s/%s/transactions%s" % (
+            self.base_url,
+            account_id_key,
+            ".json" if resp_format == "json" else ""
+        )
+       
         # Build Payload
         payload = kwargs
         LOGGER.debug("payload: %s", payload)
@@ -362,9 +146,7 @@ class ETradeAccounts(object):
         req.raise_for_status()
         LOGGER.debug(req.text)
 
-        if resp_format == "json":
-            return req.json()
-        return req.text
+        return xmltodict.parse(req.text) if resp_format.lower() == "xml" else req.json()
 
     def get_transaction_details(
         self, account_id, transaction_id, dev=True, resp_format="json", **kwargs

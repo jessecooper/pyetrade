@@ -1,6 +1,7 @@
-#!/usr/bin/python3
-
 """Alerts
+   TODO:
+    * list_alerts - add args
+    * list_alert_details - add arg
 """
 
 import logging
@@ -29,7 +30,7 @@ class ETradeAlerts(object):
         self.resource_owner_key = resource_owner_key
         self.resource_owner_secret = resource_owner_secret
         suffix = "apisb" if dev else "api"
-        self.base_url = r"https://%s.etrade.com/v1/user" % suffix
+        self.base_url = r"https://%s.etrade.com/v1/user/alerts" % suffix
         self.session = OAuth1Session(
             self.client_key,
             self.client_secret,
@@ -43,20 +44,7 @@ class ETradeAlerts(object):
            param: resp_format
            description: Response format
            """
-
-        if dev:
-            uri = r"accounts/sandbox/rest/alerts"
-            if resp_format == "json":
-                api_url = "%s/%s.%s" % (self.base_url_dev, uri, resp_format)
-            elif resp_format == "xml":
-                api_url = "%s/%s" % (self.base_url_dev, uri)
-
-        else:
-            uri = r"accounts/rest/alerts"
-            if resp_format == "json":
-                api_url = "%s/%s.%s" % (self.base_url_prod, uri, resp_format)
-            elif resp_format == "xml":
-                api_url = "%s/%s" % (self.base_url_prod, uri)
+        api_url = "%s%s" % (self.base_url, ".json" if resp_format == "json" else "",)
 
         LOGGER.debug(api_url)
         req = self.session.get(api_url)
@@ -65,8 +53,8 @@ class ETradeAlerts(object):
 
         return xmltodict.parse(req.text) if resp_format.lower() == "xml" else req.json()
 
-    def read_alert(self, alert_id, dev=True, resp_format="json"):
-        """read_alert(alert_id, dev, resp_format) -> resp
+    def list_alert_details(self, alert_id, resp_format="xml") -> dict:
+        """list_alert_details(alert_id, dev, resp_format) -> resp
            param: alert_id
            type: int
            description: Numaric alert ID
@@ -81,40 +69,20 @@ class ETradeAlerts(object):
            rformat: other than json
            rtype: str"""
 
-        if dev:
-            uri = r"accounts/sandbox/rest/alerts"
-            if resp_format == "json":
-                api_url = "%s/%s/%s.%s" % (
-                    self.base_url_dev,
-                    uri,
-                    alert_id,
-                    resp_format,
-                )
-            elif resp_format == "xml":
-                api_url = "%s/%s/%s" % (self.base_url_dev, uri, alert_id)
-
-        else:
-            uri = r"accounts/rest/alerts"
-            if resp_format == "json":
-                api_url = "%s/%s/%s.%s" % (
-                    self.base_url_prod,
-                    uri,
-                    alert_id,
-                    resp_format,
-                )
-            elif resp_format == "xml":
-                api_url = "%s/%s/%s" % (self.base_url_prod, uri, alert_id)
+        api_url = "%s%s/%s" % (
+            self.base_url,
+            ".json" if resp_format == "json" else "",
+            alert_id,
+        )
 
         LOGGER.debug(api_url)
         req = self.session.get(api_url)
         req.raise_for_status()
         LOGGER.debug(req.text)
 
-        if resp_format == "json":
-            return req.json()
-        return req.text
+        return xmltodict.parse(req.text) if resp_format.lower() == "xml" else req.json()
 
-    def delete_alert(self, alert_id, dev=True, resp_format="json"):
+    def delete_alert(self, alert_id, resp_format="xml"):
         """delete_alert(alert_id, dev, resp_format) -> resp
            param: alert_id
            type: int
@@ -130,37 +98,15 @@ class ETradeAlerts(object):
            rformat: other than json
            rtype: str"""
 
-        if dev:
-            uri = r"accounts/sandbox/rest/alerts"
-            if resp_format == "json":
-                api_url = "%s/%s/%s.%s" % (
-                    self.base_url_dev,
-                    uri,
-                    alert_id,
-                    resp_format,
-                )
-            elif resp_format == "xml":
-                api_url = "%s/%s/%s" % (self.base_url_dev, uri, alert_id)
-
-        else:
-            uri = r"accounts/rest/alerts"
-            if resp_format == "json":
-                api_url = "%s/%s/%s.%s" % (
-                    self.base_url_prod,
-                    uri,
-                    alert_id,
-                    resp_format,
-                )
-            elif resp_format == "xml":
-                api_url = "%s/%s/%s" % (self.base_url_prod, uri, alert_id)
+        api_url = "%s%s/%s" % (
+            self.base_url,
+            ".json" if resp_format == "json" else "",
+            alert_id,
+        )
 
         LOGGER.debug(api_url)
         req = self.session.delete(api_url)
         req.raise_for_status()
         LOGGER.debug(req.text)
 
-        if resp_format == "json":
-            return req.json()
-        return req.text
-
-   
+        return xmltodict.parse(req.text) if resp_format.lower() == "xml" else req.json()

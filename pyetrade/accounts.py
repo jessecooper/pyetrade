@@ -3,7 +3,6 @@
 """Accounts - ETrade Accounts API
    Calls
    TODO:
-       * list transactions APIv1
        * list transaction details APIv1
        * Fix init doc string
        * Check request response for error"""

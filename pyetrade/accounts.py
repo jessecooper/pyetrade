@@ -142,12 +142,12 @@ class ETradeAccounts(object):
 
         return xmltodict.parse(req.text) if resp_format.lower() == "xml" else req.json()
 
-    def get_transaction_details(
-        self, account_id, transaction_id, dev=True, resp_format="json", **kwargs
-    ):
+    def list_transaction_details(
+        self, account_id_key: str, transaction_id, resp_format="xml", **kwargs
+    ) -> dict:
         """get_transaction_details(account_id, transaction_id, dev, resp_format) -> resp
-           param: account_id
-           type: int
+           param: account_id_key
+           type: str
            required: true
            description: Numeric account ID
            param: transaction_id
@@ -156,40 +156,12 @@ class ETradeAccounts(object):
            description: Numeric transaction ID"""
 
         # Set Env
-        if dev:
-            uri = r"accounts/sandbox/rest"
-            if resp_format == "json":
-                api_url = "%s/%s/%s/transactions/%s.%s" % (
-                    self.base_url_dev,
-                    uri,
-                    account_id,
-                    transaction_id,
-                    resp_format,
-                )
-            elif resp_format == "xml":
-                api_url = "%s/%s/%s/transactions/%s" % (
-                    self.base_url_dev,
-                    uri,
-                    account_id,
-                    transaction_id,
-                )
-        else:
-            uri = r"accounts/rest"
-            if resp_format == "json":
-                api_url = "%s/%s/%s/transactions/%s.%s" % (
-                    self.base_url_prod,
-                    uri,
-                    account_id,
-                    transaction_id,
-                    resp_format,
-                )
-            elif resp_format == "xml":
-                api_url = "%s/%s/%s/transactions/%s" % (
-                    self.base_url_prod,
-                    uri,
-                    account_id,
-                    transaction_id,
-                )
+        api_url = "%s/%s/transactions%s/%s" % (
+            self.base_url,
+            account_id_key,
+            ".json" if resp_format == "json" else "",
+            transaction_id,
+        )
 
         # Build Payload
         payload = kwargs
@@ -200,6 +172,4 @@ class ETradeAccounts(object):
         req.raise_for_status()
         LOGGER.debug(req.text)
 
-        if resp_format == "json":
-            return req.json()
-        return req.text
+        return xmltodict.parse(req.text) if resp_format.lower() == "xml" else req.json()

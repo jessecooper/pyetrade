@@ -118,10 +118,7 @@ class ETradeAccounts(object):
         return xmltodict.parse(req.text) if resp_format.lower() == "xml" else req.json()
 
     def list_transactions(
-        self,
-        account_id_key: str,
-        resp_format="xml",
-        **kwargs
+        self, account_id_key: str, resp_format="xml", **kwargs
     ) -> dict:
         """list_transactions(account_id_key, resp_format) -> resp
            param: account_id_key
@@ -130,13 +127,13 @@ class ETradeAccounts(object):
            param: kwargs
            description: see etrade docs for details
         """
-            
+
         api_url = "%s/%s/transactions%s" % (
             self.base_url,
             account_id_key,
-            ".json" if resp_format == "json" else ""
+            ".json" if resp_format == "json" else "",
         )
-       
+
         # Build Payload
         payload = kwargs
         LOGGER.debug("payload: %s", payload)

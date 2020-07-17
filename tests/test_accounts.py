@@ -257,8 +257,8 @@ class TestETradeAccounts(unittest.TestCase):
 
     # Mock out OAuth1Session
     @patch("pyetrade.accounts.OAuth1Session")
-    def test_get_transaction_history(self, MockOAuthSession):
-        """test_get_transaction_history(MockOAuthSession) -> None
+    def test_list_transactions(self, MockOAuthSession):
+        """test_list_transactions(MockOAuthSession) -> None
            param: MockOAuthSession
            type: mock.MagicMock
            description: MagicMock object for OAuth1Sessions"""
@@ -268,48 +268,47 @@ class TestETradeAccounts(unittest.TestCase):
         account = accounts.ETradeAccounts("abc123", "xyz123", "abctoken", "xyzsecret")
         # Test Dev JSON
         self.assertEqual(
-            account.get_transaction_history(12345), "{'transaction': 'abc123'}"
-        )
-        # Test API URL
-        MockOAuthSession().get.assert_called_with(
-            (
-                "https://apisb.etrade.com/v1/accounts/"
-                "sandbox/rest/12345/transactions.json"
-            ),
-            params={},
-        )
-        # Test Prod JSON
-        self.assertEqual(
-            account.get_transaction_history(12345, dev=False),
+            account.list_transactions(12345, resp_format="json"),
             "{'transaction': 'abc123'}",
         )
         # Test API URL
         MockOAuthSession().get.assert_called_with(
-            ("https://api.etrade.com/v1/accounts/" "rest/12345/transactions.json"),
-            params={},
+            ("https://apisb.etrade.com/v1/accounts/12345/transactions.json"), params={},
         )
+
         # Test Dev XML
         self.assertEqual(
-            account.get_transaction_history(12345, resp_format="xml"),
-            r"<xml> returns </xml>",
+            dict(account.list_transactions(12345, resp_format="xml")),
+            {"xml": "returns"},
         )
         # Test API URL
         MockOAuthSession().get.assert_called_with(
-            ("https://apisb.etrade.com/v1/accounts/" "sandbox/rest/12345/transactions"),
-            params={},
+            ("https://apisb.etrade.com/v1/accounts/12345/transactions"), params={},
+        )
+        account = accounts.ETradeAccounts(
+            "abc123", "xyz123", "abctoken", "xyzsecret", dev=False
+        )
+        # Test Prod JSON
+        self.assertEqual(
+            account.list_transactions(12345, resp_format="json"),
+            "{'transaction': 'abc123'}",
+        )
+        # Test API URL
+        MockOAuthSession().get.assert_called_with(
+            ("https://api.etrade.com/v1/accounts/12345/transactions.json"), params={},
         )
         # Test Prod XML
         self.assertEqual(
-            account.get_transaction_history(12345, dev=False, resp_format="xml"),
-            r"<xml> returns </xml>",
+            dict(account.list_transactions(12345, resp_format="xml")),
+            {"xml": "returns"},
         )
         # Test API URL
         MockOAuthSession().get.assert_called_with(
-            ("https://api.etrade.com/v1/accounts/" "rest/12345/transactions"), params={}
+            ("https://api.etrade.com/v1/accounts/12345/transactions"), params={}
         )
         # Test optional_args
         self.assertEqual(
-            account.get_transaction_history(12345, group="WITHDRAWALS"),
+            account.list_transactions(12345, group="WITHDRAWALS", resp_format="json"),
             "{'transaction': 'abc123'}",
         )
         self.assertTrue(MockOAuthSession().get().json.called)

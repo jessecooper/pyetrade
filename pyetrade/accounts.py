@@ -1,7 +1,6 @@
 """Accounts - ETrade Accounts API
    Calls
    TODO:
-       * list transaction details APIv1
        * Fix init doc string
        * Check request response for error"""
 
@@ -143,7 +142,7 @@ class ETradeAccounts(object):
         return xmltodict.parse(req.text) if resp_format.lower() == "xml" else req.json()
 
     def list_transaction_details(
-        self, account_id_key: str, transaction_id, resp_format="xml", **kwargs
+        self, account_id_key: str, transaction_id: int, resp_format="xml", **kwargs
     ) -> dict:
         """get_transaction_details(account_id, transaction_id, dev, resp_format) -> resp
            param: account_id_key

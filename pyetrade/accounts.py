@@ -1,5 +1,3 @@
-#!/usr/bin/python3
-
 """Accounts - ETrade Accounts API
    Calls
    TODO:

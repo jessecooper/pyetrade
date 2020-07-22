@@ -6,5 +6,6 @@ coverage
 Sphinx
 pytest
 pytest-cov
+pytest-mock
 tox
 bumpversion

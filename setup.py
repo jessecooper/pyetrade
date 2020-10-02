@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 from distutils.core import setup
+from pyetrade import __version__
 
 # requirements
 with open("requirements.txt") as requirements:
@@ -8,7 +9,7 @@ with open("requirements.txt") as requirements:
 
 setup(
     name="pyetrade",
-    version="1.2.0",
+    version=__version__,
     description="eTrade API wrappers",
     author="Jesse Cooper",
     author_email="jesse_cooper@codeholics.com",

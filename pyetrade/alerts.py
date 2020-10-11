@@ -1,7 +1,9 @@
-"""Alerts
+"""Alerts - ETrade Alerts API
+
    TODO:
     * list_alerts - add args
     * list_alert_details - add arg
+
 """
 
 import logging
@@ -13,7 +15,22 @@ LOGGER = logging.getLogger(__name__)
 
 
 class ETradeAlerts(object):
-    """ETradeAccounts:"""
+    """:description: Object to retrieve alerts
+
+       :param client_key: Client key provided by Etrade
+       :type client_key: str, required
+       :param client_secret: Client secret provided by Etrade
+       :type client_secret: str, required
+       :param resource_owner_key: Resource key from :class:`pyetrade.authorization.ETradeOAuth`
+       :type resource_owner_key: str, required
+       :param resource_owner_secret: Resource secret from
+              :class:`pyetrade.authorization.ETradeOAuth`
+       :type resource_owner_secret: str, required
+       :param dev: Defines Sandbox (True) or Live (False) ETrade, defaults to True
+       :type dev: bool, optional
+       :EtradeRef: https://apisb.etrade.com/docs/api/user/api-alert-v1.html
+
+    """
 
     def __init__(
         self,
@@ -23,8 +40,6 @@ class ETradeAlerts(object):
         resource_owner_secret,
         dev=True,
     ):
-        """__init_()
-           """
         self.client_key = client_key
         self.client_secret = client_secret
         self.resource_owner_key = resource_owner_key
@@ -40,9 +55,14 @@ class ETradeAlerts(object):
         )
 
     def list_alerts(self, resp_format="xml") -> dict:
-        """list_alerts(dev, resp_format) -> resp
-           param: resp_format
-           description: Response format
+        """:description: Lists alerts in Etrade
+
+           :param resp_format: Desired Response format, defaults to xml
+           :type  resp_format: str, optional
+           :return: List of alerts
+           :rtype: ``xml`` or ``json`` based on ``resp_format``
+           :EtradeRef: https://apisb.etrade.com/docs/api/user/api-alert-v1.html
+
            """
         api_url = "%s%s" % (self.base_url, ".json" if resp_format == "json" else "",)
 
@@ -54,20 +74,17 @@ class ETradeAlerts(object):
         return xmltodict.parse(req.text) if resp_format.lower() == "xml" else req.json()
 
     def list_alert_details(self, alert_id, resp_format="xml") -> dict:
-        """list_alert_details(alert_id, dev, resp_format) -> resp
-           param: alert_id
-           type: int
-           description: Numaric alert ID
-           param: dev
-           type: bool
-           description: API enviornment
-           param: resp_format
-           type: str
-           description: Response format
-           rformat: json
-           rtype: dict
-           rformat: other than json
-           rtype: str"""
+        """:description: Provides details for an alert
+
+           :param alert_id: Alert ID obtained from :class:`list_alerts`
+           :type alert_id: int, required
+           :param resp_format: Desired Response format, defaults to xml
+           :type  resp_format: str, optional
+           :return: List of alert details
+           :rtype: xml or json based on ``resp_format``
+           :EtradeRef: https://apisb.etrade.com/docs/api/user/api-alert-v1.html
+
+           """
 
         api_url = "%s%s/%s" % (
             self.base_url,
@@ -83,20 +100,17 @@ class ETradeAlerts(object):
         return xmltodict.parse(req.text) if resp_format.lower() == "xml" else req.json()
 
     def delete_alert(self, alert_id, resp_format="xml"):
-        """delete_alert(alert_id, dev, resp_format) -> resp
-           param: alert_id
-           type: int
-           description: Numaric alert ID
-           param: dev
-           type: bool
-           description: API enviornment
-           param: resp_format
-           type: str
-           description: Response format
-           rformat: json
-           rtype: dict
-           rformat: other than json
-           rtype: str"""
+        """:description: Deletes specified alert
+
+           :param alert_id: Alert ID obtained from :class:`list_alerts`
+           :type alert_id: int, required
+           :param resp_format: Desired Response format, defaults to xml
+           :type  resp_format: str, optional
+           :return: List of alert details
+           :rtype: xml or json based on ``resp_format``
+           :EtradeRef: https://apisb.etrade.com/docs/api/user/api-alert-v1.html
+
+        """
 
         api_url = "%s%s/%s" % (
             self.base_url,

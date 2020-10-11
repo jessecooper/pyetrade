@@ -5,3 +5,5 @@ pyetrade
    :maxdepth: 4
 
    pyetrade
+
+   examples

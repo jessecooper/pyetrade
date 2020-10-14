@@ -1,10 +1,10 @@
-#!/usr/bin/env python3
+"""Authorization - ETrade Authorization API Calls
 
-"""authorization.py
-   Description: ETrade API authorization
    TODO:
     * Lint this messy code
-    * Catch events"""
+    * Catch events
+
+    """
 
 import logging
 from requests_oauthlib import OAuth1Session
@@ -14,20 +14,19 @@ LOGGER = logging.getLogger(__name__)
 
 
 class ETradeOAuth(object):
-    """ETradeOAuth
-       ETrade OAuth 1.0a Wrapper"""
+    """:description: Performs authorization for OAuth 1.0a
+
+       :param client_key: Client key provided by Etrade
+       :type client_key: str, required
+       :param client_secret: Client secret provided by Etrade
+       :type client_secret: str, required
+       :param callback_url: Callback URL passed to OAuth mod, defaults to "oob"
+       :type callback_url: str, optional
+       :EtradeRef: https://apisb.etrade.com/docs/api/authorization/request_token.html
+
+    """
 
     def __init__(self, consumer_key, consumer_secret, callback_url="oob"):
-        """__init__(consumer_key, consumer_secret, callback_url)
-           param: consumer_key
-           type: str
-           description: etrade oauth consumer key
-           param: consumer_secret
-           type: str
-           description: etrade oauth consumer secret
-           param: callback_url
-           type: str
-           description: etrade oauth callback url default oob"""
 
         self.consumer_key = consumer_key
         self.consumer_secret = consumer_secret
@@ -41,38 +40,14 @@ class ETradeOAuth(object):
         self.resource_owner_key = None
 
     def get_request_token(self):
-        """get_request_token() -> auth url
-           some params handled by requests_oauthlib but put in
-           doc string for clarity into the API.
-           param: oauth_consumer_key
-           type: str
-           description: the value used by the consumer to identify
-                        itself to the service provider.
-           param: oauth_timestamp
-           type: int
-           description: the date and time of the request, in epoch time.
-                        must be accurate within five minutes.
-           param: oauth_nonce
-           type: str
-           description: a nonce, as discribed in the authorization guide
-                        roughly, an arbitrary or random value that cannot
-                        be used again with the same timestamp.
-           param: oauth_signature_method
-           type: str
-           description: the signature method used by the consumer to sign
-                        the request. the only supported value is 'HMAC-SHA1'.
-           param: oauth_signature
-           type: str
-           description: signature generated with the shared secret and token
-                        secret using the specified oauth_signature_method
-                        as described in OAuth documentation.
-           param: oauth_callback
-           type: str
-           description: callback information, as described elsewhere. must
-                        always be set to 'oob' whether using a callback or
-                        not
-           rtype: str
-           description: Etrade autherization url"""
+        """:description: Obtains the token URL from Etrade.
+
+           :param None: Takes no parameters
+           :return: Formatted Authorization URL (Access this to obtain taken)
+           :rtype: str
+           :EtradeRef: https://apisb.etrade.com/docs/api/authorization/request_token.html
+
+        """
 
         # Set up session
         self.session = OAuth1Session(
@@ -100,45 +75,15 @@ class ETradeOAuth(object):
         return formated_auth_url
 
     def get_access_token(self, verifier):
-        """get_access_token(verifier) -> access_token
-           param: verifier
-           type: str
-           description: oauth verification code
-           rtype: dict
-           description: oauth access tokens
+        """:description: Obtains access token. Requires token URL from :class:`get_request_token`
 
-           OAuth API paramiters mostly handled by requests_oauthlib
-           but illistrated here for clarity.
-           param: oauth_consumer_key
-           type: str
-           description: the value used by the consumer to identify
-                        itself to the service provider.
-           param: oauth_timestamp
-           type: int
-           description: the date and time of the request, in epoch time.
-                        must be accurate within five minutes.
-           param: oauth_nonce
-           type: str
-           description: a nonce, as discribed in the authorization guide
-                        roughly, an arbitrary or random value that cannot
-                        be used again with the same timestamp.
-           param: oauth_signature_method
-           type: str
-           description: the signature method used by the consumer to sign
-                        the request. the only supported value is 'HMAC-SHA1'.
-           param: oauth_signature
-           type: str
-           description: signature generated with the shared secret and token
-                        secret using the specified oauth_signature_method
-                        as described in OAuth documentation.
-           param: oauth_token
-           type: str
-           description: the consumer's request token to be exchanged for an
-                        access token
-           param: oauth_verifier
-           type: str
-           description: the code received by the user to authenticate with
-                        the third-party application"""
+           :param verifier: OAuth Verification Code from Etrade
+           :type verifier: str, required
+           :return: OAuth access tokens
+           :rtype: dict
+           :EtradeRef: https://apisb.etrade.com/docs/api/authorization/get_access_token.html
+
+        """
 
         # Set verifier
         self.session._client.client.verifier = verifier
@@ -150,24 +95,23 @@ class ETradeOAuth(object):
 
 
 class ETradeAccessManager(object):
-    """ETradeAccessManager - Renew and revoke ETrade OAuth Access Tokens"""
+    """:description: Renews and revokes ETrade OAuth access tokens
+
+       :param client_key: Client key provided by Etrade
+       :type client_key: str, required
+       :param client_secret: Client secret provided by Etrade
+       :type client_secret: str, required
+       :param resource_owner_key: Resource key from :class:`ETradeOAuth`
+       :type resource_owner_key: str, required
+       :param resource_owner_secret: Resource secret from :class:`ETradeOAuth`
+       :type resource_owner_secret: str, required
+       :EtradeRef: https://apisb.etrade.com/docs/api/authorization/renew_access_token.html
+
+    """
 
     def __init__(
         self, client_key, client_secret, resource_owner_key, resource_owner_secret
     ):
-        """__init__(client_key, client_secret)
-           param: client_key
-           type: str
-           description: etrade client key
-           param: client_secret
-           type: str
-           description: etrade client secret
-           param: resource_owner_key
-           type: str
-           description: OAuth authentication token key
-           param: resource_owner_secret
-           type: str
-           description: OAuth authentication token secret"""
         self.client_key = client_key
         self.client_secret = client_secret
         self.resource_owner_key = resource_owner_key
@@ -185,40 +129,14 @@ class ETradeAccessManager(object):
         )
 
     def renew_access_token(self):
-        """renew_access_token() -> bool
-           some params handled by requests_oauthlib but put in
-           doc string for clarity into the API.
-           param: oauth_consumer_key
-           type: string
-           required: true
-           description: the value used by the consumer to identify
-                        itself to the service provider.
-           param: oauth_timestamp
-           type: int
-           required: true
-           description: the date and time of the request, in epoch time.
-                        must be accurate withiin five minutes.
-           param: oauth_nonce
-           type: str
-           required: true
-           description: a nonce, as described in the authorization guide
-                        roughly, an arbitrary or random value that cannot
-                        be used again with the same timestamp.
-           param: oauth_signature_method
-           type: str
-           required: true
-           description: the signature method used by the consumer to sign
-                        the request. the only supported value is "HMAC-SHA1".
-           param: oauth_signature
-           type: str
-           required: true
-           description: signature generated with the shared secret and
-                        token secret using the specified oauth_signature_method
-                        as described in OAuth documentation.
-           param: oauth_token
-           type: str
-           required: true
-           description: the consumer's access token to be renewed."""
+        """:description: Renews access tokens obtained from :class:`ETradeOAuth`
+
+           :param None: Takes no parameters
+           :return: Success or failure
+           :rtype: bool (True or False)
+           :EtradeRef: https://apisb.etrade.com/docs/api/authorization/renew_access_token.html
+
+        """
         resp = self.session.get(self.renew_access_token_url)
         LOGGER.debug(resp.text)
         resp.raise_for_status()
@@ -226,40 +144,14 @@ class ETradeAccessManager(object):
         return True
 
     def revoke_access_token(self):
-        """revoke_access_token() -> bool
-           some params handled by requests_oauthlib but put in
-           doc string for clarity into the API.
-           param: oauth_consumer_key
-           type: string
-           required: true
-           description: the value used by the consumer to identify
-                        itself to the service provider.
-           param: oauth_timestamp
-           type: int
-           required: true
-           description: the date and time of the request, in epoch time.
-                        must be accurate withiin five minutes.
-           param: oauth_nonce
-           type: str
-           required: true
-           description: a nonce, as described in the authorization guide
-                        roughly, an arbitrary or random value that cannot
-                        be used again with the same timestamp.
-           param: oauth_signature_method
-           type: str
-           required: true
-           description: the signature method used by the consumer to sign
-                        the request. the only supported value is "HMAC-SHA1".
-           param: oauth_signature
-           type: str
-           required: true
-           description: signature generated with the shared secret and
-                        token secret using the specified oauth_signature_method
-                        as described in OAuth documentation.
-           param: oauth_token
-           type: str
-           required: true
-           description: the consumer's access token to be revoked."""
+        """:description: Revokes access tokens obtained from :class:`ETradeOAuth`
+
+           :param None: Takes no parameters
+           :return: Success or failure
+           :rtype: bool (True or False)
+           :EtradeRef: https://apisb.etrade.com/docs/api/authorization/revoke_access_token.html
+
+        """
         resp = self.session.get(self.revoke_access_token_url)
         LOGGER.debug(resp.text)
         resp.raise_for_status()

@@ -1,8 +1,9 @@
 """Accounts - ETrade Accounts API Calls
-   
+
    TODO:
        * Fix init doc string
        * Check request response for error
+
        """
 
 import logging
@@ -14,9 +15,22 @@ LOGGER = logging.getLogger(__name__)
 
 
 class ETradeAccounts(object):
-    """ETradeAccounts:
-        """
+    """:description: Accounts object to access account information
 
+       :param client_key: Client key provided by Etrade
+       :type client_key: str, required
+       :param client_secret: Client secret provided by Etrade
+       :type client_secret: str, required
+       :param resource_owner_key: Resource key from :class:`pyetrade.authorization.ETradeOAuth`
+       :type resource_owner_key: str, required
+       :param resource_owner_secret: Resource secret from
+            :class:`pyetrade.authorization.ETradeOAuth`
+       :type resource_owner_secret: str, required
+       :param dev: Defines Sandbox (True) or Live (False) ETrade, defaults to True
+       :type dev: bool, optional
+       :EtradeRef: https://apisb.etrade.com/docs/api/account/api-account-v1.html
+
+        """
 
     def __init__(
         self,
@@ -46,7 +60,7 @@ class ETradeAccounts(object):
 
     def list_accounts(self, resp_format="xml") -> dict:
         """:description: Lists accounts in Etrade
-           
+
            :param resp_format: Desired Response format, defaults to xml
            :type  resp_format: str, optional
            :return: List of accounts
@@ -73,7 +87,7 @@ class ETradeAccounts(object):
 
            :param account_id_key: AccountIDkey retrived from :class:`list_accounts`
            :type  account_id_key: str, required
-           :param resp_format: Desired Response format, defaults to xml 
+           :param resp_format: Desired Response format, defaults to xml
            :type  resp_format: str, optional
            :return: Balance of account with key ``account_id_key``
            :rtype: xml or json based on ``resp_format``
@@ -106,10 +120,11 @@ class ETradeAccounts(object):
            :param resp_format: Desired Response format, defaults to xml
            :type  resp_format: str, optional
            :param kwargs: Parameters for api
-           :type  kwargs: ``**kwargs``, optional 
+           :type  kwargs: ``**kwargs``, optional
            :return: Account portfolio of account with key ``account_id_key``
            :rtype: xml or json based on ``resp_format``
            :EtradeRef: https://apisb.etrade.com/docs/api/account/api-portfolio-v1.html
+
            """
 
         api_url = "%s/%s/portfolio%s" % (
@@ -163,7 +178,7 @@ class ETradeAccounts(object):
     ) -> dict:
         """:description: Retrieves transaction details for an account
 
-           :param account_id_key: AccountIDKey retrived from list_accounts
+           :param account_id_key: AccountIDKey retrived from :class:`list_accounts`
            :type  account_id_key: str, required
            :param resp_format: Desired Response format, defaults to xml
            :type  resp_format: str, optional
@@ -171,9 +186,9 @@ class ETradeAccounts(object):
            :type  transaction_id: int, required
            :param kwargs: Parameters for api
            :type  kwargs: ``**kwargs``, optional
-           :return: Transaction Details for ``transaction_id`` for account with key ``account_id_key``
+           :return: Transaction Details for ``transaction_id`` for account key ``account_id_key``
            :rtype: xml or json based on ``resp_format``
-           :EtradeRef: https://apisb.etrade.com/docs/api/account/api-transaction-v1.html#/definition/getTransactionDetails
+           :EtradeRef: https://apisb.etrade.com/docs/api/account/api-transaction-v1.html
 
            """
 

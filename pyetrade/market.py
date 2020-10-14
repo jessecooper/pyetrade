@@ -1,20 +1,5 @@
-#!/usr/bin/python3
-
 """Market - ETrade Market API V1
 
-    Calling sequence to get all option chains for a particular month
-    me = pyetrade.market.ETradeMarket(
-                    consumer_key,
-                    consumer_secret,
-                    tokens['oauth_token'],
-                    tokens['oauth_token_secret'],
-                    dev = False)
-
-    option_dates = me.get_option_expire_date('aapl')
-    option_chains = me.get_option_chains('aapl')
-
-    OR all inclusive:
-        (option_dates,option_chains) = me.get_all_option_chains('aapl')
     TODO:
     * move logger into object under self.logger
 
@@ -28,7 +13,22 @@ LOGGER = logging.getLogger(__name__)
 
 
 class ETradeMarket(object):
-    """ETradeMarket"""
+    """:description: Performs Market functions
+
+       :param client_key: Client key provided by Etrade
+       :type client_key: str, required
+       :param client_secret: Client secret provided by Etrade
+       :type client_secret: str, required
+       :param resource_owner_key: Resource key from :class:`pyetrade.authorization.ETradeOAuth`
+       :type resource_owner_key: str, required
+       :param resource_owner_secret: Resource secret from
+              :class:`pyetrade.authorization.ETradeOAuth`
+       :type resource_owner_secret: str, required
+       :param dev: Defines Sandboxi (True) or Live (False) ETrade, defaults to True
+       :type dev: bool, optional
+       :EtradeRef: https://apisb.etrade.com/docs/api/market/api-quote-v1.html
+
+    """
 
     def __init__(
         self,
@@ -38,34 +38,6 @@ class ETradeMarket(object):
         resource_owner_secret,
         dev=True,
     ):
-        """__init__(client_key, client_secret, resource_owner_key,
-                    resource_owner_secret, dev=True)
-
-            This is the object initialization routine, which simply
-            sets the various variables to be used by the rest of the
-            methods and constructs the OAuth1Session.
-
-            param: client_key
-            type: str
-            description: etrade client key
-
-            param: client_secret
-            type: str
-            description: etrade client secret
-
-            param: resource_owner_key
-            type: str
-            description: OAuth authentication token key
-
-            param: resource_owner_secret
-            type: str
-            description: OAuth authentication token secret
-
-            param: dev
-            type: boolean
-            description: use the sandbox environment (True) or live (False)
-
-        """
         self.client_key = client_key
         self.client_secret = client_secret
         self.resource_owner_key = resource_owner_key
@@ -89,13 +61,19 @@ class ETradeMarket(object):
         return "\n".join(ret)
 
     def look_up_product(self, search_str: str, resp_format="xml") -> dict:
-        """Look up product
-           Args:
-            search_str (str): full or partial name of the company. Note
-                that the system extensivly abbreviates common words
-                such as company, industry and systems and generally
-                skips punctuation.
-            resp_format (str): the api endpoint to hit (json or xml)
+        """:description: Performs a look up product
+
+           :param search_str: Full or partial name of the company.
+           :type search_str: str, required
+           :param resp_format: Desired Response format, defaults to xml
+           :type  resp_format: str, optional
+           :return: Product lookup
+           :rtype: ``xml`` or ``json`` as defined by ``resp_format``
+           :Note: Etrade abbreviates common words such as company, industry and systems
+                  and generally skips punctuation.
+           :EtradeRef:
+                  https://apisb.etrade.com/docs/api/market/api-market-v1.html#/definition/Lookup
+
         """
 
         # api_url = self.base_url + "lookup/%s" % search_str
@@ -117,47 +95,38 @@ class ETradeMarket(object):
         skip_mini_options_check=None,
         resp_format="xml",
     ) -> dict:
-        """ get_quote(symbols, detail_flag=None, requireEarningsDate=None,
-                      skipMiniOptionsCheck=None)
+        """:description: Get quote data on symbols provided in the list args.
 
-            Get quote data on all symbols provided in the list args.
-            the eTrade API is limited to 25 requests per call. Issue
-            warning if more than 25 are requested. Only process the first 25.
+           :param symbols: Symbols in list args format. Limit 25.
+           :type symbols: list[], required
+           :param detail_flag: Market fields returned from a quote request, defaults to None
+           :type detail_flag: enum, optional
+           :param require_earnings_date: Provides Earnings date if True, defaults to None
+           :type require_earnings_date: str, optional
+           :param skip_mini_options_check: Skips mini options check if True, defaults to None
+           :type skip_mini_options_check: str, optional
+           :param resp_format: Desired Response format, defaults to xml
+           :type  resp_format: str, optional
+           :return: Returns quote data on symbols provided
+           :rtype: xml or json based on ``resp_format``
+           :symbols values:
+               * Limited to 25. If exceeded, first 25 will be processed with warnings
+               * Equities format - ``symbol`` name sufficient, e.g. GOOGL.
+               * Options format - ``underlier:year:month:day:optionType:strikePrice``
+           :detailflag values:
+               * fundamental - Instrument fundamentals and latest price
+               * intraday - Performance for the current of most recent trading day
+               * options - Information on a given option offering
+               * week_52 - 52-week high and low (highest high and lowest low)
+               * mf_detail - MutualFund structure gets displayed
+               * all (default) - All of the above information and more
+               * None - Defaults to all.
+           :skipMiniOptionsCheck values:
+               * True - Call is NOT made to check whether the symbol has mini options
+               * False - Call is made to check whether the symbol has mini options
+               * None - Call is made to check whether the symbol has mini options (default)
+           :EtradeRef: https://apisb.etrade.com/docs/api/market/api-quote-v1.html
 
-            param: skipMiniOptionsCheck
-            type: True, False, None
-            description: If value is true, no call is made to the service to check
-            whether the symbol has mini options. If value is false or if the field
-            is not specified, a service call is made to check if the symbol has mini
-            options
-
-            param: detailFlag
-            type: enum
-            required: optional
-            description: Optional parameter specifying which details to
-                return in the response. The field set for each possible
-                value is listed in separate tables below. The possible
-                values are:
-                    * FUNDAMENTAL - Instrument fundamentals and latest
-                        price
-                    * INTRADAY - Performance for the current of most
-                        recent trading day
-                    * OPTIONS - Information on a given option offering
-                    * WEEK_52 - 52-week high and low (highest high and
-                        lowest low
-                    * ALL (default) - All of the above information and
-                        more
-                    * MF_DETAIL - MutualFund structure gets displayed.
-
-            param: symbols
-            type: list
-            required: true
-            description: One or more symobols for equities or options, up to a
-            maximum of  25 symbols.
-                For equities, the symbol name alone, e.g. GOOGL.
-                Symbols for options are more complex, consisting of six elements
-                separated by colons, in this format:
-                underlier:year:month:day:optionType:strikePrice
             """
 
         assert detail_flag in (
@@ -210,47 +179,46 @@ class ETradeMarket(object):
         price_type=None,
         resp_format="xml",
     ) -> dict:
-        """ get_optionchains(underlier, expiry_date=None, skipAdjusted=None,
-                             chainType=None, strikePriceNear=None, noOfStrikes=None,
-                             optionCategory=None, priceType=None)
+        """:description: Returns the option chain information for the
+                         requested expiry_date and chaintype in the desired format.
+                         This should be a list of dictionaries,
+                         one for each option chain.
 
-            Returns the option chain information for the requested expiry_date and
-            chaintype in the desired format. This should be a list of dictionaries,
-            one for each option chain.
-
-            param: underlier
-            description: market symbol
-
-            param: chainType
-            type: str
-            description: put, call, or callput
-            Default: callput
-
-            param: priceType
-            type: 'atmn', 'all', None
-            description: The price type
-            Default: ATNM
-
-            param: expiry_date
-            type: dt.date()
-            description: contract expiration date; if expiry_date is None, then gets the
-            expiration_date closest to today
-
-            param: optionCategory
-            type: 'standard', 'all', 'mini', None
-            description: what type of option data to return
-            Default: standard
-
-            param: skipAdjusted
-            type: bool
-            description: Specifies whether to show (TRUE) or not show (FALSE) adjusted
-                options, i.e., options that have undergone a change resulting
-                in a modification of the option contract.
-
-            Sample Request
-            GET https://api.etrade.com/v1/market/optionchains?
-            expiryDay=03&expiryMonth=04&expiryYear=2011
-            &chainType=PUT&skipAdjusted=true&symbol=GOOGL
+           :param underlier: Market Symbol
+           :type underlier: str, required
+           :param expiry_date: Contract expiration date, None produces closest to today
+           :type expiry_date: datetime.date(year, month, day), optional
+           :param skip_adjusted: Specifies whether to show (True) or not show (False) adjusted
+                                 options, defaults to True
+           :type skip_adjusted: str, optional
+           :param chain_type: Type of option chain, defaults to callput
+           :type chain_type: str, optional
+           :param strike_price_near: Optionchains fetched will have strike price close to this value
+           :type strike_price_near: int, optional
+           :param no_of_strikes: Indicates number of strikes for which the optionchain
+                                 needs to be fetched, defaults to None
+           :type no_of_strikes: int, optional
+           :param option_category: The option category, defaults to ``standard``
+           :type option_category: str, optional
+           :param price_type: The price type, defaults to ``atnm``
+           :type price_type: str, optional
+           :param resp_format: Desired Response format, defaults to ``xml``
+           :type  resp_format: str, optional
+           :return: Returns list of option chains for a specific underlying instrument
+           :rtype: xml or json based on ``resp_format``
+           :chain_type values:
+               * put
+               * call
+               * callput (default)
+           :option_category values:
+               * standard (default)
+               * all
+               * mini
+           :price_type values:
+               * atnm
+               * all
+           :sampleURL: https://api.etrade.com/v1/market/optionchains?expiryDay=03&expiryMonth=04&expiryYear=2011&chainType=PUT&skipAdjusted=true&symbol=GOOGL
+           :EtradeRef: https://apisb.etrade.com/docs/api/market/api-market-v1.html
 
         """
         assert chain_type in ("put", "call", "callput", None)
@@ -291,16 +259,17 @@ class ETradeMarket(object):
         return xmltodict.parse(req.text) if resp_format.lower() == "xml" else req.json()
 
     def get_option_expire_date(self, underlier: str, resp_format="xml") -> dict:
-        """ get_option_expiry_dates(underlier)
+        """:description: Returns a list of dates suitable for structuring an option table display
 
-            param: underlier
-            description: market symbol
+           :param underlier: Market Symbol
+           :type underlier: str, required
+           :param resp_format: Desired Response format, defaults to xml
+           :type  resp_format: str, optional
+           :return: Returns expiry of options for symbol
+           :rtype: xml or json based on ``resp_format``
+           :sampleURL: https://api.etrade.com/v1/market/optionexpiredate?symbol=GOOG&expiryType=ALL
+           :EtradeRef: https://apisb.etrade.com/docs/api/market/api-market-v1.html
 
-            https://api.etrade.com/v1/market/optionexpiredate?symbol={symbol}
-
-            Sample Request
-            GET https://api.etrade.com/v1/market/optionexpiredate?
-               symbol=GOOG&expiryType=ALL
         """
 
         assert isinstance(resp_format, str)

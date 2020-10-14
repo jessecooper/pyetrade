@@ -20,10 +20,10 @@ pyetrade\.authorization module
     :undoc-members:
     :show-inheritance:
 
-pyetrade\.etrade\_exception module
-----------------------------------
+pyetrade\.alerts module
+-----------------------
 
-.. automodule:: pyetrade.etrade_exception
+.. automodule:: pyetrade.alerts
     :members:
     :undoc-members:
     :show-inheritance:
@@ -53,3 +53,7 @@ Module contents
     :members:
     :undoc-members:
     :show-inheritance:
+
+* :ref:`genindex`
+* :ref:`modindex`
+* :ref:`search`

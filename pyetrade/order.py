@@ -1,6 +1,5 @@
-#!/usr/bin/python3
-
 """Order - ETrade Order API
+
    TODO:
        * Preview equity order change
        * Place equity order change
@@ -8,6 +7,7 @@
        * Place option order
        * Preview option order change
        * Place option order change
+
 """
 
 import logging
@@ -18,9 +18,8 @@ LOGGER = logging.getLogger(__name__)
 
 
 class OrderException(Exception):
-    """
-    Exception raised when giving bad args to a method
-    not from Etrade calls
+    """:description: Exception raised when giving bad args to a method not from Etrade calls
+
     """
 
     def __init__(self, explanation=None, params=None):
@@ -33,7 +32,24 @@ class OrderException(Exception):
 
 
 class ETradeOrder:
-    """ETradeOrder"""
+    """:description: Object to perform Orders
+
+       :param client_key: Client key provided by Etrade
+       :type client_key: str, required
+       :param client_secret: Client secret provided by Etrade
+       :type client_secret: str, required
+       :param resource_owner_key: Resource key from :class:`pyetrade.authorization.ETradeOAuth`
+       :type resource_owner_key: str, required
+       :param resource_owner_secret: Resource secret from
+            :class:`pyetrade.authorization.ETradeOAuth`
+       :type resource_owner_secret: str, required
+       :param dev: Defines Sandbox (True) or Live (False) ETrade, defaults to True
+       :type dev: bool, optional
+       :param timeout: Timeout value for OAuth, defaults to 30
+       :type timeout: int, optional
+       :EtradeRef: https://apisb.etrade.com/docs/api/order/api-order-v1.html
+
+    """
 
     def __init__(
         self,
@@ -44,33 +60,6 @@ class ETradeOrder:
         dev=True,
         timeout=30,
     ):
-        """__init__(client_key, client_secret, resource_owner_key, resource_owner_secret, dev=True)
-
-           param: client_key
-           type: str
-           description: etrade client key
-
-           param: client_secret
-           type: str
-           description: etrade client secret
-
-           param: resource_owner_key
-           type: str
-           description: OAuth authentication token key
-
-           param: resource_owner_secret
-           type: str
-           description: OAuth authentication token secret
-
-           param: dev
-           type: boolean
-           description: use the development environment (True) or production (False)
-
-           param: timeout
-           type: int
-           description: request timeout, default 30s
-
-        """
         self.base_url = (
             r"https://apisb.etrade.com/v1/accounts"
             if dev
@@ -87,14 +76,17 @@ class ETradeOrder:
         )
 
     def list_orders(self, account_id, resp_format="json", **kwargs):
-        """ list_orders(dev, resp_format='json', **kwargs) -> resp
+        """:description: Lists orders for a specific account ID Key
 
-            param: account_id
-            type: string
-            required: true
-            description: account ID Key
-
-            description: see ETrade API docs
+        :param account_id: AccountIDKey from :class:`pyetrade.accounts.ETradeAccounts.list_accounts`
+        :type  account_id: str, required
+        :param resp_format: Desired Response format, defaults to xml
+        :type  resp_format: str, optional
+        :param kwargs: Parameters for api. Refer to EtradeRef for options
+        :type  kwargs: ``**kwargs``, optional
+        :return: List of orders for an account
+        :rtype: ``xml`` or ``json`` based on ``resp_format``
+        :EtradeRef: https://apisb.etrade.com/docs/api/order/api-order-v1.html
 
         """
         assert resp_format in ("json", "xml")
@@ -116,10 +108,10 @@ class ETradeOrder:
         return req.text
 
     def check_order(self, **kwargs):
-        """
-        check that required params
-        for preview or place order are there
-        and correct
+        """:description: Check that required params for preview or place order are there and correct
+
+                         (Used internally)
+
         """
         mandatory = [
             "accountId",
@@ -146,13 +138,15 @@ class ETradeOrder:
             raise OrderException
 
     def build_order_payload(self, order_type, **kwargs):
-        """
-        build the POST payload of a preview or place order
+        """:description: Builds the POST payload of a preview or place order
+                         (Used internally)
 
-            param: order_type
-            type: string
-            required: true
-            description: PreviewOrderRequest or PlaceOrderRequest
+           :param order_type: PreviewOrderRequest or PlaceOrderRequest
+           :type  order_type: str, required
+           :return: Builds Order Payload
+           :rtype: ``xml`` or ``json`` based on ``resp_format``
+           :EtradeRef: https://apisb.etrade.com/docs/api/order/api-order-v1.html
+
         """
         instrument = {
             "Product": {"securityType": "EQ", "symbol": kwargs["symbol"]},
@@ -177,10 +171,20 @@ class ETradeOrder:
         return payload
 
     def perform_request(self, method, resp_format, api_url, payload):
-        """
-        run a post or put request
-        with json or xml
-        used by preview, place and cancel
+        """:description: POST or PUT request with json or xml used by preview, place and cancel
+
+           :param method: PUT or POST method
+           :type method: session, required
+           :param resp_format: Desired Response format, defaults to xml
+           :type  resp_format: str, required
+           :param api_url: API URL
+           :type  api_url: str, required
+           :param payload: Payload
+           :type  payload: str[], required
+           :return: Return request
+           :rtype: xml or json based on ``resp_format``
+           :EtradeRef: https://apisb.etrade.com/docs/api/order/api-order-v1.html
+
         """
 
         LOGGER.debug(api_url)
@@ -203,273 +207,106 @@ class ETradeOrder:
         return req.text
 
     def preview_equity_order(self, resp_format=None, **kwargs):
-        """preview_equity_order(dev, resp_format, **kwargs) -> resp
+        """API is used to submit an order request for preview before placing it
 
-           param: resp_format
-           type: str
-           description: Response format JSON or None = XML
-
-           kwargs:
-           param: accountId
-           type: string
-           required: true
-           description: account ID Key
-
-           param: symbol
-           type: str
-           required: true
-           description: The market symbol for the security being bought or sold
-
-           param: orderAction
-           type: str
-           required: true
-           description: The action that the broker is requested
-                        to perform Possible values are:
-                            * BUY
-                            * SELL
-                            * BUY_TO_COVER
-                            * SELL_SHORT
-
-           param: previewId
-           type: long
-           required: conditional
-           description: If the order was not previewed, this
-                        parameter should not be specified. If
-                        the order was previewed, this parameter
-                        must specify the numeric preview ID from
-                        the preview, and other parameters of
-                        this request must match the parameters
-                        of the preview
-
-           param: clientOrderId
-           type: str
-           required: true
-           description: A reference number generated by the
-                        developer. Used to ensure that a
-                        duplicate order is not being submitted.
-                        It can be any value of 20 alphanmeric
-                        characters or less, but must be unique
-                        within this account. It does not appear
-                        in any API responses.
-
-           param: priceType
-           type: str
-           required: true
-           description: The type of pricing specified in the
-                        equity order. Possible values are:
-                            * MARKET
-                            * LIMIT
-                            * STOP
-                            * STOP_LIMIT
-                            * MARKET_ON_CLOSE
-                        If STOP, requires a stopPrice. If LIMIT,
-                        requires a limitPrice. if STOP_LIMIT,
-                        requires both. For more information
-                        on these values, refer to the E-Trade
-                        online help on conditional orders
-
-           param: limitPrice
-           type: double
-           required: conditional
-           description: The highest price at which to buy or
-                        lowest price at which to sell. Required
-                        if priceType is STOP or STOP_LIMIT.
-
-           param: stopPrice
-           type: double
-           required: conditional
-           description: The price at which to buy or sell if
-                        specified in a stop order. Required if
-                        priceType is STOP or STOP_LIMIT.
-
-           param: allOrNone
-           type: bool
-           required: optional
-           description: If TRUE, the transactions specified in
-                        the order must be executed all at once
-                        or not at all. Default is FALSE.
-
-           param: quantity
-           type: int
-           required: true
-           description: The number of shares to buy or sell
-
-           param: reserveOrder
-           type: bool
-           required: optional
-           description: If set to TRUE, publicly displays only
-                        a limited number of shares (the
-                        reserve quantity), instead of the
-                        entire order, to avoid influencing
-                        other traders. Default is FALSE. If
-                        TRUE, must also specify the
-                        reserveQuantity.
-
-           param: reserveQuantity
-           type: int
-           required: conditional
-           description: The number of shares to be publicly
-                        displayed if this is a reserve order.
-                        Required if serveOrder is True.
-
-           param: marketSession
-           type: str
-           required: true
-           description: Session in which the equity order will
-                        be placed. Possible values are:
-                            * REGULAR
-                            * EXTENDED
-           param: orderTerm
-           type: str
-           required: true
-           description: Specifies the term for which the order
-                        is in effect. Possible values are:
-                            * GOOD_UNTIL_CANCEL
-                            * GOOD_FOR_DAY
-                            * IMMEDIATE_OR_CANCEL (only for
-                              limit orders)
-                            * FILL_OR_KILL (only for limit
-                              orders)
-
-           param: routingDestination
-           type: str
-           required: optional
-           description: The exchange where the order should be
-                        executed. Users may want to specify
-                        this if they believe they can get a
-                        better order fill at a specific exchange
-                        rather than relying on automatic order
-                        routing system. Posssible values are:
-                            * AUTO (default)
-                            * ARCA
-                            * NSDQ
-                            * NYSE
-
-           param: accountId
-           type: int
-           description: Numeric account ID
-
-           param: allOrNone
-           type: bool
-
-           description: if True, the transaction specified in
-                         the order are to be executed all at
-                         once, or not at all
-           param: estimatedCommission
-           type: double
-
-           description: The cost billed to the user to preform
-                         the requested action
-           param: estimatedTotalAmount
-           type: double
-
-           description: The cost or proceeds, including broker
-                         commission, resulting from the requested
-                         action
-
-           param: messageList
-           type: dict
-           description: Container for messages describing the
-                         result of the action
-
-           param: msgDesc
-           type: str
-           description: Text of the result message,
-                            indicating order status, success or
-                            failure, additional requirements
-                            that must be met before placing the
-                            order, etc. Applications typically
-                            display this message to the user,
-                            which may result in further user
-                            action
-            param: msgCode
-            type: int
-            description: Standard numeric code of the result
-                            message. Refer to the Error Messages
-                            documentation for examples. May
-                            optionally be displayed to the user,
-                            but is primarily intended for
-                            internal use.
-
-           param: orderNum
-           type: int
-           description: Numeric ID for this order in the E*TRADE
-                         system
-
-           param: orderTime
-           type: long
-           description: The time the order was submitted, in
-                         epoch time.
-           param: symbolDesc
-           type: str
-           description: Text description of the security
-
-           param: symbol
-           type: str
-           description: The market symbol for the underlier
-
-           param: quantity
-           type: int
-           description: The number of shares to buy or sell
-
-           param: reserveOrder
-           type: bool
-           description: If TRUE, this is a reserve order -
-                         meaning that only a limited number
-                         of shares will be publicly displayed,
-                         instead of the entire order, to
-                         avoid influencing other traders.
-
-           param: orderTerm
-           type: str
-           description: Specifies the term for which the
-                         order is in effect. Possible values
-                         are:
-                             * GOOD_UNTIL_CANCEL
-                             * GOOD_FOR_DAY
-                             * IMMEDIATE_OR_CANCEL (only for
-                                limit orders)
-                             * FILL_OR_KILL (only for limit
-                                orders)
-           param: orderAction
-           type: str
-           description: The action that the broker is requested
-                         to perform. Possible values are:
-                             * BUY
-                             * SELL
-                             * BUY_TO_COVER
-                             * SELL_SHORT
-
-            param: priceType
-           type: str
-           description: The type of pricing. Possible values are:
-                            * MARKET
-                            * LIMIT
-                            * STOP
-                            * STOP_LIMIT
-                            * MARKET_ON_CLOSE
-
-            param: limitPrice
-           type: double
-           description: The highest price at which to buy or the
-                         lowest price at which to sell if specified
-                         in a limit order. Returned if priceType is
-                         LIMIT
-
-            param: stopPrice
-           type: double
-           description: The price at which a stock is to be bought
-                         or sold if specified in a stop order.
-                         Returned if priceType is STOP.
-
-            param: routingDestination
-           type: str
-           description: The exchange where the order should be
-                         executed. Possible values are:
-                             * AUTO
-                             * ARCA
-                             * NSDQ
-                             * NYSE
+           :param resp_format: Desired Response format (json or xml), defaults to xml
+           :type  resp_format: str, optional
+           :param accountId: AccountIDkey retrived from :class:`list_accounts`
+           :type  accountId: str, required
+           :param symbol: Market symbol for the security being bought or sold
+           :type  symbol: str, required
+           :param orderAction: Action that the broker is requested to perform
+           :type  orderAction: str, required
+           :orderAction values:
+               * BUY
+               * SELL
+               * BUY_TO_COVER
+               * SELL_SHORT
+           :param previewId: Required only if order was previewed.
+                             Numeric preview ID from preview.
+                             **Note** - Other parameters much match that of preview
+           :type  previewId: long, conditional
+           :param clientOrderId: Reference number generated by developer.
+                                 Used to ensure duplicate order is not submitted.
+                                 Value can be of 20 alphanmeric characters or less
+                                 Must be uniquewithin this account.
+                                 Does not appear in any API responses.
+           :type  clientOrderId: str, required
+           :param priceType: Type of pricing specified in equity order
+           :type  priceType: str, required
+           :priceType values:
+               * MARKET
+               * LIMIT - Requires `limitPrice`
+               * STOP - Requires `stopPrice`
+               * STOP_LIMIT - Requires `limitPrice`
+               * MARKET_ON_CLOSE
+           :param limitPrice: Highest to buy or lowest to sell.
+                              Required if `priceType` is `STOP` or `STOP_LIMIT`
+           :type  limitPrice: double, conditional
+           :param stopPrice: Price to buy or sell if specified in a stop order.
+                             Required if `priceType` is  `STOP` or `STOP_LIMIT`
+           :type  stopPrice: double, conditional
+           :param allOrNone: Specifies if order must be executed all at once.
+                             TRUE triggers `allOrNone`, defaults to FALSE
+           :type  allOrNone: bool, optional
+           :param quantity: Number of shares to buy or sell
+           :type  quantity: int, required
+           :param reserveOrder: If set to TRUE, publicly displays only a limited
+                                number of shares (the reserve quantity), instead
+                                of the entire order, to avoid influencing other
+                                traders. If TRUE, must also specify the
+                                `reserveQuantity`, defaults to FALSE
+           :type  reserveOrder: bool, optional
+           :param reserveQuantity: Number of shares to be publicly displayed if
+                                   this is a reserve order. Required if
+                                   `reserveOrder` is TRUE.
+           :type reserveQuantity: int, conditional
+           :param marketSession: Session to place the equity order
+           :type  marketSession: str, required
+           :marketSession values:
+               * REGULAR
+               * EXTENDED
+           :param orderTerm: Term for which the order is in effect.
+           :type  orderTerm: str, required
+           :orderTerm values:
+               * GOOD_UNTIL_CANCEL
+               * GOOD_FOR_DAY
+               * IMMEDIATE_OR_CANCEL (only for `LIMIT` orders)
+               * FILL_OR_KILL (only for `LIMIT` orders)
+           :param routingDestination: Exchange where the order should be executed.
+           :type  routingDestination: str, optional
+           :routingDestination values:
+               * AUTO (default)
+               * ARCA
+               * NSDQ
+               * NYSE
+           :param estimatedCommission: Cost billed to the user to preform requested action
+           :type  estimatedCommission: double
+           :param estimatedTotalAmount: Cost including commission
+           :type  estimatedTotalAmount: double
+           :param messageList: Container for messages describing the result of the action
+           :type  messageList: dict
+           :param msgDesc: Text of the result message, indicating order status, success
+                           or failure, additional requirements that must be met before
+                           placing the order, etc. Applications typically display this
+                           message to the user, which may result in further user action
+           :type  msgDesc: str
+           :param msgCode: Standard numeric code of the result message. Refer to
+                           the Error Messages documentation for examples. May optionally
+                           be displayed to the user, but is primarily intended for
+                           internal use.
+           :type  msgCode: int
+           :param orderNum: Numeric ID for this order in the E*TRADE system
+           :type  orderNum: int
+           :param orderTime: The epoch time the order was submitted.
+           :type  orderTime: long
+           :param symbolDesc: Text description of the security
+           :type  symbolDesc: str
+           :param symbol: The market symbol for the underlier
+           :type  symbol: str
+           :return: Confirmation of the Preview Equity Order
+           :rtype: ``xml`` or ``json`` based on ``resp_format``
+           :EtradeRef: https://apisb.etrade.com/docs/api/order/api-order-v1.html
 
         """
         assert resp_format in (None, "json", "xml")
@@ -483,13 +320,19 @@ class ETradeOrder:
         payload = self.build_order_payload("PreviewOrderRequest", **kwargs)
 
         return self.perform_request(self.session.post, resp_format, api_url, payload)
-   
+
     def change_preview_equity_order(self, resp_format=None, **kwargs):
-        """
-        Same as preview_equity_order() above, but with orderId 
-        param: orderId
-           type: str
-           description: The orderId you want to modify
+        """:description: Same as :class:`preview_equity_order` with orderId
+           :param orderId: orderId to modify, refer :class:`list_orders`
+           :type  orderId: str, required
+           :param resp_format: Desired Response format, defaults to xml
+           :type  resp_format: str, optional
+           :param accountId: AccountIDkey retrived from :class:`list_accounts`
+           :type  accountId: str, required
+           :return: Previews Changed order with orderId for account with key accountId
+           :rtype: xml or json based on ``resp_format``
+           :EtradeRef: https://apisb.etrade.com/docs/api/order/api-order-v1.html
+
         """
         assert resp_format in (None, "json", "xml")
         LOGGER.debug(kwargs)
@@ -504,13 +347,16 @@ class ETradeOrder:
         return self.perform_request(self.session.put, resp_format, api_url, payload)
 
     def place_equity_order(self, resp_format=None, **kwargs):
-        """place_equity_order(dev, resp_format, **kwargs) -> resp
+        """:description: Places Equity Order
 
-           param: resp_format
-           type: str
-           description: Response format JSON or None = XML
+           :param resp_format: Desired Response format, defaults to xml
+           :type  resp_format: str, optional
+           :param kwargs: Parameters for api, refer :class:`change_preview_equity_order`
+           :type  kwargs: ``**kwargs``, required
+           :return: Returns confirmation of the equity order
+           :rtype: xml or json based on ``resp_format``
+           :EtradeRef: https://apisb.etrade.com/docs/api/order/api-order-v1.html
 
-           kwargs: see preview_equity_order
         """
 
         assert resp_format in (None, "json", "xml")
@@ -539,15 +385,18 @@ class ETradeOrder:
         payload = self.build_order_payload("PlaceOrderRequest", **kwargs)
 
         return self.perform_request(self.session.post, resp_format, api_url, payload)
-      
+
     def place_changed_equity_order(self, resp_format=None, **kwargs):
-        """place_changed_equity_order(dev, resp_format, **kwargs) -> resp
+        """:description: Places changes to equity orders
 
-           param: resp_format
-           type: str
-           description: Response format JSON or None = XML
+           :param resp_format: Desired Response format, defaults to xml
+           :type  resp_format: str, optional
+           :param kwargs: Parameters for api, refer :class:`change_preview_equity_order`
+           :type  kwargs: ``**kwargs``, required
+           :return: Returns confirmation similar to :class:`preview_equity_order`
+           :rtype: xml or json based on ``resp_format``
+           :EtradeRef: https://apisb.etrade.com/docs/api/order/api-order-v1.html
 
-           kwargs: see change_preview_equity_order
         """
 
         assert resp_format in (None, "json", "xml")
@@ -576,24 +425,20 @@ class ETradeOrder:
         payload = self.build_order_payload("PlaceOrderRequest", **kwargs)
 
         return self.perform_request(self.session.put, resp_format, api_url, payload)
-      
+
     def cancel_order(self, account_id, order_num, resp_format=None):
-        """ cancel_order(account_id, order_num, dev, resp_format)
-            param: account_id
-            type: string
-            description: account id key
+        """:description: Cancels a specific order for a given account
 
-            param: order_num
-            type: int
-            description: numeric id for this order in the etrade system
-
-            param: dev
-            type: bool
-            description: API enviornment
-
-            param: resp_format
-            type: str
-            description: Response format JSON or None = XML
+           :param account_id: AccountIDkey retrived from
+                              :class:`pyetrade.accounts.ETradeAccounts.list_accounts`
+           :type  account_id: str, required
+           :param order_num: Numeric id for this order listed in :class:`list_orders`
+           :type  order_num: int, required
+           :param resp_format: Desired Response format("None", "json", "xml"), defaults to xml
+           :type  resp_format: str, optional
+           :return: Confirmation of cancellation
+           :rtype: ``xml`` or ``json`` based on ``resp_format``
+           :EtradeRef: https://apisb.etrade.com/docs/api/order/api-order-v1.html
 
         """
         assert resp_format in (None, "json", "xml")

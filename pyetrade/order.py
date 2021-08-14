@@ -156,7 +156,10 @@ class ETradeOrder:
         }
         order = kwargs
         order["Instrument"] = instrument
-        order["stopPrice"] = ""
+        if "stopPrice" in kwargs:
+          stopPrice = (float(kwargs["stopPrice"]) - 0.01)
+          if stopPrice > 0:
+            order["stopPrice"] = "%.2f" % stopPrice
         payload = {
             order_type: {
                 "orderType": "EQ",

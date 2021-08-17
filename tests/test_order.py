@@ -105,6 +105,79 @@ class TestETradeOrder(unittest.TestCase):
         self.assertTrue(MockOAuthSession().post().json.called)
         self.assertTrue(MockOAuthSession().post.called)
 
+        # Test payload: BUY MARKET
+        payload = orders.build_order_payload("PreviewOrderRequest",
+                resp_format="json",
+                accountId="12345",
+                symbol="ABC",
+                orderAction="BUY",
+                clientOrderId="1a2b3c",
+                priceType="MARKET",
+                quantity=100,
+                orderTerm="GOOD_UNTIL_CANCEL",
+                marketSession="REGULAR",
+            )
+        # print(payload)  # to debug
+        expected = {'PreviewOrderRequest': {'orderType': 'EQ', 'clientOrderId': '1a2b3c', 'Order': {'resp_format': 'json', 'accountId': '12345', 'symbol': 'ABC', 'orderAction': 'BUY', 'clientOrderId': '1a2b3c', 'priceType': 'MARKET', 'quantity': 100, 'orderTerm': 'GOOD_UNTIL_CANCEL', 'marketSession': 'REGULAR', 'Instrument': {'Product': {'securityType': 'EQ', 'symbol': 'ABC'}, 'orderAction': 'BUY', 'quantityType': 'QUANTITY', 'quantity': 100}}}}
+        self.assertTrue(expected == payload)
+
+        # Test payload: SELL STOP
+        payload = orders.build_order_payload("PreviewOrderRequest",
+                accountId="12345",
+                symbol="ABC",
+                orderAction="SELL",
+                clientOrderId="1a2b3c",
+                priceType="STOP",
+                stopPrice=19.99999,  # double values are not exact
+                quantity=100,
+                orderTerm="GOOD_UNTIL_CANCEL",
+                marketSession="REGULAR",
+            )
+        self.assertEqual(payload['PreviewOrderRequest']['Order']['stopPrice'], '19.99')  # SELL: round down to decimal
+
+        # Test payload: SELL STOP
+        payload = orders.build_order_payload("PreviewOrderRequest",
+                accountId="12345",
+                symbol="ABC",
+                orderAction="SELL",
+                clientOrderId="1a2b3c",
+                priceType="STOP",
+                stopPrice=20.00001,  # double values are not exact
+                quantity=100,
+                orderTerm="GOOD_UNTIL_CANCEL",
+                marketSession="REGULAR",
+            )
+        self.assertEqual(payload['PreviewOrderRequest']['Order']['stopPrice'], '20.00')  # SELL: round down to decimal
+
+        # Test payload: BUY STOP
+        payload = orders.build_order_payload("PreviewOrderRequest",
+                accountId="12345",
+                symbol="ABC",
+                orderAction="BUY",
+                clientOrderId="1a2b3c",
+                priceType="STOP",
+                stopPrice=19.99999,  # double values are not exact
+                quantity=100,
+                orderTerm="GOOD_UNTIL_CANCEL",
+                marketSession="REGULAR",
+            )
+        self.assertEqual(payload['PreviewOrderRequest']['Order']['stopPrice'], '20.00')  #  BUY: round   up to decimal
+
+        # Test payload: BUY STOP
+        payload = orders.build_order_payload("PreviewOrderRequest",
+                accountId="12345",
+                symbol="ABC",
+                orderAction="BUY",
+                clientOrderId="1a2b3c",
+                priceType="STOP",
+                stopPrice=20.00001,  # double values are not exact
+                quantity=100,
+                orderTerm="GOOD_UNTIL_CANCEL",
+                marketSession="REGULAR",
+            )
+        self.assertEqual(payload['PreviewOrderRequest']['Order']['stopPrice'], '20.01')  #  BUY: round   up to decimal
+
+
     @patch("pyetrade.order.OAuth1Session")
     def test_place_equity_order_exception(self, MockOAuthSession):
         """test_place_equity_order_exception(MockOAuthSession) -> None

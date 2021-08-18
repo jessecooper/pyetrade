@@ -1,4 +1,4 @@
-'''Init for pyetrade module  '''
+"""Init for pyetrade module  """
 
 __ALL__ = ["authorization", "accounts"]
 
@@ -14,5 +14,5 @@ from . import market  # noqa: F401
 from .market import ETradeMarket  # noqa: F401
 from . import order  # noqa: F401
 from .order import ETradeOrder  # noqa: F401
-from . import alerts # noqa: F401
-from .alerts import ETradeAlerts # noqa: F401
+from . import alerts  # noqa: F401
+from .alerts import ETradeAlerts  # noqa: F401

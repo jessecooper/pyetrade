@@ -122,60 +122,45 @@ class TestETradeOrder(unittest.TestCase):
         self.assertTrue(expected == payload)
 
         # Test payload: SELL STOP
-        payload = orders.build_order_payload("PreviewOrderRequest",
+        float_decimals = [
+            (19.99999, '19.99'),  # double values are not exact; SELL: round down to decimal
+            (20,       '20.00'),  # exact int
+            (20.00001, '20.00'),
+            ]
+
+        for fd in float_decimals:
+          payload = orders.build_order_payload("PreviewOrderRequest",
                 accountId="12345",
                 symbol="ABC",
                 orderAction="SELL",
                 clientOrderId="1a2b3c",
                 priceType="STOP",
-                stopPrice=19.99999,  # double values are not exact
+                stopPrice=fd[0],
                 quantity=100,
                 orderTerm="GOOD_UNTIL_CANCEL",
                 marketSession="REGULAR",
             )
-        self.assertEqual(payload['PreviewOrderRequest']['Order']['stopPrice'], '19.99')  # SELL: round down to decimal
-
-        # Test payload: SELL STOP
-        payload = orders.build_order_payload("PreviewOrderRequest",
-                accountId="12345",
-                symbol="ABC",
-                orderAction="SELL",
-                clientOrderId="1a2b3c",
-                priceType="STOP",
-                stopPrice=20.00001,  # double values are not exact
-                quantity=100,
-                orderTerm="GOOD_UNTIL_CANCEL",
-                marketSession="REGULAR",
-            )
-        self.assertEqual(payload['PreviewOrderRequest']['Order']['stopPrice'], '20.00')  # SELL: round down to decimal
+          self.assertEqual(payload['PreviewOrderRequest']['Order']['stopPrice'], fd[1])
 
         # Test payload: BUY STOP
-        payload = orders.build_order_payload("PreviewOrderRequest",
+        float_decimals = [
+            (19.99999, '20.00'),  # double values are not exact; BUY: round   up to decimal
+            (20,       '20.00'),  # exact int
+            (20.00001, '20.01'),
+            ]
+        for fd in float_decimals:
+          payload = orders.build_order_payload("PreviewOrderRequest",
                 accountId="12345",
                 symbol="ABC",
                 orderAction="BUY",
                 clientOrderId="1a2b3c",
                 priceType="STOP",
-                stopPrice=19.99999,  # double values are not exact
+                stopPrice=fd[0],
                 quantity=100,
                 orderTerm="GOOD_UNTIL_CANCEL",
                 marketSession="REGULAR",
             )
-        self.assertEqual(payload['PreviewOrderRequest']['Order']['stopPrice'], '20.00')  #  BUY: round   up to decimal
-
-        # Test payload: BUY STOP
-        payload = orders.build_order_payload("PreviewOrderRequest",
-                accountId="12345",
-                symbol="ABC",
-                orderAction="BUY",
-                clientOrderId="1a2b3c",
-                priceType="STOP",
-                stopPrice=20.00001,  # double values are not exact
-                quantity=100,
-                orderTerm="GOOD_UNTIL_CANCEL",
-                marketSession="REGULAR",
-            )
-        self.assertEqual(payload['PreviewOrderRequest']['Order']['stopPrice'], '20.01')  #  BUY: round   up to decimal
+          self.assertEqual(payload['PreviewOrderRequest']['Order']['stopPrice'], fd[1])
 
 
     @patch("pyetrade.order.OAuth1Session")

@@ -8,4 +8,4 @@ pytest
 pytest-cov
 pytest-mock
 tox
-bumpversion
+bumpversion==0.5.3

@@ -105,6 +105,72 @@ class TestETradeOrder(unittest.TestCase):
         self.assertTrue(MockOAuthSession().post().json.called)
         self.assertTrue(MockOAuthSession().post.called)
 
+        # Test payload: BUY MARKET
+        payload = orders.build_order_payload("PreviewOrderRequest",
+                resp_format="json",
+                accountId="12345",
+                symbol="ABC",
+                orderAction="BUY",
+                clientOrderId="1a2b3c",
+                priceType="MARKET",
+                quantity=100,
+                orderTerm="GOOD_UNTIL_CANCEL",
+                marketSession="REGULAR",
+            )
+        # print(payload)  # to debug
+        expected = {'PreviewOrderRequest': {'orderType': 'EQ', 'clientOrderId': '1a2b3c', 'Order': {'resp_format': 'json', 'accountId': '12345', 'symbol': 'ABC', 'orderAction': 'BUY', 'clientOrderId': '1a2b3c', 'priceType': 'MARKET', 'quantity': 100, 'orderTerm': 'GOOD_UNTIL_CANCEL', 'marketSession': 'REGULAR', 'Instrument': {'Product': {'securityType': 'EQ', 'symbol': 'ABC'}, 'orderAction': 'BUY', 'quantityType': 'QUANTITY', 'quantity': 100}}}}
+        self.assertTrue(expected == payload)
+
+        # Test payload: SELL STOP
+        float_decimals = [
+            (19.99999, '19.99'),  # double values are not exact; SELL: round down to decimal
+            (20,       '20.00'),  # exact int
+            (20.01001, '20.01'),
+            (20.01,    '20.01'),
+            (20.00999, '20.00'),
+            (20.00001, '20.00'),
+            ]
+
+        for fd in float_decimals:
+          for orderAction in ["SELL", "SELL_SHORT"]:
+            payload = orders.build_order_payload("PreviewOrderRequest",
+                accountId="12345",
+                symbol="ABC",
+                orderAction=orderAction,
+                clientOrderId="1a2b3c",
+                priceType="STOP",
+                stopPrice=fd[0],
+                quantity=100,
+                orderTerm="GOOD_UNTIL_CANCEL",
+                marketSession="REGULAR",
+                )
+            self.assertEqual(payload['PreviewOrderRequest']['Order']['stopPrice'], fd[1])
+
+        # Test payload: BUY STOP
+        float_decimals = [
+            (19.99999, '20.00'),  # double values are not exact; BUY: round   up to decimal
+            (20,       '20.00'),  # exact int
+            (20.01001, '20.02'),
+            (20.01,    '20.01'),
+            (20.00999, '20.01'),
+            (20.00001, '20.01'),
+            ]
+        for fd in float_decimals:
+          for orderAction in ["BUY", "BUY_TO_COVER"]:
+            payload = orders.build_order_payload("PreviewOrderRequest",
+                accountId="12345",
+                symbol="ABC",
+                orderAction=orderAction,
+                clientOrderId="1a2b3c",
+                priceType="STOP",
+                stopPrice=fd[0],
+                quantity=100,
+                orderTerm="GOOD_UNTIL_CANCEL",
+                marketSession="REGULAR",
+                )
+            self.assertEqual(payload['PreviewOrderRequest']['Order']['stopPrice'], fd[1])
+
+
     @patch("pyetrade.order.OAuth1Session")
     def test_place_equity_order_exception(self, MockOAuthSession):
         """test_place_equity_order_exception(MockOAuthSession) -> None

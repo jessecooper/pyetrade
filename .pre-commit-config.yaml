@@ -2,18 +2,18 @@ defualt_stages: [commit, push]
 fail_fast: true
 repos:
 - repo: https://github.com/ambv/black
-  rev: stable
+  rev: 21.7b0
   hooks:
   - id: black
 - repo: https://github.com/pre-commit/pre-commit-hooks
-  rev: v2.1.0
+  rev: v4.0.1
   hooks:
   - id: trailing-whitespace
-- repo: https://github.com/pre-commit/pre-commit-hooks
-  rev: v2.1.0
+- repo: https://gitlab.com/pycqa/flake8
+  rev: 3.9.2
   hooks:
   - id: flake8
 - repo: https://github.com/szebenyib/pre-commit-pytest
-  rev: master
+  rev: 051fea31dbabf063ab38428c34a92c76d1abd5dc
   hooks:
   - id: pytest

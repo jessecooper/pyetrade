@@ -157,12 +157,18 @@ class ETradeOrder:
         order = kwargs
         order["Instrument"] = instrument
         if "stopPrice" in kwargs:
-          HALF_CENT = 0.005  #  BUY: round   up to decimal
-          if "SELL" == kwargs["orderAction"][:4]:
-            HALF_CENT *= -1  # SELL: round down to decimal
-          stopPrice = (float(kwargs["stopPrice"]) + HALF_CENT)
-          if stopPrice > 0:
-            order["stopPrice"] = "%.2f" % stopPrice  # now round to 2-place decimal
+          stopPrice = float(kwargs["stopPrice"])
+          spstr = "%.2f" % stopPrice  # round to 2-place decimal
+          spstrf = float(spstr)       # convert back to float again
+          diff = stopPrice - spstrf
+          if diff != 0:        # have to work hard to round to decimal
+            HALF_CENT = 0.005  #  BUY: round   up to decimal
+            if "SELL" == kwargs["orderAction"][:4]:
+              HALF_CENT *= -1  # SELL: round down to decimal
+            stopPrice += HALF_CENT
+            if stopPrice > 0:
+              spstr = "%.2f" % stopPrice  # now round to 2-place decimal
+          order["stopPrice"] = spstr
         payload = {
             order_type: {
                 "orderType": "EQ",

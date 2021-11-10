@@ -14,6 +14,7 @@ import dateutil.parser
 import logging
 import jxmlease
 from nose.tools import *
+import pdb
 from requests_oauthlib import OAuth1Session
 
 LOGGER = logging.getLogger(__name__)
@@ -154,7 +155,7 @@ class ETradeOrder:
         LOGGER.debug(api_url)
         req = self.session.get(api_url, params=params, timeout=self.timeout)
 
-        return get_request_result(req, resp_format, [])
+        return get_request_result(req, resp_format, {})
 
     def find_option_orders(self, account_id, symbol, callPut, expiryDate, strikePrice):
         """:description: Lists orders for a specific account ID Key
@@ -163,14 +164,15 @@ class ETradeOrder:
         opt_sym = option_symbol(symbol, callPut, expiryDate, strikePrice)
         results = []
         orders = self.list_orders(account_id, resp_format="json", status="OPEN")  # this call may return empty
-        for o in orders["OrdersResponse"]["Order"]:
-            orderId = o["orderId"]
-            product = o["OrderDetail"][0]["Instrument"][0]["Product"]
-            symbol = product["symbol"]
-            if product["securityType"] == "OPTN":
-                symbol = product["productId"]["symbol"]  # e.g. "PLTR--220218P00023000"
-                if symbol == opt_sym:
-                    results.append(o)
+        if len(orders) > 0:
+            for o in orders["OrdersResponse"]["Order"]:
+                orderId = o["orderId"]
+                product = o["OrderDetail"][0]["Instrument"][0]["Product"]
+                symbol = product["symbol"]
+                if product["securityType"] == "OPTN":
+                    symbol = product["productId"]["symbol"]  # e.g. "PLTR--220218P00023000"
+                    if symbol == opt_sym:
+                        results.append(o)
         return results
 
     def check_order(self, **kwargs):

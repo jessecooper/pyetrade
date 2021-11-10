@@ -13,6 +13,9 @@ from collections import OrderedDict
 class TestETradeOrder(unittest.TestCase):
     """TestEtradeOrder Unit Test"""
 
+    def test_simple_funs(self):
+        self.assertTrue(order._test_option_symbol())
+
     @patch("pyetrade.order.OAuth1Session")
     def test_list_orders(self, MockOAuthSession):
         """test_place_equity_order(MockOAuthSession) -> None

@@ -13,9 +13,15 @@
 import dateutil.parser
 import logging
 import jxmlease
+from nose.tools import *
 from requests_oauthlib import OAuth1Session
 
 LOGGER = logging.getLogger(__name__)
+
+
+# some constants
+CALL = "Call"
+PUT  = "Put"
 
 
 # resp_format: xml (default) or json
@@ -34,10 +40,35 @@ def get_request_result(req, resp_format, empty_result):
       else:
         return req.json()
 
-    if resp_format is None:  # TODO(jessecooper): should this be: == "xml":
+    if resp_format is None:  # TODO(jessecooper): should this be: == "xml"?
         return jxmlease.parse(req.text)
 
     return req.text
+
+
+# return Etrade internal option symbol: e.g. "PLTR--220218P00023000" ref:_test_option_symbol()
+def option_symbol(symbol, callPut, expiryDate, strikePrice):
+  sym = symbol.strip().upper()
+  symstr = sym + ("-" * (6 - len(sym)))
+
+  ed = dateutil.parser.parse(expiryDate)  # dateutil can handle most date formats
+  edstr = ed.strftime("%y%m%d")
+  assert_equal(len(edstr), 6)
+
+  sp = "%08d" % (float(strikePrice) * 1000)
+  assert_equal(len(sp), 8)
+
+  opt_sym = symstr + edstr + callPut.strip().upper()[0] + sp
+  assert_equal(len(opt_sym), 21)
+  return opt_sym
+
+
+def _test_option_symbol():
+  expected = "PLTR--220218P00023000"
+  assert_equal(expected, option_symbol("PLTR", PUT, "2022-02-18",  23))
+  assert_equal(expected, option_symbol("PLTR", PUT, "2022-02-18",  23.00))
+  assert_equal(expected, option_symbol("PLTR", PUT, "2022-02-18", "23.0"))
+  return True  # if we reach here
 
 
 class OrderException(Exception):

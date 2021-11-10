@@ -10,7 +10,7 @@
 
 """
 
-import dateutil
+import dateutil.parser
 import logging
 import jxmlease
 from requests_oauthlib import OAuth1Session
@@ -21,7 +21,7 @@ LOGGER = logging.getLogger(__name__)
 # resp_format: xml (default) or json
 # empty_result: either [] or {}, depends on the caller's semantics
 def get_request_result(req, resp_format, empty_result):
-    assert resp_format in ("json", "xml")
+    assert resp_format in ("json", "xml", None)  # TODO: why None?
 
     LOGGER.debug(req.text)
     req.raise_for_status()
@@ -34,7 +34,7 @@ def get_request_result(req, resp_format, empty_result):
       else:
         return req.json()
 
-    if resp_format == "xml":
+    if resp_format is None:  # TODO(jessecooper): should this be: == "xml":
         return jxmlease.parse(req.text)
 
     return req.text
@@ -112,7 +112,6 @@ class ETradeOrder:
         :EtradeRef: https://apisb.etrade.com/docs/api/order/api-order-v1.html
 
         """
-        assert resp_format in ("json", "xml")
         api_url = self.base_url + "/" + account_id + "/orders"
         if resp_format == "json":
             api_url += ".json"
@@ -173,8 +172,8 @@ class ETradeOrder:
         """
         securityType = kwargs.get("securityType", "EQ")  # EQ by default
         product = {"securityType": securityType, "symbol": kwargs["symbol"]}
-        expiryDate = dateutil.parser.parse(kwargs.pop("expiryDate"))  # dateutil can handle most date formats
         if securityType == "OPTN":
+          expiryDate = dateutil.parser.parse(kwargs.pop("expiryDate"))  # dateutil can handle most date formats
           product.update({
             "expiryDay":   expiryDate.day,
             "expiryMonth": expiryDate.month,

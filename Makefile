@@ -12,5 +12,6 @@ install:
 dist:
 	python setup.py sdist
 clean:
+	$(RM) -fr .tox/
 	find . -iname *.pyc -exec rm -f {} +
 	pip uninstall -y pyetrade

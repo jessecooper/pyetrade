@@ -25,8 +25,8 @@ PUT  = "Put"
 
 
 # resp_format: xml (default) or json
-# empty_result: either [] or {}, depends on the caller's semantics
-def get_request_result(req, resp_format, empty_result):
+# empty_json: either [] or {}, depends on the caller's semantics
+def get_request_result(req, resp_format, empty_json):
     assert resp_format in ("json", "xml", None)  # TODO: why None?
 
     LOGGER.debug(req.text)
@@ -36,7 +36,7 @@ def get_request_result(req, resp_format, empty_result):
       if req.text.strip() == "":
         # otherwise, when ETrade server return empty string, we got this error:
         # simplejson.errors.JSONDecodeError: Expecting value: line 1 column 1 (char 0)
-        return {}  # empty json object
+        return empty_json  # empty json object
       else:
         return req.json()
 

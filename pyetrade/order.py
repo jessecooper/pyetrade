@@ -486,8 +486,16 @@ class ETradeOrder:
 
         return self.perform_request(self.session.post, resp_format, api_url, payload)
 
+    def place_changed_option_order(self, resp_format=None, **kwargs):
+        """:description: Places Option Order, only single leg CALL or PUT is supported for now
+           :return: Returns confirmation of the equity order
+        """
+        kwargs["securityType"] = "OPTN"
+        return self.place_changed_equity_order(resp_format, **kwargs)
+
     def place_changed_equity_order(self, resp_format=None, **kwargs):
         """:description: Places changes to equity orders
+            NOTE: the ETrade server will actually cancel the old orderId, and create a new orderId
 
            :param resp_format: Desired Response format, defaults to xml
            :type  resp_format: str, optional
@@ -520,7 +528,7 @@ class ETradeOrder:
                 "Got a successful preview with previewId: %s", kwargs["previewId"]
             )
 
-        api_url = self.base_url + "/" + kwargs["accountId"] + "/orders/"+kwargs["orderId"]+"change/place"
+        api_url = self.base_url + "/" + kwargs["accountId"] + "/orders/"+kwargs["orderId"]+"/change/place"
         # payload creation
         payload = self.build_order_payload("PlaceOrderRequest", **kwargs)
 

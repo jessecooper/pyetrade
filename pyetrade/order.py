@@ -10,11 +10,34 @@
 
 """
 
+import dateutil
 import logging
 import jxmlease
 from requests_oauthlib import OAuth1Session
 
 LOGGER = logging.getLogger(__name__)
+
+
+# resp_format: xml (default) or json
+# empty_result: either [] or {}, depends on the caller's semantics
+def get_request_result(req, resp_format, empty_result):
+    assert resp_format in ("json", "xml")
+
+    LOGGER.debug(req.text)
+    req.raise_for_status()
+
+    if resp_format == "json":
+      if req.text.strip() == "":
+        # otherwise, when ETrade server return empty string, we got this error:
+        # simplejson.errors.JSONDecodeError: Expecting value: line 1 column 1 (char 0)
+        return {}  # empty json object
+      else:
+        return req.json()
+
+    if resp_format == "xml":
+        return jxmlease.parse(req.text)
+
+    return req.text
 
 
 class OrderException(Exception):
@@ -100,12 +123,8 @@ class ETradeOrder:
 
         LOGGER.debug(api_url)
         req = self.session.get(api_url, params=params, timeout=self.timeout)
-        LOGGER.debug(req.text)
-        req.raise_for_status()
 
-        if resp_format == "json":
-            return req.json()
-        return req.text
+        return get_request_result(req, resp_format, [])
 
     def check_order(self, **kwargs):
         """:description: Check that required params for preview or place order are there and correct
@@ -143,19 +162,41 @@ class ETradeOrder:
 
            :param order_type: PreviewOrderRequest or PlaceOrderRequest
            :type  order_type: str, required
+           :securityType: EQ or OPTN
+           :orderAction: for OPTN: BUY_OPEN, SELL_CLOSE
+           :callPut: CALL or PUT
+           :expiryDate: string, e.g. "2022-02-18"
            :return: Builds Order Payload
            :rtype: ``xml`` or ``json`` based on ``resp_format``
            :EtradeRef: https://apisb.etrade.com/docs/api/order/api-order-v1.html
 
         """
+        securityType = kwargs.get("securityType", "EQ")  # EQ by default
+        product = {"securityType": securityType, "symbol": kwargs["symbol"]}
+        expiryDate = dateutil.parser.parse(kwargs.pop("expiryDate"))  # dateutil can handle most date formats
+        if securityType == "OPTN":
+          product.update({
+            "expiryDay":   expiryDate.day,
+            "expiryMonth": expiryDate.month,
+            "expiryYear":  expiryDate.year,
+            "callPut":     kwargs["callPut"],
+            "strikePrice": kwargs["strikePrice"]
+            })
         instrument = {
-            "Product": {"securityType": "EQ", "symbol": kwargs["symbol"]},
+            "Product": product,
             "orderAction": kwargs["orderAction"],
             "quantityType": "QUANTITY",
             "quantity": kwargs["quantity"],
         }
         order = kwargs
         order["Instrument"] = instrument
+
+        def remove_invalid_price_from_kwargs(key):
+          if float(kwargs.get(key, 0)) <= 0:
+            kwargs.pop(key, 0)
+
+        remove_invalid_price_from_kwargs("stopPrice")
+        remove_invalid_price_from_kwargs("limitPrice")
         if "stopPrice" in kwargs:
           stopPrice = float(kwargs["stopPrice"])
           spstr = "%.2f" % stopPrice  # round to 2-place decimal
@@ -171,7 +212,7 @@ class ETradeOrder:
           order["stopPrice"] = spstr
         payload = {
             order_type: {
-                "orderType": "EQ",
+                "orderType": securityType,
                 "clientOrderId": kwargs["clientOrderId"],
                 "Order": order,
             }
@@ -209,14 +250,7 @@ class ETradeOrder:
             LOGGER.debug("xml payload: %s", payload)
             req = method(api_url, data=payload, headers=headers, timeout=self.timeout)
 
-        LOGGER.debug(req.text)
-        req.raise_for_status()
-
-        if resp_format == "json":
-            return req.json()
-        if resp_format is None:
-            return jxmlease.parse(req.text)
-        return req.text
+        return get_request_result(req, resp_format, {})
 
     def preview_equity_order(self, resp_format=None, **kwargs):
         """API is used to submit an order request for preview before placing it
@@ -357,6 +391,13 @@ class ETradeOrder:
         payload = self.build_order_payload("PreviewOrderRequest", **kwargs)
 
         return self.perform_request(self.session.put, resp_format, api_url, payload)
+
+    def place_option_order(self, resp_format=None, **kwargs):
+        """:description: Places Option Order, only single leg CALL or PUT is supported for now
+           :return: Returns confirmation of the equity order
+        """
+        kwargs["securityType"] = "OPTN"
+        return self.place_equity_order(resp_format, **kwargs)
 
     def place_equity_order(self, resp_format=None, **kwargs):
         """:description: Places Equity Order

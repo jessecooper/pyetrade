@@ -156,6 +156,23 @@ class ETradeOrder:
 
         return get_request_result(req, resp_format, [])
 
+    def find_option_orders(self, account_id, symbol, callPut, expiryDate, strikePrice):
+        """:description: Lists orders for a specific account ID Key
+        :return: List of matching option orders in an account
+        """
+        opt_sym = option_symbol(symbol, callPut, expiryDate, strikePrice)
+        results = []
+        orders = self.list_orders(account_id, resp_format="json", status="OPEN")  # this call may return empty
+        for o in orders["OrdersResponse"]["Order"]:
+            orderId = o["orderId"]
+            product = o["OrderDetail"][0]["Instrument"][0]["Product"]
+            symbol = product["symbol"]
+            if product["securityType"] == "OPTN":
+                symbol = product["productId"]["symbol"]  # e.g. "PLTR--220218P00023000"
+                if symbol == opt_sym:
+                    results.append(o)
+        return results
+
     def check_order(self, **kwargs):
         """:description: Check that required params for preview or place order are there and correct
 

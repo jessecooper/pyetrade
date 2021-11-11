@@ -523,6 +523,11 @@ class ETradeOrder:
             preview = self.preview_equity_order(resp_format, **kwargs)
             if resp_format == "xml":
                 preview = jxmlease.parse(preview)
+
+            if "Error" in preview:
+              print(str(preview))
+              raise Exception("Please check your order!")
+
             kwargs["previewId"] = preview["PreviewOrderResponse"]["PreviewIds"][
                 "previewId"
             ]

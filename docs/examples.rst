@@ -249,4 +249,31 @@ Order Module
     # Lists orders of a account
     print(orders.list_orders(accountIDKey, resp_format='json'))
 
+    # place option order:
+    action = "BUY_OPEN"
+    symbol = "PLTR"
+    callPut = "PUT"
+    expiryDate = "2022-02-18"
+    strikePrice = 23
+    quantity = 1
+    limitPrice=1.97
+    orderTerm = "GOOD_UNTIL_CANCEL"  # "IMMEDIATE_OR_CANCEL"  # "GOOD_FOR_DAY"
+    marketSession = "REGULAR"
+    priceType = "LIMIT"
 
+    resp = order.place_option_order(
+          resp_format="xml",
+          accountId = account_id,
+          symbol = symbol,
+          callPut=callPut,
+          expiryDate=expiryDate,
+          strikePrice=strikePrice,
+          orderAction=action,
+          clientOrderId=clientOrderId,
+          priceType= priceType,
+          limitPrice=limitPrice,
+          allOrNone=False,
+          quantity=quantity,
+          orderTerm=orderTerm,
+          marketSession=marketSession,
+        )

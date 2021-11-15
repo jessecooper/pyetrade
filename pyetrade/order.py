@@ -64,14 +64,6 @@ def option_symbol(symbol, callPut, expiryDate, strikePrice):
   return opt_sym
 
 
-def _test_option_symbol():
-  expected = "PLTR--220218P00023000"
-  assert_equal(expected, option_symbol("PLTR", PUT, "2022-02-18",  23))
-  assert_equal(expected, option_symbol("PLTR", PUT, "2022-02-18",  23.00))
-  assert_equal(expected, option_symbol("PLTR", PUT, "2022-02-18", "23.0"))
-  return True  # if we reach here
-
-
 class OrderException(Exception):
     """:description: Exception raised when giving bad args to a method not from Etrade calls
 

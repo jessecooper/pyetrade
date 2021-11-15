@@ -8,13 +8,22 @@ import unittest
 from unittest.mock import patch
 from pyetrade import order
 from collections import OrderedDict
+from nose.tools import *
+
+
+def _test_option_symbol():
+  expected = "PLTR--220218P00023000"
+  assert_equal(expected, order.option_symbol("PLTR", order.PUT, "2022-02-18",  23))
+  assert_equal(expected, order.option_symbol("PLTR", order.PUT, "2022-02-18",  23.00))
+  assert_equal(expected, order.option_symbol("PLTR", order.PUT, "2022-02-18", "23.0"))
+  return True  # if we reach here
 
 
 class TestETradeOrder(unittest.TestCase):
     """TestEtradeOrder Unit Test"""
 
     def test_simple_funs(self):
-        self.assertTrue(order._test_option_symbol())
+        self.assertTrue(_test_option_symbol())
 
     @patch("pyetrade.order.OAuth1Session")
     def test_list_orders(self, MockOAuthSession):

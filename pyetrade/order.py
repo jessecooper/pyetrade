@@ -13,8 +13,7 @@
 import dateutil.parser
 import logging
 import jxmlease
-from nose.tools import *
-import pdb
+from nose.tools import assert_equal
 from requests_oauthlib import OAuth1Session
 
 LOGGER = logging.getLogger(__name__)

@@ -24,6 +24,23 @@ CALL = "Call"
 PUT  = "Put"
 
 
+# price: number
+# round_down: bool
+# return string
+def to_decimal_str(price, round_down):
+    spstr = "%.2f" % price  # round to 2-place decimal
+    spstrf = float(spstr)       # convert back to float again
+    diff = price - spstrf
+    if diff != 0:        # have to work hard to round to decimal
+      HALF_CENT = 0.005  # e.g. BUY  stop: round   up to decimal
+      if round_down:
+        HALF_CENT *= -1  # e.g. SELL stop: round down to decimal
+      price += HALF_CENT
+      if price > 0:
+        spstr = "%.2f" % price  # now round to 2-place decimal
+    return spstr
+
+
 # resp_format: xml (default) or json
 # empty_json: either [] or {}, depends on the caller's semantics
 def get_request_result(req, resp_format, empty_json):
@@ -239,16 +256,9 @@ class ETradeOrder:
         remove_invalid_price_from_kwargs("limitPrice")
         if "stopPrice" in kwargs:
           stopPrice = float(kwargs["stopPrice"])
-          spstr = "%.2f" % stopPrice  # round to 2-place decimal
-          spstrf = float(spstr)       # convert back to float again
-          diff = stopPrice - spstrf
-          if diff != 0:        # have to work hard to round to decimal
-            HALF_CENT = 0.005  #  BUY: round   up to decimal
-            if "SELL" == kwargs["orderAction"][:4]:
-              HALF_CENT *= -1  # SELL: round down to decimal
-            stopPrice += HALF_CENT
-            if stopPrice > 0:
-              spstr = "%.2f" % stopPrice  # now round to 2-place decimal
+          round_down = ("SELL" == kwargs["orderAction"][:4])
+          spstr = to_decimal_str(stopPrice, round_down)
+
           order["stopPrice"] = spstr
         payload = {
             order_type: {

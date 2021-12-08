@@ -13,7 +13,6 @@
 import dateutil.parser
 import logging
 import jxmlease
-from nose.tools import assert_equal
 from requests_oauthlib import OAuth1Session
 
 LOGGER = logging.getLogger(__name__)
@@ -70,13 +69,13 @@ def option_symbol(symbol, callPut, expiryDate, strikePrice):
 
   ed = dateutil.parser.parse(expiryDate)  # dateutil can handle most date formats
   edstr = ed.strftime("%y%m%d")
-  assert_equal(len(edstr), 6)
+  assert(len(edstr) == 6)
 
   sp = "%08d" % (float(strikePrice) * 1000)
-  assert_equal(len(sp), 8)
+  assert(len(sp) == 8)
 
   opt_sym = symstr + edstr + callPut.strip().upper()[0] + sp
-  assert_equal(len(opt_sym), 21)
+  assert(len(opt_sym) == 21)
   return opt_sym
 
 

@@ -13,6 +13,12 @@ from collections import OrderedDict
 class TestETradeOrder(unittest.TestCase):
     """TestEtradeOrder Unit Test"""
 
+    def test_option_symbol(self):
+        expected = "PLTR--220218P00023000"
+        self.assertEqual(expected, order.option_symbol("PLTR", order.PUT, "2022-02-18",  23))
+        self.assertEqual(expected, order.option_symbol("PLTR", order.PUT, "2022-02-18",  23.00))
+        self.assertEqual(expected, order.option_symbol("PLTR", order.PUT, "2022-02-18", "23.0"))
+
     @patch("pyetrade.order.OAuth1Session")
     def test_list_orders(self, MockOAuthSession):
         """test_place_equity_order(MockOAuthSession) -> None

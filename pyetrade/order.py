@@ -10,11 +10,73 @@
 
 """
 
+import dateutil.parser
 import logging
 import jxmlease
 from requests_oauthlib import OAuth1Session
 
 LOGGER = logging.getLogger(__name__)
+
+
+# some constants
+CALL = "Call"
+PUT  = "Put"
+
+
+# price: number
+# round_down: bool
+# return string
+def to_decimal_str(price, round_down):
+    spstr = "%.2f" % price  # round to 2-place decimal
+    spstrf = float(spstr)       # convert back to float again
+    diff = price - spstrf
+    if diff != 0:        # have to work hard to round to decimal
+      HALF_CENT = 0.005  # e.g. BUY  stop: round   up to decimal
+      if round_down:
+        HALF_CENT *= -1  # e.g. SELL stop: round down to decimal
+      price += HALF_CENT
+      if price > 0:
+        spstr = "%.2f" % price  # now round to 2-place decimal
+    return spstr
+
+
+# resp_format: xml (default) or json
+# empty_json: either [] or {}, depends on the caller's semantics
+def get_request_result(req, resp_format, empty_json):
+    assert resp_format in ("json", "xml", None)  # TODO: why None?
+
+    LOGGER.debug(req.text)
+    req.raise_for_status()
+
+    if resp_format == "json":
+      if req.text.strip() == "":
+        # otherwise, when ETrade server return empty string, we got this error:
+        # simplejson.errors.JSONDecodeError: Expecting value: line 1 column 1 (char 0)
+        return empty_json  # empty json object
+      else:
+        return req.json()
+
+    if resp_format is None:  # TODO(jessecooper): should this be: == "xml"?
+        return jxmlease.parse(req.text)
+
+    return req.text
+
+
+# return Etrade internal option symbol: e.g. "PLTR--220218P00023000" ref:_test_option_symbol()
+def option_symbol(symbol, callPut, expiryDate, strikePrice):
+  sym = symbol.strip().upper()
+  symstr = sym + ("-" * (6 - len(sym)))
+
+  ed = dateutil.parser.parse(expiryDate)  # dateutil can handle most date formats
+  edstr = ed.strftime("%y%m%d")
+  assert(len(edstr) == 6)
+
+  sp = "%08d" % (float(strikePrice) * 1000)
+  assert(len(sp) == 8)
+
+  opt_sym = symstr + edstr + callPut.strip().upper()[0] + sp
+  assert(len(opt_sym) == 21)
+  return opt_sym
 
 
 class OrderException(Exception):
@@ -89,7 +151,6 @@ class ETradeOrder:
         :EtradeRef: https://apisb.etrade.com/docs/api/order/api-order-v1.html
 
         """
-        assert resp_format in ("json", "xml")
         api_url = self.base_url + "/" + account_id + "/orders"
         if resp_format == "json":
             api_url += ".json"
@@ -100,12 +161,26 @@ class ETradeOrder:
 
         LOGGER.debug(api_url)
         req = self.session.get(api_url, params=params, timeout=self.timeout)
-        LOGGER.debug(req.text)
-        req.raise_for_status()
 
-        if resp_format == "json":
-            return req.json()
-        return req.text
+        return get_request_result(req, resp_format, {})
+
+    def find_option_orders(self, account_id, symbol, callPut, expiryDate, strikePrice):
+        """:description: Lists orders for a specific account ID Key
+        :return: List of matching option orders in an account
+        """
+        opt_sym = option_symbol(symbol, callPut, expiryDate, strikePrice)
+        results = []
+        orders = self.list_orders(account_id, resp_format="json", status="OPEN")  # this call may return empty
+        if len(orders) > 0:
+            for o in orders["OrdersResponse"]["Order"]:
+                orderId = o["orderId"]
+                product = o["OrderDetail"][0]["Instrument"][0]["Product"]
+                symbol = product["symbol"]
+                if product["securityType"] == "OPTN":
+                    symbol = product["productId"]["symbol"]  # e.g. "PLTR--220218P00023000"
+                    if symbol == opt_sym:
+                        results.append(o)
+        return results
 
     def check_order(self, **kwargs):
         """:description: Check that required params for preview or place order are there and correct
@@ -143,35 +218,50 @@ class ETradeOrder:
 
            :param order_type: PreviewOrderRequest or PlaceOrderRequest
            :type  order_type: str, required
+           :securityType: EQ or OPTN
+           :orderAction: for OPTN: BUY_OPEN, SELL_CLOSE
+           :callPut: CALL or PUT
+           :expiryDate: string, e.g. "2022-02-18"
            :return: Builds Order Payload
            :rtype: ``xml`` or ``json`` based on ``resp_format``
            :EtradeRef: https://apisb.etrade.com/docs/api/order/api-order-v1.html
 
         """
+        securityType = kwargs.get("securityType", "EQ")  # EQ by default
+        product = {"securityType": securityType, "symbol": kwargs["symbol"]}
+        if securityType == "OPTN":
+          expiryDate = dateutil.parser.parse(kwargs.pop("expiryDate"))  # dateutil can handle most date formats
+          product.update({
+            "expiryDay":   expiryDate.day,
+            "expiryMonth": expiryDate.month,
+            "expiryYear":  expiryDate.year,
+            "callPut":     kwargs["callPut"],
+            "strikePrice": kwargs["strikePrice"]
+            })
         instrument = {
-            "Product": {"securityType": "EQ", "symbol": kwargs["symbol"]},
+            "Product": product,
             "orderAction": kwargs["orderAction"],
             "quantityType": "QUANTITY",
             "quantity": kwargs["quantity"],
         }
         order = kwargs
         order["Instrument"] = instrument
+
+        def remove_invalid_price_from_kwargs(key):
+          if float(kwargs.get(key, 0)) <= 0:
+            kwargs.pop(key, 0)
+
+        remove_invalid_price_from_kwargs("stopPrice")
+        remove_invalid_price_from_kwargs("limitPrice")
         if "stopPrice" in kwargs:
           stopPrice = float(kwargs["stopPrice"])
-          spstr = "%.2f" % stopPrice  # round to 2-place decimal
-          spstrf = float(spstr)       # convert back to float again
-          diff = stopPrice - spstrf
-          if diff != 0:        # have to work hard to round to decimal
-            HALF_CENT = 0.005  #  BUY: round   up to decimal
-            if "SELL" == kwargs["orderAction"][:4]:
-              HALF_CENT *= -1  # SELL: round down to decimal
-            stopPrice += HALF_CENT
-            if stopPrice > 0:
-              spstr = "%.2f" % stopPrice  # now round to 2-place decimal
+          round_down = ("SELL" == kwargs["orderAction"][:4])
+          spstr = to_decimal_str(stopPrice, round_down)
+
           order["stopPrice"] = spstr
         payload = {
             order_type: {
-                "orderType": "EQ",
+                "orderType": securityType,
                 "clientOrderId": kwargs["clientOrderId"],
                 "Order": order,
             }
@@ -209,14 +299,7 @@ class ETradeOrder:
             LOGGER.debug("xml payload: %s", payload)
             req = method(api_url, data=payload, headers=headers, timeout=self.timeout)
 
-        LOGGER.debug(req.text)
-        req.raise_for_status()
-
-        if resp_format == "json":
-            return req.json()
-        if resp_format is None:
-            return jxmlease.parse(req.text)
-        return req.text
+        return get_request_result(req, resp_format, {})
 
     def preview_equity_order(self, resp_format=None, **kwargs):
         """API is used to submit an order request for preview before placing it
@@ -358,6 +441,13 @@ class ETradeOrder:
 
         return self.perform_request(self.session.put, resp_format, api_url, payload)
 
+    def place_option_order(self, resp_format=None, **kwargs):
+        """:description: Places Option Order, only single leg CALL or PUT is supported for now
+           :return: Returns confirmation of the equity order
+        """
+        kwargs["securityType"] = "OPTN"
+        return self.place_equity_order(resp_format, **kwargs)
+
     def place_equity_order(self, resp_format=None, **kwargs):
         """:description: Places Equity Order
 
@@ -398,8 +488,16 @@ class ETradeOrder:
 
         return self.perform_request(self.session.post, resp_format, api_url, payload)
 
+    def place_changed_option_order(self, resp_format=None, **kwargs):
+        """:description: Places Option Order, only single leg CALL or PUT is supported for now
+           :return: Returns confirmation of the equity order
+        """
+        kwargs["securityType"] = "OPTN"
+        return self.place_changed_equity_order(resp_format, **kwargs)
+
     def place_changed_equity_order(self, resp_format=None, **kwargs):
         """:description: Places changes to equity orders
+            NOTE: the ETrade server will actually cancel the old orderId, and create a new orderId
 
            :param resp_format: Desired Response format, defaults to xml
            :type  resp_format: str, optional
@@ -425,6 +523,11 @@ class ETradeOrder:
             preview = self.preview_equity_order(resp_format, **kwargs)
             if resp_format == "xml":
                 preview = jxmlease.parse(preview)
+
+            if "Error" in preview:
+              LOGGER.error(preview)
+              raise Exception("Please check your order!")
+
             kwargs["previewId"] = preview["PreviewOrderResponse"]["PreviewIds"][
                 "previewId"
             ]
@@ -432,7 +535,7 @@ class ETradeOrder:
                 "Got a successful preview with previewId: %s", kwargs["previewId"]
             )
 
-        api_url = self.base_url + "/" + kwargs["accountId"] + "/orders/"+kwargs["orderId"]+"change/place"
+        api_url = self.base_url + "/" + kwargs["accountId"] + "/orders/"+kwargs["orderId"]+"/change/place"
         # payload creation
         payload = self.build_order_payload("PlaceOrderRequest", **kwargs)
 

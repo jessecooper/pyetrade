@@ -525,7 +525,7 @@ class ETradeOrder:
                 preview = jxmlease.parse(preview)
 
             if "Error" in preview:
-              print(str(preview))
+              LOGGER.error(preview)
               raise Exception("Please check your order!")
 
             kwargs["previewId"] = preview["PreviewOrderResponse"]["PreviewIds"][

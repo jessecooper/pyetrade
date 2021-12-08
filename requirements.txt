@@ -1,4 +1,3 @@
-nose
 python-dateutil
 requests
 requests_oauthlib

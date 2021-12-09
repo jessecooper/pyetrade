@@ -3,8 +3,10 @@ on:
     tags:
      - 'v*'
 jobs:
+  test:
+    uses: jessecooper/pyetrade/.github/workflows/build.yml@main
   release:
-    needs: build
+    needs: test
     name: Create Release
     runs-on: ubuntu-latest
     steps:

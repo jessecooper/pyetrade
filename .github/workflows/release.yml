@@ -4,7 +4,7 @@ on:
      - 'v*'
 jobs:
   test:
-    uses: jessecooper/pyetrade/.github/workflows/build.yml@main
+    uses: jessecooper/pyetrade/.github/workflows/build.yml@master
   release:
     needs: test
     name: Create Release

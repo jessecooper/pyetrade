@@ -22,6 +22,7 @@ setup(
     version=__version__,
     description="eTrade API wrappers",
     long_description=long_description,
+    long_description_content_type="text/markdown",
     author="Jesse Cooper",
     author_email="jesse_cooper@codeholics.com",
     url="https://github.com/jessecooper/pyetrade",

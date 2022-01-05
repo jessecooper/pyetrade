@@ -3,8 +3,8 @@
 from setuptools import setup, find_packages
 from codecs import open
 from os import path
-from pyetrade import __version__
 
+__version__ = "1.3.4"
 here = path.abspath(path.dirname(__file__))
 
 # Get the long description from the README file

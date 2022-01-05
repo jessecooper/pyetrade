@@ -1,23 +1,33 @@
 #!/usr/bin/env python3
 
-from distutils.core import setup
+from setuptools import setup, find_packages
+from codecs import open
+from os import path
 from pyetrade import __version__
 
+here = path.abspath(path.dirname(__file__))
+
+# Get the long description from the README file
+with open(path.join(here, "README.md"), encoding="utf-8") as f:
+    long_description = f.read()
+
 # requirements
-with open("requirements.txt") as requirements:
-    req = [i.strip() for i in requirements]
+with open(path.join(here, "requirements.txt"), encoding="utf-8") as f:
+    all_reqs = f.read().split("\n")
+
+install_requires = [x.strip() for x in all_reqs if "git+" not in x]
 
 setup(
     name="pyetrade",
     version=__version__,
     description="eTrade API wrappers",
+    long_description=long_description,
     author="Jesse Cooper",
     author_email="jesse_cooper@codeholics.com",
     url="https://github.com/jessecooper/pyetrade",
     license="GPLv3",
-    packages=["pyetrade"],
-    package_dir={"pyetrade": "pyetrade"},
-    install_requires=req,
+    packages=find_packages(exclude=["docs", "test*"]),
+    install_requires=install_requires,
     platforms=["any"],
     keywords=["etrade", "pyetrade", "stocks"],
     classifiers=[

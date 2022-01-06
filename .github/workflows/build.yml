@@ -36,4 +36,4 @@ jobs:
         run: make test
 
       - name: Run docs build test
-        run: make -C docs/make html
+        run: make -C docs/ html

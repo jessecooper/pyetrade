@@ -1,4 +1,5 @@
 """Init for pyetrade module  """
+__version__ = "1.3.6"
 
 from . import authorization  # noqa: F401
 from .authorization import ETradeOAuth, ETradeAccessManager  # noqa: F401

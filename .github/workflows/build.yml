@@ -37,3 +37,6 @@ jobs:
 
       - name: Run docs build test
         run: make -C docs/ html
+
+      - name: upload coverage
+        uses: codecov/codecov-action@v2

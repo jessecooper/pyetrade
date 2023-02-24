@@ -2,12 +2,12 @@
 """pyetrade authorization unit tests
    TODO:
        * Test request error
-       * Test API URL"""
+       * Test API URL
+"""
 
 import unittest
 from unittest.mock import patch
 from pyetrade import order
-from collections import OrderedDict
 
 
 class TestETradeOrder(unittest.TestCase):
@@ -15,8 +15,8 @@ class TestETradeOrder(unittest.TestCase):
 
     def test_option_symbol(self):
         expected = "PLTR--220218P00023000"
-        self.assertEqual(expected, order.option_symbol("PLTR", order.PUT, "2022-02-18",  23))
-        self.assertEqual(expected, order.option_symbol("PLTR", order.PUT, "2022-02-18",  23.00))
+        self.assertEqual(expected, order.option_symbol("PLTR", order.PUT, "2022-02-18", 23))
+        self.assertEqual(expected, order.option_symbol("PLTR", order.PUT, "2022-02-18", 23.00))
         self.assertEqual(expected, order.option_symbol("PLTR", order.PUT, "2022-02-18", "23.0"))
 
     @patch("pyetrade.order.OAuth1Session")
@@ -61,8 +61,7 @@ class TestETradeOrder(unittest.TestCase):
         # Test xml buy order equity
         self.assertEqual(
             orders.place_equity_order(
-                resp_format="xml",
-                accountId="12345",
+                accountIdKey="12345",
                 symbol="ABC",
                 orderAction="BUY",
                 clientOrderId="1a2b3c",
@@ -78,7 +77,7 @@ class TestETradeOrder(unittest.TestCase):
         # Test OrderedDict buy order equity
         self.assertEqual(
             orders.place_equity_order(
-                accountId="12345",
+                accountIdKey="12345",
                 symbol="ABC",
                 orderAction="BUY",
                 clientOrderId="1a2b3c",
@@ -96,8 +95,7 @@ class TestETradeOrder(unittest.TestCase):
         MockOAuthSession().post().json.return_value = ret_val
         self.assertEqual(
             orders.place_equity_order(
-                resp_format="json",
-                accountId="12345",
+                accountIdKey="12345",
                 symbol="ABC",
                 orderAction="BUY",
                 clientOrderId="1a2b3c",
@@ -113,69 +111,75 @@ class TestETradeOrder(unittest.TestCase):
 
         # Test payload: BUY MARKET
         payload = orders.build_order_payload("PreviewOrderRequest",
-                resp_format="json",
-                accountId="12345",
-                symbol="ABC",
-                orderAction="BUY",
-                clientOrderId="1a2b3c",
-                priceType="MARKET",
-                quantity=100,
-                orderTerm="GOOD_UNTIL_CANCEL",
-                marketSession="REGULAR",
-            )
+                                             resp_format="json",
+                                             accountId="12345",
+                                             symbol="ABC",
+                                             orderAction="BUY",
+                                             clientOrderId="1a2b3c",
+                                             priceType="MARKET",
+                                             quantity=100,
+                                             orderTerm="GOOD_UNTIL_CANCEL",
+                                             marketSession="REGULAR",
+                                             )
         # print(payload)  # to debug
-        expected = {'PreviewOrderRequest': {'orderType': 'EQ', 'clientOrderId': '1a2b3c', 'Order': {'resp_format': 'json', 'accountId': '12345', 'symbol': 'ABC', 'orderAction': 'BUY', 'clientOrderId': '1a2b3c', 'priceType': 'MARKET', 'quantity': 100, 'orderTerm': 'GOOD_UNTIL_CANCEL', 'marketSession': 'REGULAR', 'Instrument': {'Product': {'securityType': 'EQ', 'symbol': 'ABC'}, 'orderAction': 'BUY', 'quantityType': 'QUANTITY', 'quantity': 100}}}}
+        expected = {'PreviewOrderRequest': {'orderType': 'EQ', 'clientOrderId': '1a2b3c',
+                                            'Order': {'resp_format': 'json', 'accountId': '12345', 'symbol': 'ABC',
+                                                      'orderAction': 'BUY', 'clientOrderId': '1a2b3c',
+                                                      'priceType': 'MARKET', 'quantity': 100,
+                                                      'orderTerm': 'GOOD_UNTIL_CANCEL', 'marketSession': 'REGULAR',
+                                                      'Instrument': {'Product': {'securityType': 'EQ', 'symbol': 'ABC'},
+                                                                     'orderAction': 'BUY', 'quantityType': 'QUANTITY',
+                                                                     'quantity': 100}}}}
         self.assertTrue(expected == payload)
 
         # Test payload: SELL STOP
         float_decimals = [
             (19.99999, '19.99'),  # double values are not exact; SELL: round down to decimal
-            (20,       '20.00'),  # exact int
+            (20, '20.00'),  # exact int
             (20.01001, '20.01'),
-            (20.01,    '20.01'),
+            (20.01, '20.01'),
             (20.00999, '20.00'),
             (20.00001, '20.00'),
-            ]
+        ]
 
         for fd in float_decimals:
-          for orderAction in ["SELL", "SELL_SHORT"]:
-            payload = orders.build_order_payload("PreviewOrderRequest",
-                accountId="12345",
-                symbol="ABC",
-                orderAction=orderAction,
-                clientOrderId="1a2b3c",
-                priceType="STOP",
-                stopPrice=fd[0],
-                quantity=100,
-                orderTerm="GOOD_UNTIL_CANCEL",
-                marketSession="REGULAR",
-                )
-            self.assertEqual(payload['PreviewOrderRequest']['Order']['stopPrice'], fd[1])
+            for orderAction in ["SELL", "SELL_SHORT"]:
+                payload = orders.build_order_payload("PreviewOrderRequest",
+                                                     accountIdKey="12345",
+                                                     symbol="ABC",
+                                                     orderAction=orderAction,
+                                                     clientOrderId="1a2b3c",
+                                                     priceType="STOP",
+                                                     stopPrice=fd[0],
+                                                     quantity=100,
+                                                     orderTerm="GOOD_UNTIL_CANCEL",
+                                                     marketSession="REGULAR",
+                                                     )
+                self.assertEqual(payload['PreviewOrderRequest']['Order']['stopPrice'], fd[1])
 
         # Test payload: BUY STOP
         float_decimals = [
             (19.99999, '20.00'),  # double values are not exact; BUY: round   up to decimal
-            (20,       '20.00'),  # exact int
+            (20, '20.00'),  # exact int
             (20.01001, '20.02'),
-            (20.01,    '20.01'),
+            (20.01, '20.01'),
             (20.00999, '20.01'),
             (20.00001, '20.01'),
-            ]
+        ]
         for fd in float_decimals:
-          for orderAction in ["BUY", "BUY_TO_COVER"]:
-            payload = orders.build_order_payload("PreviewOrderRequest",
-                accountId="12345",
-                symbol="ABC",
-                orderAction=orderAction,
-                clientOrderId="1a2b3c",
-                priceType="STOP",
-                stopPrice=fd[0],
-                quantity=100,
-                orderTerm="GOOD_UNTIL_CANCEL",
-                marketSession="REGULAR",
-                )
-            self.assertEqual(payload['PreviewOrderRequest']['Order']['stopPrice'], fd[1])
-
+            for orderAction in ["BUY", "BUY_TO_COVER"]:
+                payload = orders.build_order_payload("PreviewOrderRequest",
+                                                     accountIdKey="12345",
+                                                     symbol="ABC",
+                                                     orderAction=orderAction,
+                                                     clientOrderId="1a2b3c",
+                                                     priceType="STOP",
+                                                     stopPrice=fd[0],
+                                                     quantity=100,
+                                                     orderTerm="GOOD_UNTIL_CANCEL",
+                                                     marketSession="REGULAR",
+                                                     )
+                self.assertEqual(payload['PreviewOrderRequest']['Order']['stopPrice'], fd[1])
 
     @patch("pyetrade.order.OAuth1Session")
     def test_place_equity_order_exception(self, MockOAuthSession):
@@ -194,10 +198,11 @@ class TestETradeOrder(unittest.TestCase):
             orders.place_equity_order()
         except order.OrderException as e:
             print(e)
+
         # Test STOP
         with self.assertRaises(order.OrderException):
             orders.place_equity_order(
-                accountId="12345",
+                accountIdKey="12345",
                 symbol="ABC",
                 orderAction="BUY",
                 clientOrderId="1a2b3c",
@@ -209,7 +214,7 @@ class TestETradeOrder(unittest.TestCase):
         # Test LIMIT
         with self.assertRaises(order.OrderException):
             orders.place_equity_order(
-                accountId="12345",
+                accountIdKey="12345",
                 symbol="ABC",
                 orderAction="BUY",
                 clientOrderId="1a2b3c",
@@ -221,7 +226,7 @@ class TestETradeOrder(unittest.TestCase):
         # Test STOP_LIMIT
         with self.assertRaises(order.OrderException):
             orders.place_equity_order(
-                accountId="12345",
+                accountIdKey="12345",
                 symbol="ABC",
                 orderAction="BUY",
                 clientOrderId="1a2b3c",
@@ -242,7 +247,7 @@ class TestETradeOrder(unittest.TestCase):
            param: MockOAuthSession
            type: mock.MagicMock
            description: MagicMock of OAuth1Session"""
-        MockOAuthSession().put().json.return_value = "{'accountId': '12345'}"
+        MockOAuthSession().put().json.return_value = "{'accountIdKey': '12345'}"
         MockOAuthSession().put().text = r"<xml> returns </xml>"
         orders = order.ETradeOrder(
             "abc123", "xyz123", "abctoken", "xyzsecret", dev=False
@@ -250,10 +255,10 @@ class TestETradeOrder(unittest.TestCase):
         # Prod
         self.assertEqual(
             orders.cancel_order("12345", 42, resp_format="json"),
-            "{'accountId': '12345'}",
+            "{'accountIdKey': '12345'}",
         )
         MockOAuthSession().put.assert_called_with(
-            ("https://api.etrade.com/v1/accounts" "/12345/orders/cancel"),
+            "https://api.etrade.com/v1/accounts" "/12345/orders/cancel",
             json={"CancelOrderRequest": {"orderId": 42}},
             timeout=30,
         )

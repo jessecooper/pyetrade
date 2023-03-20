@@ -11,11 +11,12 @@
 """
 
 import logging
-import jxmlease
-import xmltodict
 import dateutil.parser
-from requests import sessions
+
+from typing import Union
+from jxmlease import emit_xml
 from requests_oauthlib import OAuth1Session
+from xmltodict import parse as xmltodict_parse
 
 LOGGER = logging.getLogger(__name__)
 
@@ -47,19 +48,23 @@ def to_decimal_str(price: float, round_down: bool) -> str:
 
 # resp_format: xml (default)
 # empty_json: either [] or {}, depends on the caller's semantics
-def get_request_result(req: sessions, empty_json: dict, resp_format: str = "xml") -> dict:
+def get_request_result(req: OAuth1Session.request, empty_json: dict, resp_format: str = "xml") -> dict:
     LOGGER.debug(req.text)
-    # req.raise_for_status()  # This won't allow users to see the etrade API error codes if uncommented
 
     if resp_format == "json":
         if req.text.strip() == "":
             # otherwise, when ETrade server return empty string, we got this error:
             # simplejson.errors.JSONDecodeError: Expecting value: line 1 column 1 (char 0)
-            return empty_json  # empty json object
+            req_output = empty_json  # empty json object
         else:
-            return req.json()
+            req_output = req.json()
     else:
-        return xmltodict.parse(req.text)
+        req_output = xmltodict_parse(req.text)
+
+    if 'Error' in req_output.keys():
+        raise Exception(f'Etrade API Error - Code: {req_output["Error"]["code"]}, Msg: {req_output["Error"]["message"]}')
+    else:
+        return req_output
 
 
 # return Etrade internal option symbol: e.g. "PLTR--220218P00023000" ref:_test_option_symbol()
@@ -301,7 +306,7 @@ class ETradeOrder:
 
         return payload
 
-    def perform_request(self, method, api_url: str, payload: dict | str, resp_format: str = "xml") -> dict:
+    def perform_request(self, method, api_url: str, payload: Union[dict, str], resp_format: str = "xml") -> dict:
         """:description: POST or PUT request with json or xml used by preview, place and cancel
 
            :param method: PUT or POST method
@@ -311,7 +316,7 @@ class ETradeOrder:
            :param api_url: API URL
            :type  api_url: str, required
            :param payload: Payload
-           :type  payload: str[], required
+           :type  payload: json/dict or str xml, required
            :return: Return request
            :rtype: xml or json based on ``resp_format``
            :EtradeRef: https://apisb.etrade.com/docs/api/order/api-order-v1.html
@@ -325,7 +330,7 @@ class ETradeOrder:
             req = method(api_url, json=payload, timeout=self.timeout)
         else:
             headers = {"Content-Type": "application/xml"}
-            payload = jxmlease.emit_xml(payload)
+            payload = emit_xml(payload)
             LOGGER.debug("xml payload: %s", payload)
             req = method(api_url, data=payload, headers=headers, timeout=self.timeout)
 

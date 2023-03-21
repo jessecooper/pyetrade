@@ -11,12 +11,12 @@
 """
 
 import logging
+import xmltodict
 import dateutil.parser
 
 from typing import Union
 from jxmlease import emit_xml
 from requests_oauthlib import OAuth1Session
-from xmltodict import parse as xmltodict_parse
 
 LOGGER = logging.getLogger(__name__)
 
@@ -59,7 +59,7 @@ def get_request_result(req: OAuth1Session.request, empty_json: dict, resp_format
         else:
             req_output = req.json()
     else:
-        req_output = xmltodict_parse(req.text)
+        req_output = xmltodict.parse(req.text)
 
     if 'Error' in req_output.keys():
         raise Exception(f'Etrade API Error - Code: {req_output["Error"]["code"]}, Msg: {req_output["Error"]["message"]}')
@@ -559,7 +559,7 @@ class ETradeOrder:
 
         return self.perform_request(self.session.put, api_url, payload, "xml")
 
-    def cancel_order(self, account_id_key: str, order_num: int) -> dict:
+    def cancel_order(self, account_id_key: str, order_num: int, resp_format: str = "xml") -> dict:
         """:description: Cancels a specific order for a given account
 
            :param account_id_key: AccountIDkey retrived from
@@ -567,13 +567,14 @@ class ETradeOrder:
            :type  account_id_key: str, required
            :param order_num: Numeric id for this order listed in :class:`list_orders`
            :type  order_num: int, required
+           :param resp_format: Desired Response format, defaults to xml
+           :type  resp_format: str, required
            :return: Confirmation of cancellation
            :rtype: ``dict/json``
            :EtradeRef: https://apisb.etrade.com/docs/api/order/api-order-v1.html
-
         """
 
         api_url = f'{self.base_url}/{account_id_key}/orders/cancel'
         payload = {"CancelOrderRequest": {"orderId": order_num}}
 
-        return self.perform_request(self.session.put, api_url, payload)
+        return self.perform_request(self.session.put, api_url, payload, resp_format)

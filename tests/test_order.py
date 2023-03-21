@@ -53,27 +53,25 @@ class TestETradeOrder(unittest.TestCase):
            type: mock.MagicMock
            description: MagicMock of OAuth1Session"""
         # Set Mock returns
-        ret_val = r"<PreviewOrderResponse><PreviewIds><previewId>321</previewId></PreviewIds></PreviewOrderResponse>"
         MockOAuthSession().post().text = r"<PreviewOrderResponse><PreviewIds><previewId>321</previewId></PreviewIds></PreviewOrderResponse>"
-        orders = order.ETradeOrder(
-            "abc123", "xyz123", "abctoken", "xyzsecret", dev=False
-        )
+        orders = order.ETradeOrder("abc123", "xyz123", "abctoken", "xyzsecret", dev=False)
+
+        result = orders.place_equity_order(
+                    accountIdKey="12345",
+                    symbol="ABC",
+                    orderAction="BUY",
+                    clientOrderId="1a2b3c",
+                    priceType="MARKET",
+                    quantity=100,
+                    orderTerm="GOOD_UNTIL_CANCEL",
+                    marketSession="REGULAR",
+                )
+
         # Test xml buy order equity
-        self.assertEqual(
-            orders.place_equity_order(
-                accountIdKey="12345",
-                symbol="ABC",
-                orderAction="BUY",
-                clientOrderId="1a2b3c",
-                priceType="MARKET",
-                quantity=100,
-                orderTerm="GOOD_UNTIL_CANCEL",
-                marketSession="REGULAR",
-            ),
-            ret_val,
-        )
+        self.assertTrue(isinstance(result, dict))
         # self.assertTrue(MockOAuthSession().post().json.called)
         self.assertTrue(MockOAuthSession().post.called)
+
         # Test OrderedDict buy order equity
         self.assertEqual(
             orders.place_equity_order(

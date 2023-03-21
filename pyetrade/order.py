@@ -10,73 +10,79 @@
 
 """
 
-import dateutil.parser
 import logging
-import jxmlease
+import xmltodict
+import dateutil.parser
+
+from typing import Union
+from jxmlease import emit_xml
 from requests_oauthlib import OAuth1Session
 
 LOGGER = logging.getLogger(__name__)
 
-
 # some constants
 CALL = "Call"
-PUT  = "Put"
+PUT = "Put"
 
 
 # price: number
 # round_down: bool
 # return string
-def to_decimal_str(price, round_down):
+def to_decimal_str(price: float, round_down: bool) -> str:
     spstr = "%.2f" % price  # round to 2-place decimal
-    spstrf = float(spstr)       # convert back to float again
+    spstrf = float(spstr)  # convert back to float again
     diff = price - spstrf
-    if diff != 0:        # have to work hard to round to decimal
-      HALF_CENT = 0.005  # e.g. BUY  stop: round   up to decimal
-      if round_down:
-        HALF_CENT *= -1  # e.g. SELL stop: round down to decimal
-      price += HALF_CENT
-      if price > 0:
-        spstr = "%.2f" % price  # now round to 2-place decimal
+
+    if diff != 0:  # have to work hard to round to decimal
+        HALF_CENT = 0.005  # e.g. BUY  stop: round   up to decimal
+
+        if round_down:
+            HALF_CENT *= -1  # e.g. SELL stop: round down to decimal
+        price += HALF_CENT
+
+        if price > 0:
+            spstr = "%.2f" % price  # now round to 2-place decimal
+
     return spstr
 
 
-# resp_format: xml (default) or json
+# resp_format: xml (default)
 # empty_json: either [] or {}, depends on the caller's semantics
-def get_request_result(req, resp_format, empty_json):
-    assert resp_format in ("json", "xml", None)  # TODO: why None?
-
+def get_request_result(req: OAuth1Session.request, empty_json: dict, resp_format: str = "xml") -> dict:
     LOGGER.debug(req.text)
-    req.raise_for_status()
 
     if resp_format == "json":
-      if req.text.strip() == "":
-        # otherwise, when ETrade server return empty string, we got this error:
-        # simplejson.errors.JSONDecodeError: Expecting value: line 1 column 1 (char 0)
-        return empty_json  # empty json object
-      else:
-        return req.json()
+        if req.text.strip() == "":
+            # otherwise, when ETrade server return empty string, we got this error:
+            # simplejson.errors.JSONDecodeError: Expecting value: line 1 column 1 (char 0)
+            req_output = empty_json  # empty json object
+        else:
+            req_output = req.json()
+    else:
+        req_output = xmltodict.parse(req.text)
 
-    if resp_format is None:  # TODO(jessecooper): should this be: == "xml"?
-        return jxmlease.parse(req.text)
-
-    return req.text
+    if 'Error' in req_output.keys():
+        raise Exception(f'Etrade API Error - Code: {req_output["Error"]["code"]}, Msg: {req_output["Error"]["message"]}')
+    else:
+        return req_output
 
 
 # return Etrade internal option symbol: e.g. "PLTR--220218P00023000" ref:_test_option_symbol()
-def option_symbol(symbol, callPut, expiryDate, strikePrice):
-  sym = symbol.strip().upper()
-  symstr = sym + ("-" * (6 - len(sym)))
+def option_symbol(symbol: str, call_put: str, expiry_date: str, strike_price: float) -> str:
+    sym = symbol.strip().upper()
+    symstr = sym + ("-" * (6 - len(sym)))
 
-  ed = dateutil.parser.parse(expiryDate)  # dateutil can handle most date formats
-  edstr = ed.strftime("%y%m%d")
-  assert(len(edstr) == 6)
+    ed = dateutil.parser.parse(expiry_date)  # dateutil can handle most date formats
+    edstr = ed.strftime("%y%m%d")
+    assert (len(edstr) == 6)
 
-  sp = "%08d" % (float(strikePrice) * 1000)
-  assert(len(sp) == 8)
+    sp = "%08d" % (float(strike_price) * 1000)
+    assert (len(sp) == 8)
 
-  opt_sym = symstr + edstr + callPut.strip().upper()[0] + sp
-  assert(len(opt_sym) == 21)
-  return opt_sym
+    opt_sym = symstr + edstr + call_put.strip().upper()[0] + sp
+    assert (len(opt_sym) == 21)
+
+    return opt_sym
 
 
 class OrderException(Exception):
@@ -84,12 +90,12 @@ class OrderException(Exception):
 
     """
 
-    def __init__(self, explanation=None, params=None):
+    def __init__(self, explanation=None, params=None) -> None:
         super().__init__()
         self.required = params
         self.args = (explanation, params)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return "Missing required parameters"
 
 
@@ -137,21 +143,25 @@ class ETradeOrder:
             signature_type="AUTH_HEADER",
         )
 
-    def list_orders(self, account_id, resp_format="json", **kwargs):
+    def list_orders(self, account_id_key: str, resp_format: str = "json", **kwargs) -> dict:
         """:description: Lists orders for a specific account ID Key
 
-        :param account_id: AccountIDKey from :class:`pyetrade.accounts.ETradeAccounts.list_accounts`
-        :type  account_id: str, required
-        :param resp_format: Desired Response format, defaults to xml
-        :type  resp_format: str, optional
-        :param kwargs: Parameters for api. Refer to EtradeRef for options
-        :type  kwargs: ``**kwargs``, optional
-        :return: List of orders for an account
-        :rtype: ``xml`` or ``json`` based on ``resp_format``
-        :EtradeRef: https://apisb.etrade.com/docs/api/order/api-order-v1.html
+            :param account_id_key: AccountIDKey from :class:`pyetrade.accounts.ETradeAccounts.list_accounts`
+            :type  account_id_key: str, required
+            :param resp_format: Desired Response format, defaults to xml
+            :type  resp_format: str, optional
+            :param kwargs: Parameters for api. Refer to EtradeRef for options
+            :type  kwargs: ``**kwargs``, optional
+            :return: List of orders for an account
+            :rtype: ``xml`` or ``json`` based on ``resp_format``
+            :EtradeRef: https://apisb.etrade.com/docs/api/order/api-order-v1.html
+
+            :return: List of orders in an account
 
         """
-        api_url = self.base_url + "/" + account_id + "/orders"
+
+        api_url = f'{self.base_url}/{account_id_key}/orders'
+
         if resp_format == "json":
             api_url += ".json"
 
@@ -162,34 +172,52 @@ class ETradeOrder:
         LOGGER.debug(api_url)
         req = self.session.get(api_url, params=params, timeout=self.timeout)
 
-        return get_request_result(req, resp_format, {})
+        return get_request_result(req, {}, resp_format)
 
-    def find_option_orders(self, account_id, symbol, callPut, expiryDate, strikePrice):
-        """:description: Lists orders for a specific account ID Key
-        :return: List of matching option orders in an account
+    def find_option_orders(self, account_id_key: str, symbol: str, call_put: str,
+                           expiry_date: str, strike_price: float) -> list:
+        """:description: Lists option orders for a specific account ID Key
+
+            :param account_id_key: AccountIDKey from :class:`pyetrade.accounts.ETradeAccounts.list_accounts`
+            :type  account_id_key: str, required
+            :param symbol: ticker symbol for options chain
+            :type  symbol: str, required
+            :param call_put: whether the option is a call or put
+            :type  call_put: str, required
+            :param expiry_date: desired expiry of option (ex: 12-05-2021)
+            :type  expiry_date: str, required
+            :param strike_price: strike price of desired option
+            :type  strike_price: str, required
+
+            :return: List of matching option orders in an account
+
         """
-        opt_sym = option_symbol(symbol, callPut, expiryDate, strikePrice)
+
+        opt_sym = option_symbol(symbol, call_put, expiry_date, strike_price)
+        orders = self.list_orders(account_id_key, resp_format="json", status="OPEN")  # this call may return empty
+
         results = []
-        orders = self.list_orders(account_id, resp_format="json", status="OPEN")  # this call may return empty
+
         if len(orders) > 0:
             for o in orders["OrdersResponse"]["Order"]:
-                orderId = o["orderId"]
                 product = o["OrderDetail"][0]["Instrument"][0]["Product"]
-                symbol = product["symbol"]
+
                 if product["securityType"] == "OPTN":
                     symbol = product["productId"]["symbol"]  # e.g. "PLTR--220218P00023000"
+
                     if symbol == opt_sym:
                         results.append(o)
         return results
 
-    def check_order(self, **kwargs):
+    @staticmethod
+    def check_order(**kwargs):
         """:description: Check that required params for preview or place order are there and correct
 
                          (Used internally)
 
         """
         mandatory = [
-            "accountId",
+            "accountIdKey",
             "symbol",
             "orderAction",
             "clientOrderId",
@@ -198,6 +226,7 @@ class ETradeOrder:
             "orderTerm",
             "marketSession",
         ]
+
         if not all(param in kwargs for param in mandatory):
             raise OrderException
 
@@ -206,13 +235,13 @@ class ETradeOrder:
         if kwargs["priceType"] == "LIMIT" and "limitPrice" not in kwargs:
             raise OrderException
         if (
-            kwargs["priceType"] == "STOP_LIMIT"
-            and "limitPrice" not in kwargs
-            and "stopPrice" not in kwargs
+                kwargs["priceType"] == "STOP_LIMIT"
+                and "limitPrice" not in kwargs
+                and "stopPrice" not in kwargs
         ):
             raise OrderException
 
-    def build_order_payload(self, order_type, **kwargs):
+    def build_order_payload(self, order_type: str, **kwargs) -> dict:
         """:description: Builds the POST payload of a preview or place order
                          (Used internally)
 
@@ -229,36 +258,41 @@ class ETradeOrder:
         """
         securityType = kwargs.get("securityType", "EQ")  # EQ by default
         product = {"securityType": securityType, "symbol": kwargs["symbol"]}
+
         if securityType == "OPTN":
-          expiryDate = dateutil.parser.parse(kwargs.pop("expiryDate"))  # dateutil can handle most date formats
-          product.update({
-            "expiryDay":   expiryDate.day,
-            "expiryMonth": expiryDate.month,
-            "expiryYear":  expiryDate.year,
-            "callPut":     kwargs["callPut"],
-            "strikePrice": kwargs["strikePrice"]
+            expiryDate = dateutil.parser.parse(kwargs.pop("expiryDate"))  # dateutil can handle most date formats
+            product.update({
+                "expiryDay": expiryDate.day,
+                "expiryMonth": expiryDate.month,
+                "expiryYear": expiryDate.year,
+                "callPut": kwargs["callPut"],
+                "strikePrice": kwargs["strikePrice"]
             })
+
         instrument = {
             "Product": product,
             "orderAction": kwargs["orderAction"],
             "quantityType": "QUANTITY",
             "quantity": kwargs["quantity"],
         }
+
         order = kwargs
         order["Instrument"] = instrument
 
-        def remove_invalid_price_from_kwargs(key):
-          if float(kwargs.get(key, 0)) <= 0:
-            kwargs.pop(key, 0)
+        def remove_invalid_price_from_kwargs(key: str) -> None:
+            if float(kwargs.get(key, 0)) <= 0:
+                kwargs.pop(key, 0)
 
         remove_invalid_price_from_kwargs("stopPrice")
         remove_invalid_price_from_kwargs("limitPrice")
-        if "stopPrice" in kwargs:
-          stopPrice = float(kwargs["stopPrice"])
-          round_down = ("SELL" == kwargs["orderAction"][:4])
-          spstr = to_decimal_str(stopPrice, round_down)
 
-          order["stopPrice"] = spstr
+        if "stopPrice" in kwargs:
+            stopPrice = float(kwargs["stopPrice"])
+            round_down = ("SELL" == kwargs["orderAction"][:4])
+            spstr = to_decimal_str(stopPrice, round_down)
+
+            order["stopPrice"] = spstr
+
         payload = {
             order_type: {
                 "orderType": securityType,
@@ -272,7 +306,7 @@ class ETradeOrder:
 
         return payload
 
-    def perform_request(self, method, resp_format, api_url, payload):
+    def perform_request(self, method, api_url: str, payload: Union[dict, str], resp_format: str = "xml") -> dict:
         """:description: POST or PUT request with json or xml used by preview, place and cancel
 
            :param method: PUT or POST method
@@ -282,7 +316,7 @@ class ETradeOrder:
            :param api_url: API URL
            :type  api_url: str, required
            :param payload: Payload
-           :type  payload: str[], required
+           :type  payload: json/dict or str xml, required
            :return: Return request
            :rtype: xml or json based on ``resp_format``
            :EtradeRef: https://apisb.etrade.com/docs/api/order/api-order-v1.html
@@ -291,23 +325,22 @@ class ETradeOrder:
 
         LOGGER.debug(api_url)
         LOGGER.debug("payload: %s", payload)
+
         if resp_format == "json":
             req = method(api_url, json=payload, timeout=self.timeout)
         else:
             headers = {"Content-Type": "application/xml"}
-            payload = jxmlease.emit_xml(payload)
+            payload = emit_xml(payload)
             LOGGER.debug("xml payload: %s", payload)
             req = method(api_url, data=payload, headers=headers, timeout=self.timeout)
 
-        return get_request_result(req, resp_format, {})
+        return get_request_result(req, {}, resp_format)
 
-    def preview_equity_order(self, resp_format=None, **kwargs):
+    def preview_equity_order(self, **kwargs) -> dict:
         """API is used to submit an order request for preview before placing it
 
-           :param resp_format: Desired Response format (json or xml), defaults to xml
-           :type  resp_format: str, optional
-           :param accountId: AccountIDkey retrived from :class:`list_accounts`
-           :type  accountId: str, required
+           :param accountIdKey: AccountIDkey retrived from :class:`list_accounts`
+           :type  accountIdKey: str, required
            :param symbol: Market symbol for the security being bought or sold
            :type  symbol: str, required
            :param orderAction: Action that the broker is requested to perform
@@ -404,64 +437,60 @@ class ETradeOrder:
            :EtradeRef: https://apisb.etrade.com/docs/api/order/api-order-v1.html
 
         """
-        assert resp_format in (None, "json", "xml")
         LOGGER.debug(kwargs)
 
         # Test required values
         self.check_order(**kwargs)
 
-        api_url = self.base_url + "/" + kwargs["accountId"] + "/orders/preview"
+        api_url = f'{self.base_url}/{kwargs["accountIdKey"]}/orders/preview'
+
         # payload creation
         payload = self.build_order_payload("PreviewOrderRequest", **kwargs)
 
-        return self.perform_request(self.session.post, resp_format, api_url, payload)
+        return self.perform_request(self.session.post, api_url, payload, "xml")
 
-    def change_preview_equity_order(self, resp_format=None, **kwargs):
+    def change_preview_equity_order(self, account_id_key: str, order_id: str, **kwargs):
         """:description: Same as :class:`preview_equity_order` with orderId
-           :param orderId: orderId to modify, refer :class:`list_orders`
-           :type  orderId: str, required
-           :param resp_format: Desired Response format, defaults to xml
-           :type  resp_format: str, optional
-           :param accountId: AccountIDkey retrived from :class:`list_accounts`
-           :type  accountId: str, required
-           :return: Previews Changed order with orderId for account with key accountId
-           :rtype: xml or json based on ``resp_format``
+           :param order_id: order_id to modify, refer :class:`list_orders`
+           :type  order_id: str, required
+           :param account_id_key: account_id_key retrieved from :class:`list_accounts`
+           :type  account_id_key: str, required
+           :return: Previews Changed order with orderId for account with account_id_key
+           :rtype: dict/json
            :EtradeRef: https://apisb.etrade.com/docs/api/order/api-order-v1.html
 
         """
-        assert resp_format in (None, "json", "xml")
+
         LOGGER.debug(kwargs)
 
         # Test required values
         self.check_order(**kwargs)
 
-        api_url = self.base_url + "/" + kwargs["accountId"] + "/orders/"+kwargs["orderId"]+"/change/preview"
+        api_url = f'{self.base_url}/{account_id_key}/orders/{order_id}/change/preview'
+
         # payload creation
         payload = self.build_order_payload("PreviewOrderRequest", **kwargs)
 
-        return self.perform_request(self.session.put, resp_format, api_url, payload)
+        return self.perform_request(self.session.put, api_url, payload, "xml")
 
-    def place_option_order(self, resp_format=None, **kwargs):
+    def place_option_order(self, **kwargs) -> dict:
         """:description: Places Option Order, only single leg CALL or PUT is supported for now
            :return: Returns confirmation of the equity order
         """
         kwargs["securityType"] = "OPTN"
-        return self.place_equity_order(resp_format, **kwargs)
 
-    def place_equity_order(self, resp_format=None, **kwargs):
+        return self.place_equity_order(**kwargs)
+
+    def place_equity_order(self, **kwargs) -> dict:
         """:description: Places Equity Order
 
-           :param resp_format: Desired Response format, defaults to xml
-           :type  resp_format: str, optional
-           :param kwargs: Parameters for api, refer :class:`change_preview_equity_order`
+           :param kwargs: Parameters for api, refer :class:`preview_equity_order`
            :type  kwargs: ``**kwargs``, required
            :return: Returns confirmation of the equity order
            :rtype: xml or json based on ``resp_format``
            :EtradeRef: https://apisb.etrade.com/docs/api/order/api-order-v1.html
-
         """
 
-        assert resp_format in (None, "json", "xml")
         LOGGER.debug(kwargs)
 
         # Test required values
@@ -472,35 +501,30 @@ class ETradeOrder:
                 "No previewId given, previewing before placing order "
                 "because of an Etrade bug as of 1/1/2019"
             )
-            preview = self.preview_equity_order(resp_format, **kwargs)
-            if resp_format == "xml":
-                preview = jxmlease.parse(preview)
-            kwargs["previewId"] = preview["PreviewOrderResponse"]["PreviewIds"][
-                "previewId"
-            ]
-            LOGGER.debug(
-                "Got a successful preview with previewId: %s", kwargs["previewId"]
-            )
+            preview = self.preview_equity_order(**kwargs)
+            kwargs["previewId"] = preview["PreviewOrderResponse"]["PreviewIds"]["previewId"]
 
-        api_url = self.base_url + "/" + kwargs["accountId"] + "/orders/place"
+            LOGGER.debug("Got a successful preview with previewId: %s", kwargs["previewId"])
+
+        api_url = f'{self.base_url}/{kwargs["accountIdKey"]}/orders/place'
+
         # payload creation
         payload = self.build_order_payload("PlaceOrderRequest", **kwargs)
 
-        return self.perform_request(self.session.post, resp_format, api_url, payload)
+        return self.perform_request(self.session.post, api_url, payload, "xml")
 
-    def place_changed_option_order(self, resp_format=None, **kwargs):
+    def place_changed_option_order(self, **kwargs) -> dict:
         """:description: Places Option Order, only single leg CALL or PUT is supported for now
            :return: Returns confirmation of the equity order
         """
         kwargs["securityType"] = "OPTN"
-        return self.place_changed_equity_order(resp_format, **kwargs)
 
-    def place_changed_equity_order(self, resp_format=None, **kwargs):
+        return self.place_changed_equity_order(**kwargs)
+
+    def place_changed_equity_order(self, **kwargs) -> dict:
         """:description: Places changes to equity orders
             NOTE: the ETrade server will actually cancel the old orderId, and create a new orderId
 
-           :param resp_format: Desired Response format, defaults to xml
-           :type  resp_format: str, optional
            :param kwargs: Parameters for api, refer :class:`change_preview_equity_order`
            :type  kwargs: ``**kwargs``, required
            :return: Returns confirmation similar to :class:`preview_equity_order`
@@ -509,7 +533,6 @@ class ETradeOrder:
 
         """
 
-        assert resp_format in (None, "json", "xml")
         LOGGER.debug(kwargs)
 
         # Test required values
@@ -520,44 +543,38 @@ class ETradeOrder:
                 "No previewId given, previewing before placing order "
                 "because of an Etrade bug as of 1/1/2019"
             )
-            preview = self.preview_equity_order(resp_format, **kwargs)
-            if resp_format == "xml":
-                preview = jxmlease.parse(preview)
+            preview = self.preview_equity_order(**kwargs)
 
             if "Error" in preview:
-              LOGGER.error(preview)
-              raise Exception("Please check your order!")
+                LOGGER.error(preview)
+                raise Exception("Please check your order!")
 
-            kwargs["previewId"] = preview["PreviewOrderResponse"]["PreviewIds"][
-                "previewId"
-            ]
-            LOGGER.debug(
-                "Got a successful preview with previewId: %s", kwargs["previewId"]
-            )
+            kwargs["previewId"] = preview["PreviewOrderResponse"]["PreviewIds"]["previewId"]
+            LOGGER.debug("Got a successful preview with previewId: %s", kwargs["previewId"])
 
-        api_url = self.base_url + "/" + kwargs["accountId"] + "/orders/"+kwargs["orderId"]+"/change/place"
+        api_url = f'{self.base_url}/{kwargs["accountIdKey"]}/orders/{kwargs["orderId"]}/change/place'
+
         # payload creation
         payload = self.build_order_payload("PlaceOrderRequest", **kwargs)
 
-        return self.perform_request(self.session.put, resp_format, api_url, payload)
+        return self.perform_request(self.session.put, api_url, payload, "xml")
 
-    def cancel_order(self, account_id, order_num, resp_format=None):
+    def cancel_order(self, account_id_key: str, order_num: int, resp_format: str = "xml") -> dict:
         """:description: Cancels a specific order for a given account
 
-           :param account_id: AccountIDkey retrived from
+           :param account_id_key: AccountIDkey retrived from
                               :class:`pyetrade.accounts.ETradeAccounts.list_accounts`
-           :type  account_id: str, required
+           :type  account_id_key: str, required
            :param order_num: Numeric id for this order listed in :class:`list_orders`
            :type  order_num: int, required
-           :param resp_format: Desired Response format("None", "json", "xml"), defaults to xml
-           :type  resp_format: str, optional
+           :param resp_format: Desired Response format, defaults to xml
+           :type  resp_format: str, required
            :return: Confirmation of cancellation
-           :rtype: ``xml`` or ``json`` based on ``resp_format``
+           :rtype: ``dict/json``
            :EtradeRef: https://apisb.etrade.com/docs/api/order/api-order-v1.html
-
         """
-        assert resp_format in (None, "json", "xml")
-        api_url = self.base_url + "/" + account_id + "/orders/cancel"
+
+        api_url = f'{self.base_url}/{account_id_key}/orders/cancel'
         payload = {"CancelOrderRequest": {"orderId": order_num}}
 
-        return self.perform_request(self.session.put, resp_format, api_url, payload)
+        return self.perform_request(self.session.put, api_url, payload, resp_format)

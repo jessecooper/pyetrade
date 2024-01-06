@@ -1,10 +1,9 @@
 """Authorization - ETrade Authorization API Calls
 
    TODO:
-    * Lint this messy code
     * Catch events
 
-    """
+"""
 
 import logging
 from requests_oauthlib import OAuth1Session
@@ -16,18 +15,17 @@ LOGGER = logging.getLogger(__name__)
 class ETradeOAuth(object):
     """:description: Performs authorization for OAuth 1.0a
 
-       :param client_key: Client key provided by Etrade
-       :type client_key: str, required
-       :param client_secret: Client secret provided by Etrade
-       :type client_secret: str, required
+       :param consumer_key: Client key provided by Etrade
+       :type consumer_key: str, required
+       :param consumer_secret: Client secret provided by Etrade
+       :type consumer_secret: str, required
        :param callback_url: Callback URL passed to OAuth mod, defaults to "oob"
        :type callback_url: str, optional
        :EtradeRef: https://apisb.etrade.com/docs/api/authorization/request_token.html
 
     """
 
-    def __init__(self, consumer_key, consumer_secret, callback_url="oob"):
-
+    def __init__(self, consumer_key: str, consumer_secret: str, callback_url: str = "oob"):
         self.consumer_key = consumer_key
         self.consumer_secret = consumer_secret
         self.base_url_prod = r"https://api.etrade.com"
@@ -39,7 +37,7 @@ class ETradeOAuth(object):
         self.access_token = None
         self.resource_owner_key = None
 
-    def get_request_token(self):
+    def get_request_token(self) -> str:
         """:description: Obtains the token URL from Etrade.
 
            :param None: Takes no parameters
@@ -69,12 +67,11 @@ class ETradeOAuth(object):
             self.consumer_key,
             akey["oauth_token"],
         )
-        self.verifier_url = formated_auth_url
         LOGGER.debug(formated_auth_url)
 
         return formated_auth_url
 
-    def get_access_token(self, verifier):
+    def get_access_token(self, verifier: str) -> str:
         """:description: Obtains access token. Requires token URL from :class:`get_request_token`
 
            :param verifier: OAuth Verification Code from Etrade
@@ -109,17 +106,13 @@ class ETradeAccessManager(object):
 
     """
 
-    def __init__(
-        self, client_key, client_secret, resource_owner_key, resource_owner_secret
-    ):
+    def __init__(self, client_key: str, client_secret: str, resource_owner_key: str, resource_owner_secret: str):
         self.client_key = client_key
         self.client_secret = client_secret
         self.resource_owner_key = resource_owner_key
         self.resource_owner_secret = resource_owner_secret
         self.renew_access_token_url = r"https://api.etrade.com/oauth/renew_access_token"
-        self.revoke_access_token_url = (
-            r"https://api.etrade.com/oauth/revoke_access_token"
-        )
+        self.revoke_access_token_url = r"https://api.etrade.com/oauth/revoke_access_token"
         self.session = OAuth1Session(
             self.client_key,
             self.client_secret,
@@ -128,7 +121,7 @@ class ETradeAccessManager(object):
             signature_type="AUTH_HEADER",
         )
 
-    def renew_access_token(self):
+    def renew_access_token(self) -> bool:
         """:description: Renews access tokens obtained from :class:`ETradeOAuth`
 
            :param None: Takes no parameters
@@ -143,7 +136,7 @@ class ETradeAccessManager(object):
 
         return True
 
-    def revoke_access_token(self):
+    def revoke_access_token(self) -> bool:
         """:description: Revokes access tokens obtained from :class:`ETradeOAuth`
 
            :param None: Takes no parameters

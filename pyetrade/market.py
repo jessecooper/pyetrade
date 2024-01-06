@@ -7,6 +7,7 @@
 
 import logging
 import xmltodict
+from datetime import datetime
 from requests_oauthlib import OAuth1Session
 
 LOGGER = logging.getLogger(__name__)
@@ -32,11 +33,11 @@ class ETradeMarket(object):
 
     def __init__(
         self,
-        client_key,
-        client_secret,
-        resource_owner_key,
-        resource_owner_secret,
-        dev=True,
+        client_key: str,
+        client_secret: str,
+        resource_owner_key: str,
+        resource_owner_secret: str,
+        dev: bool = True,
     ):
         self.client_key = client_key
         self.client_secret = client_secret
@@ -61,7 +62,7 @@ class ETradeMarket(object):
         return "\n".join(ret)
 
     def look_up_product(self, search_str: str, resp_format="xml") -> dict:
-        """:description: Performs a look up product
+        """:description: Performs a look-up product
 
            :param search_str: Full or partial name of the company.
            :type search_str: str, required
@@ -89,10 +90,10 @@ class ETradeMarket(object):
 
     def get_quote(
         self,
-        symbols,
-        detail_flag=None,
-        require_earnings_date=None,
-        skip_mini_options_check=None,
+        symbols: list,
+        detail_flag: str = None,
+        require_earnings_date: str = None,
+        skip_mini_options_check: str = None,
         resp_format="xml",
     ) -> dict:
         """:description: Get quote data on symbols provided in the list args.
@@ -100,7 +101,7 @@ class ETradeMarket(object):
            :param symbols: Symbols in list args format. Limit 25.
            :type symbols: list[], required
            :param detail_flag: Market fields returned from a quote request, defaults to None
-           :type detail_flag: enum, optional
+           :type detail_flag: str, optional
            :param require_earnings_date: Provides Earnings date if True, defaults to None
            :type require_earnings_date: str, optional
            :param skip_mini_options_check: Skips mini options check if True, defaults to None
@@ -138,9 +139,11 @@ class ETradeMarket(object):
             "mf_detail",
             None,
         )
+
         assert require_earnings_date in (True, False, None)
         assert skip_mini_options_check in (True, False, None)
         assert isinstance(symbols, list or tuple)
+
         if len(symbols) > 25:
             LOGGER.warning(
                 "get_quote asked for %d requests; only first 25 returned" % len(symbols)
@@ -155,6 +158,7 @@ class ETradeMarket(object):
             args.append("skipMiniOptionsCheck=%s" % str(skip_mini_options_check))
 
         api_url = "%s%s%s" % (self.base_url, "quote/", ",".join(symbols[:25]))
+
         if resp_format.lower() == "json":
             api_url += ".json"
         if len(args):
@@ -170,13 +174,13 @@ class ETradeMarket(object):
     def get_option_chains(
         self,
         underlier: str,
-        expiry_date,
-        skip_adjusted=None,
-        chain_type=None,
-        strike_price_near=None,
-        no_of_strikes=None,
-        option_category=None,
-        price_type=None,
+        expiry_date: datetime.date,
+        skip_adjusted: str = None,
+        chain_type: str = None,
+        strike_price_near: int = None,
+        no_of_strikes: int = None,
+        option_category: str = None,
+        price_type: str = None,
         resp_format="xml",
     ) -> dict:
         """:description: Returns the option chain information for the
@@ -217,10 +221,11 @@ class ETradeMarket(object):
            :price_type values:
                * atnm
                * all
-           :sampleURL: https://api.etrade.com/v1/market/optionchains?expiryDay=03&expiryMonth=04&expiryYear=2011&chainType=PUT&skipAdjusted=true&symbol=GOOGL
+           :sampleURL: https://api.etrade.com/v1/market/optionchains?expiryDay=03&expiryMonth=04&expiryYear=2011&chainType=PUT&skipAdjusted=true&symbol=GOOGL  # noqa: E501
            :EtradeRef: https://apisb.etrade.com/docs/api/market/api-market-v1.html
 
         """
+
         assert chain_type in ("put", "call", "callput", None)
         assert option_category in ("standard", "all", "mini", None)
         assert price_type in ("atmn", "all", None)
@@ -258,11 +263,11 @@ class ETradeMarket(object):
 
         return xmltodict.parse(req.text) if resp_format.lower() == "xml" else req.json()
 
-    def get_option_expire_date(self, underlier: str, resp_format="xml") -> dict:
+    def get_option_expire_date(self, symbol: str, resp_format="xml") -> dict:
         """:description: Returns a list of dates suitable for structuring an option table display
 
-           :param underlier: Market Symbol
-           :type underlier: str, required
+           :param symbol: Market Symbol
+           :type symbol: str, required
            :param resp_format: Desired Response format, defaults to xml
            :type  resp_format: str, optional
            :return: Returns expiry of options for symbol
@@ -274,13 +279,15 @@ class ETradeMarket(object):
 
         assert isinstance(resp_format, str)
         assert resp_format in ["xml", "json"]
+
         api_url = "%s%s" % (
             self.base_url,
             "optionexpiredate"
             if resp_format.lower() == "xml"
             else "optionexpiredate.json",
         )
-        payload = {"symbol": underlier, "expiryType": "ALL"}
+
+        payload = {"symbol": symbol, "expiryType": "ALL"}
         LOGGER.debug(api_url)
 
         req = self.session.get(api_url, params=payload)

@@ -7,6 +7,7 @@ import datetime as dt
 from unittest.mock import patch
 from pyetrade import market
 
+
 # Mock out OAuth1Session
 @patch("pyetrade.market.OAuth1Session")
 def test_look_up_product(MockOAuthSession):

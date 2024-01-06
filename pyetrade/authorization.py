@@ -71,7 +71,7 @@ class ETradeOAuth(object):
 
         return formated_auth_url
 
-    def get_access_token(self, verifier: str) -> str:
+    def get_access_token(self, verifier: str) -> dict:
         """:description: Obtains access token. Requires token URL from :class:`get_request_token`
 
            :param verifier: OAuth Verification Code from Etrade

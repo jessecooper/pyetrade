@@ -56,13 +56,7 @@ class TestETradeOrder(unittest.TestCase):
 
         # Set Mock returns
         MockOAuthSession().post().text = r"<PreviewOrderResponse><PreviewIds><previewId>321</previewId></PreviewIds></PreviewOrderResponse>"  # noqa: E501
-        orders = order.ETradeOrder(
-            "abc123",
-            "xyz123",
-            "abctoken",
-            "xyzsecret",
-            dev=False
-        )
+        orders = order.ETradeOrder("abc123", "xyz123", "abctoken", "xyzsecret", dev=False)  # noqa: E501
 
         result = orders.place_equity_order(
                     accountIdKey="12345",

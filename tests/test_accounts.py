@@ -97,6 +97,18 @@ class TestETradeAccounts(unittest.TestCase):
         self.assertTrue(MockOAuthSession().get().json.called)
         self.assertTrue(MockOAuthSession().get.called)
 
+        # Test API URL
+        result = account.get_account_balance("12345abcd", account_type="TRUST", resp_format="json")
+        self.assertTrue(isinstance(result, dict))
+
+        MockOAuthSession().get.assert_called_with(
+            "https://api.etrade.com/v1/accounts/12345abcd/balance.json",
+            params={"realTimeNAV": True, "instType": "BROKERAGE", "accountType": "TRUST"},
+        )
+
+        self.assertTrue(MockOAuthSession().get().json.called)
+        self.assertTrue(MockOAuthSession().get.called)
+
     # Mock out OAuth1Session
     @patch("pyetrade.accounts.OAuth1Session")
     def test_get_account_portfolio(self, MockOAuthSession):

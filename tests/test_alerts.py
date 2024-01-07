@@ -55,7 +55,7 @@ def test_list_alert_details(mocker):
     # Test Dev JSON
     assert alert.list_alert_details(1234, resp_format="json") == "{'alert': 'abc123'}"
     # Test API URL
-    MockOAuthSession().get.assert_called_with("https://apisb.etrade.com/v1/user/alerts.json/1234", params=default_params)
+    MockOAuthSession().get.assert_called_with("https://apisb.etrade.com/v1/user/alerts.json/1234", params=default_params)  # noqa: E501
 
     # Test Dev XML
     assert dict(alert.list_alert_details(1234, resp_format="xml")) == {"xml": "returns"}

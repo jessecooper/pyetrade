@@ -130,6 +130,9 @@ class ETradeMarket(object):
 
             """
 
+        if detail_flag is not None:
+            detail_flag = detail_flag.lower()
+
         assert detail_flag in (
             "fundamental",
             "intraday",
@@ -145,9 +148,7 @@ class ETradeMarket(object):
         assert isinstance(symbols, list or tuple)
 
         if len(symbols) > 25:
-            LOGGER.warning(
-                "get_quote asked for %d requests; only first 25 returned" % len(symbols)
-            )
+            LOGGER.warning("get_quote asked for %d requests; only first 25 returned" % len(symbols))
 
         args = list()
         if detail_flag is not None:
@@ -226,9 +227,18 @@ class ETradeMarket(object):
 
         """
 
+        if chain_type is not None:
+            chain_type = chain_type.lower()
         assert chain_type in ("put", "call", "callput", None)
+
+        if option_category is not None:
+            option_category = option_category.lower()
         assert option_category in ("standard", "all", "mini", None)
+
+        if price_type is not None:
+            price_type = price_type.lower()
         assert price_type in ("atmn", "all", None)
+
         assert skip_adjusted in (True, False, None)
         assert isinstance(resp_format, str)
 
@@ -250,10 +260,9 @@ class ETradeMarket(object):
             args.append("skipAdjusted=%s" % str(skip_adjusted))
         if no_of_strikes is not None:
             args.append("noOfStrikes=%d" % no_of_strikes)
+
         api_url = "%s%s%s" % (
-            self.base_url,
-            "optionchains?" if resp_format.lower() == "xml" else "optionchains.json?",
-            "&".join(args),
+            self.base_url, "optionchains?" if resp_format.lower() == "xml" else "optionchains.json?", "&".join(args),
         )
 
         req = self.session.get(api_url)

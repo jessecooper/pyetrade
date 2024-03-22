@@ -72,7 +72,7 @@ print(accounts.list_accounts())
 ## Documentation
 [PyEtrade Documentation](https://pyetrade.readthedocs.io/en/latest/)
 ## Contribute to pyetrade
-* [ETrade API Docs](https://developer.etrade.com/ctnt/dev-portal/getArticleByCategory?category=Documentation)
+* [ETrade API Docs](https://apisb.etrade.com/docs/api/account/api-account-v1.html)
 * Fork pyetrade
 * Development Setup:
 ```

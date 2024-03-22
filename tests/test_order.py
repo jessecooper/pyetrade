@@ -53,9 +53,10 @@ class TestETradeOrder(unittest.TestCase):
            param: MockOAuthSession
            type: mock.MagicMock
            description: MagicMock of OAuth1Session"""
+
         # Set Mock returns
-        MockOAuthSession().post().text = r"<PreviewOrderResponse><PreviewIds><previewId>321</previewId></PreviewIds></PreviewOrderResponse>"
-        orders = order.ETradeOrder("abc123", "xyz123", "abctoken", "xyzsecret", dev=False)
+        MockOAuthSession().post().text = r"<PreviewOrderResponse><PreviewIds><previewId>321</previewId></PreviewIds></PreviewOrderResponse>"  # noqa: E501
+        orders = order.ETradeOrder("abc123", "xyz123", "abctoken", "xyzsecret", dev=False)  # noqa: E501
 
         result = orders.place_equity_order(
                     accountIdKey="12345",

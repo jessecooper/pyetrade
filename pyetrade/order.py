@@ -62,7 +62,7 @@ def get_request_result(req: OAuth1Session.request, empty_json: dict, resp_format
         req_output = xmltodict.parse(req.text)
 
     if 'Error' in req_output.keys():
-        raise Exception(f'Etrade API Error - Code: {req_output["Error"]["code"]}, Msg: {req_output["Error"]["message"]}')
+        raise Exception(f'Etrade API Error - Code: {req_output["Error"]["code"]}, Msg: {req_output["Error"]["message"]}')  # noqa: E501
     else:
         return req_output
 
@@ -99,7 +99,7 @@ class OrderException(Exception):
         return "Missing required parameters"
 
 
-class ETradeOrder:
+class ETradeOrder(object):
     """:description: Object to perform Orders
 
        :param client_key: Client key provided by Etrade
@@ -165,17 +165,12 @@ class ETradeOrder:
         if resp_format == "json":
             api_url += ".json"
 
-        # Build Params
-        params = kwargs
-        LOGGER.debug("query string params: %s", params)
-
         LOGGER.debug(api_url)
-        req = self.session.get(api_url, params=params, timeout=self.timeout)
+        req = self.session.get(api_url, params=kwargs, timeout=self.timeout)
 
         return get_request_result(req, {}, resp_format)
 
-    def find_option_orders(self, account_id_key: str, symbol: str, call_put: str,
-                           expiry_date: str, strike_price: float) -> list:
+    def find_option_orders(self, account_id_key: str, symbol: str, call_put: str, expiry_date: str, strike_price: float) -> list:  # noqa: E501
         """:description: Lists option orders for a specific account ID Key
 
             :param account_id_key: AccountIDKey from :class:`pyetrade.accounts.ETradeAccounts.list_accounts`
@@ -214,8 +209,8 @@ class ETradeOrder:
         """:description: Check that required params for preview or place order are there and correct
 
                          (Used internally)
-
         """
+
         mandatory = [
             "accountIdKey",
             "symbol",
@@ -339,7 +334,7 @@ class ETradeOrder:
     def preview_equity_order(self, **kwargs) -> dict:
         """API is used to submit an order request for preview before placing it
 
-           :param accountIdKey: AccountIDkey retrived from :class:`list_accounts`
+           :param accountIdKey: AccountIDkey retrieved from :class:`list_accounts`
            :type  accountIdKey: str, required
            :param symbol: Market symbol for the security being bought or sold
            :type  symbol: str, required
@@ -562,7 +557,7 @@ class ETradeOrder:
     def cancel_order(self, account_id_key: str, order_num: int, resp_format: str = "xml") -> dict:
         """:description: Cancels a specific order for a given account
 
-           :param account_id_key: AccountIDkey retrived from
+           :param account_id_key: AccountIDkey retrieved from
                               :class:`pyetrade.accounts.ETradeAccounts.list_accounts`
            :type  account_id_key: str, required
            :param order_num: Numeric id for this order listed in :class:`list_orders`

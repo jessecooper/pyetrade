@@ -5,8 +5,8 @@ devel:
 	pre-commit install
 test:
 	tox
-lint:
-	flake8 pyetrade tests
+analysis: # Lint, format, import optimizer, etc.
+	pipenv run pre-commit run --all-files
 install:
 	pip install --upgrade .
 dist:

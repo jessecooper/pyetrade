@@ -2,7 +2,7 @@ init:
 	pip install -r requirements.txt
 devel:
 	pip install -r requirements_dev.txt
-	pre-commit install
+	pre-commit install --hook-type pre-commit --hook-type pre-push
 test:
 	tox
 analysis: # Lint, format, import optimizer, etc.

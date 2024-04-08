@@ -8,7 +8,7 @@
 
 ## Completed
 
-* Authorization API - ALL (OAuth)
+* Authorization API (OAuth)
   * get_request_token
   * get_access_token
   * renew_access_token

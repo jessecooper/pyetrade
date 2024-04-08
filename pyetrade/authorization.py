@@ -4,8 +4,8 @@
     * Catch events
 
 """
-
 import logging
+
 from requests_oauthlib import OAuth1Session
 
 # Set up logging
@@ -15,17 +15,18 @@ LOGGER = logging.getLogger(__name__)
 class ETradeOAuth(object):
     """:description: Performs authorization for OAuth 1.0a
 
-       :param consumer_key: Client key provided by Etrade
-       :type consumer_key: str, required
-       :param consumer_secret: Client secret provided by Etrade
-       :type consumer_secret: str, required
-       :param callback_url: Callback URL passed to OAuth mod, defaults to "oob"
-       :type callback_url: str, optional
-       :EtradeRef: https://apisb.etrade.com/docs/api/authorization/request_token.html
-
+    :param consumer_key: Client key provided by Etrade
+    :type consumer_key: str, required
+    :param consumer_secret: Client secret provided by Etrade
+    :type consumer_secret: str, required
+    :param callback_url: Callback URL passed to OAuth mod, defaults to "oob"
+    :type callback_url: str, optional
+    :EtradeRef: https://apisb.etrade.com/docs/api/authorization/request_token.html
     """
 
-    def __init__(self, consumer_key: str, consumer_secret: str, callback_url: str = "oob"):
+    def __init__(
+        self, consumer_key: str, consumer_secret: str, callback_url: str = "oob"
+    ):
         self.consumer_key = consumer_key
         self.consumer_secret = consumer_secret
         self.base_url_prod = r"https://api.etrade.com"
@@ -40,11 +41,10 @@ class ETradeOAuth(object):
     def get_request_token(self) -> str:
         """:description: Obtains the token URL from Etrade.
 
-           :param None: Takes no parameters
-           :return: Formatted Authorization URL (Access this to obtain taken)
-           :rtype: str
-           :EtradeRef: https://apisb.etrade.com/docs/api/authorization/request_token.html
-
+        :param None: Takes no parameters
+        :return: Formatted Authorization URL (Access this to obtain taken)
+        :rtype: str
+        :EtradeRef: https://apisb.etrade.com/docs/api/authorization/request_token.html
         """
 
         # Set up session
@@ -74,12 +74,11 @@ class ETradeOAuth(object):
     def get_access_token(self, verifier: str) -> dict:
         """:description: Obtains access token. Requires token URL from :class:`get_request_token`
 
-           :param verifier: OAuth Verification Code from Etrade
-           :type verifier: str, required
-           :return: OAuth access tokens
-           :rtype: dict
-           :EtradeRef: https://apisb.etrade.com/docs/api/authorization/get_access_token.html
-
+        :param verifier: OAuth Verification Code from Etrade
+        :type verifier: str, required
+        :return: OAuth access tokens
+        :rtype: dict
+        :EtradeRef: https://apisb.etrade.com/docs/api/authorization/get_access_token.html
         """
 
         # Set verifier
@@ -94,25 +93,32 @@ class ETradeOAuth(object):
 class ETradeAccessManager(object):
     """:description: Renews and revokes ETrade OAuth access tokens
 
-       :param client_key: Client key provided by Etrade
-       :type client_key: str, required
-       :param client_secret: Client secret provided by Etrade
-       :type client_secret: str, required
-       :param resource_owner_key: Resource key from :class:`ETradeOAuth`
-       :type resource_owner_key: str, required
-       :param resource_owner_secret: Resource secret from :class:`ETradeOAuth`
-       :type resource_owner_secret: str, required
-       :EtradeRef: https://apisb.etrade.com/docs/api/authorization/renew_access_token.html
-
+    :param client_key: Client key provided by Etrade
+    :type client_key: str, required
+    :param client_secret: Client secret provided by Etrade
+    :type client_secret: str, required
+    :param resource_owner_key: Resource key from :class:`ETradeOAuth`
+    :type resource_owner_key: str, required
+    :param resource_owner_secret: Resource secret from :class:`ETradeOAuth`
+    :type resource_owner_secret: str, required
+    :EtradeRef: https://apisb.etrade.com/docs/api/authorization/renew_access_token.html
     """
 
-    def __init__(self, client_key: str, client_secret: str, resource_owner_key: str, resource_owner_secret: str):
+    def __init__(
+        self,
+        client_key: str,
+        client_secret: str,
+        resource_owner_key: str,
+        resource_owner_secret: str,
+    ):
         self.client_key = client_key
         self.client_secret = client_secret
         self.resource_owner_key = resource_owner_key
         self.resource_owner_secret = resource_owner_secret
         self.renew_access_token_url = r"https://api.etrade.com/oauth/renew_access_token"
-        self.revoke_access_token_url = r"https://api.etrade.com/oauth/revoke_access_token"
+        self.revoke_access_token_url = (
+            r"https://api.etrade.com/oauth/revoke_access_token"
+        )
         self.session = OAuth1Session(
             self.client_key,
             self.client_secret,
@@ -124,29 +130,30 @@ class ETradeAccessManager(object):
     def renew_access_token(self) -> bool:
         """:description: Renews access tokens obtained from :class:`ETradeOAuth`
 
-           :param None: Takes no parameters
-           :return: Success or failure
-           :rtype: bool (True or False)
-           :EtradeRef: https://apisb.etrade.com/docs/api/authorization/renew_access_token.html
-
+        :param None: Takes no parameters
+        :return: Success or failure
+        :rtype: bool (True or False)
+        :EtradeRef: https://apisb.etrade.com/docs/api/authorization/renew_access_token.html
         """
         resp = self.session.get(self.renew_access_token_url)
-        LOGGER.debug(resp.text)
         resp.raise_for_status()
+
+        LOGGER.debug(resp.text)
 
         return True
 
     def revoke_access_token(self) -> bool:
         """:description: Revokes access tokens obtained from :class:`ETradeOAuth`
 
-           :param None: Takes no parameters
-           :return: Success or failure
-           :rtype: bool (True or False)
-           :EtradeRef: https://apisb.etrade.com/docs/api/authorization/revoke_access_token.html
+        :param None: Takes no parameters
+        :return: Success or failure
+        :rtype: bool (True or False)
+        :EtradeRef: https://apisb.etrade.com/docs/api/authorization/revoke_access_token.html
 
         """
         resp = self.session.get(self.revoke_access_token_url)
-        LOGGER.debug(resp.text)
         resp.raise_for_status()
+
+        LOGGER.debug(resp.text)
 
         return True

@@ -1,6 +1,5 @@
-# pyetrade
+# pyetrade (Python E-Trade API Wrapper)
 
-Python E-Trade API Wrapper
 [![PyPI](https://img.shields.io/pypi/v/pyetrade.svg)](https://pypi.python.org/pypi/pyetrade)
 [![PyPI](https://img.shields.io/pypi/l/pyetrade.svg)]()
 [![PyPI](https://img.shields.io/pypi/pyversions/pyetrade.svg)](https://pypi.python.org/pypi/pyetrade)
@@ -8,34 +7,60 @@ Python E-Trade API Wrapper
 [![codecov](https://codecov.io/gh/jessecooper/pyetrade/branch/master/graph/badge.svg)](https://codecov.io/gh/jessecooper/pyetrade)
 
 ## Completed
-v1 API
-Authorization API - ALL
-Accounts
-* list accounts
 
-Authorization API - ALL
-Order API -
-* List Orders
-* Place Equity Order
-* Cancel Order
+* Authorization API - ALL (OAuth)
+  * get_request_token
+  * get_access_token
+  * renew_access_token
+  * revoke_access_token
 
-Market API -
-* Look Up Product
-* optionchain
-* Get Quote
+* Alerts API
+  * list_alerts
+  * list_alert_details
+  * delete_alert
+
+* Accounts API
+  * list_accounts
+  * get_account_balance
+  * get_account_portfolio
+  * get_portfolio_position_lot
+  * list_transactions
+  * list_transaction_details
+
+* Order API
+  * list_orders
+  * find_option_orders
+  * preview_equity_order
+  * change_preview_equity_order
+  * place_equity_order
+  * place_changed_equity_order
+  * place_option_order
+  * place_changed_option_order
+  * cancel_order
+
+* Market API
+  * look_up_product
+  * get_quote
+  * get_option_chains
+  * get_option_expire_date
 
 ## Install
-```
+
+```bash
 pip install pyetrade
-- or -
+```
+OR
+```bash
 git clone https://github.com/jessecooper/pyetrade.git
 cd pyetrade
 sudo make init
 sudo make install
 ```
+
 ## Example Usage
 
 To create the OAuth tokens:
+
 ```python
 import pyetrade
 
@@ -47,6 +72,7 @@ print(oauth.get_request_token())  # Use the printed URL
 
 verifier_code = input("Enter verification code: ")
 tokens = oauth.get_access_token(verifier_code)
+
 print(tokens)
 ```
 
@@ -69,33 +95,47 @@ accounts = pyetrade.ETradeAccounts(
 
 print(accounts.list_accounts())
 ```
+
 ## Documentation
+
 [PyEtrade Documentation](https://pyetrade.readthedocs.io/en/latest/)
+
 ## Contribute to pyetrade
-* [ETrade API Docs](https://apisb.etrade.com/docs/api/account/api-account-v1.html)
+
+[ETrade API Docs](https://apisb.etrade.com/docs/api/account/api-account-v1.html)
+
+### Development Setup:
+
 * Fork pyetrade
-* Development Setup:
+* Setup development environment
+
+```bash
+make init
+make devel
 ```
-    make init
-    make devel
+OR
+```bash
+pip install -r requirements.txt
+pip install -r requirements_dev.txt
+pip install -e .
+pre-commit install --hook-type pre-commit --hook-type pre-push
 ```
-or
+
+* Lint (Run analysis - pre-commit-config)
+
+```bash
+make analysis
 ```
-    pip install -r requirements.txt
-    pip install -r requirements_dev.txt
-    pip install -e .
+
+* Test (Coverage >= 90%)
+
+```bash
+make test
 ```
-* Lint
-```
-# Run Black
-black pyetrade/
-# Run Linter
-pylint pyetrade/  #Lint score should be >=8
-```
-* Test
-```
-make test #Ensure test coverage is >80%
-```
-* Push Changes:
-Push changes to a branch on your forked repo
+
+* Push Changes
+  * Push changes to a branch on your forked repo
+
+
 * Create pull request
+  * Open a pull request on pyetrade and put your fork as the source of your changes

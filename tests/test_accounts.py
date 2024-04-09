@@ -327,8 +327,8 @@ class TestETradeAccounts(unittest.TestCase):
         )
         # Test API URL
         MockOAuthSession().get.assert_called_with(
-            "https://apisb.etrade.com/v1/accounts" "/12345abcd/transactions.json/67890",
-            params={},
+            "https://apisb.etrade.com/v1/accounts" "/12345abcd/transactions/67890.json",
+            params={"storeId": None},
         )
         # Test Dev XML
         self.assertEqual(
@@ -339,7 +339,7 @@ class TestETradeAccounts(unittest.TestCase):
         )
         MockOAuthSession().get.assert_called_with(
             "https://apisb.etrade.com/v1/accounts/12345abcd/transactions/67890",
-            params={},
+            params={"storeId": None},
         )
         account = accounts.ETradeAccounts(
             "abc123", "xyz123", "abctoken", "xyzsecret", dev=False
@@ -351,8 +351,8 @@ class TestETradeAccounts(unittest.TestCase):
         )
         # Test API URL
         MockOAuthSession().get.assert_called_with(
-            "https://api.etrade.com/v1/accounts/12345abcd/transactions.json/67890",
-            params={},
+            "https://api.etrade.com/v1/accounts/12345abcd/transactions/67890.json",
+            params={"storeId": None},
         )
         # Test Prod XML
         self.assertEqual(
@@ -363,7 +363,7 @@ class TestETradeAccounts(unittest.TestCase):
         )
         MockOAuthSession().get.assert_called_with(
             "https://api.etrade.com/v1/accounts/12345abcd/transactions/67890",
-            params={},
+            params={"storeId": None},
         )
 
         self.assertTrue(MockOAuthSession().get().json.called)

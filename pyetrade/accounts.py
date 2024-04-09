@@ -1,4 +1,5 @@
 import logging
+from datetime import datetime
 
 import xmltodict
 from requests_oauthlib import OAuth1Session
@@ -133,16 +134,26 @@ class ETradeAccounts(object):
         :type  sort_by: str, optional
         :param sort_order: Sort orders (ASC or DESC), defaults to DESC
         :type  sort_order: str, optional
-        :param page_number: The specific page that in the list that is to be returned. Each page has a default count of 50 positions.  # noqa: E501
+        :param page_number: The specific page that in the list that is to be returned.
+                            Each page has a default count of 50 positions.
         :type  page_number: int, optional
-        :param market_session: The market session (Regular or Extended), defaults to REGULAR
+        :param market_session: The market session, defaults to REGULAR
         :type  market_session: str, optional
+        :market_session values:
+            * REGULAR
+            * EXTENDED
         :param totals_required: It gives the total values of the portfolio, defaults to False
         :type  totals_required: bool, optional
         :param lots_required: It gives position lots for positions, defaults to False
         :type  lots_required: bool, optional
-        :param view: The view query: PERFORMANCE, FUNDAMENTAL, OPTIONSWATCH, QUICK, COMPLETE. Defaults to QUICK.
+        :param view: The view query, defaults to QUICK.
         :type  view: str, optional
+        :view values:
+            * PERFORMANCE
+            * FUNDAMENTAL
+            * OPTIONSWATCH
+            * QUICK
+            * COMPLETE
         :param resp_format: Desired Response format, defaults to xml
         :type  resp_format: str, optional
         :return: Account portfolio of account with key ``account_id_key``
@@ -228,10 +239,10 @@ class ETradeAccounts(object):
     def list_transactions(
         self,
         account_id_key: str,
-        start_date: str = None,
-        end_date: str = None,
+        start_date: datetime = None,
+        end_date: datetime = None,
         sort_order: str = "DESC",
-        marker=None,
+        marker: str = None,
         count: int = 50,
         resp_format: str = "xml",
     ) -> dict:
@@ -239,14 +250,17 @@ class ETradeAccounts(object):
 
         :param account_id_key: AccountIDKey retrieved from :class:`list_accounts`
         :type  account_id_key: str, required
-        :param start_date: The earliest date to include in the date range, formatted as MMDDYYYY (history is available for two years), default is None  # noqa: E501
-        :type  start_date: str, optional
-        :param end_date: The latest date to include in the date range, formatted as MMDDYYYY, default is None
-        :type  end_date: `str, optional
+        :param start_date: The earliest date to include in the date range (history is available for two years),
+                           defaults to None
+        :type  start_date: datetime obj, optional
+        :param end_date: The latest date to include in the date range (history is available for two years),
+                         defaults to None
+        :type  end_date: datetime obj, optional
         :param sort_order: The sort order request (ASC or DESC), default is DESC
         :type  sort_order: str, optional
-        :param marker: Specifies the desired starting point of the set of items to return (used for paging), default is None  # noqa: E501
-        :type  marker: ??, optional
+        :param marker: Specifies the desired starting point of the set of items to return (used for paging),
+                       default is None
+        :type  marker: str, optional
         :param count: Number of transactions to return in the response, default is 50
         :type  count: int, optional
         :param resp_format: Desired Response format, defaults to xml
@@ -263,8 +277,10 @@ class ETradeAccounts(object):
         )
 
         payload = {
-            "startDate": start_date,
-            "endDate": end_date,
+            "startDate": start_date.date().strftime("%m%d%Y")
+            if start_date
+            else start_date,
+            "endDate": end_date.date().strftime("%m%d%Y") if end_date else end_date,
             "sortOrder": sort_order,
             "marker": marker,
             "count": count,
@@ -290,8 +306,8 @@ class ETradeAccounts(object):
         self,
         account_id_key: str,
         transaction_id: int,
+        store_id: any = None,
         resp_format: str = "xml",
-        **kwargs,
     ) -> dict:
         """:description: Retrieves transaction details for an account
 
@@ -299,26 +315,26 @@ class ETradeAccounts(object):
         :type  account_id_key: str, required
         :param transaction_id: Numeric transaction ID obtained from :class:`list_transactions`
         :type  transaction_id: int, required
+        :param store_id: storage location for older transactions
+        :type  store_id: Unknown, optional
         :param resp_format: Desired Response format, defaults to xml
         :type  resp_format: str, optional
-        :param kwargs: Parameters for api
-        :type  kwargs: ``**kwargs``, optional
         :return: Transaction Details for ``transaction_id`` for account key ``account_id_key``
         :rtype: xml or json based on ``resp_format``
         :EtradeRef: https://apisb.etrade.com/docs/api/account/api-transaction-v1.html
         """
 
         # Set Env
-        api_url = "%s/%s/transactions%s/%s" % (
+        api_url = "%s/%s/transactions/%s%s" % (
             self.base_url,
             account_id_key,
-            ".json" if resp_format == "json" else "",
             transaction_id,
+            ".json" if resp_format == "json" else "",
         )
 
         LOGGER.debug(api_url)
 
-        req = self.session.get(api_url, params=kwargs)
+        req = self.session.get(api_url, params={"storeId": store_id})
         req.raise_for_status()
 
         LOGGER.debug(req.text)

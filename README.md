@@ -14,10 +14,12 @@
   * renew_access_token
   * revoke_access_token
 
+
 * Alerts API
   * list_alerts
   * list_alert_details
   * delete_alert
+
 
 * Accounts API
   * list_accounts
@@ -26,6 +28,7 @@
   * get_portfolio_position_lot
   * list_transactions
   * list_transaction_details
+
 
 * Order API
   * list_orders
@@ -38,6 +41,7 @@
   * place_option_order
   * place_changed_option_order
   * cancel_order
+
 
 * Market API
   * look_up_product

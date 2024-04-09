@@ -77,17 +77,20 @@ class ETradeMarket(object):
         # api_url = self.base_url + "lookup/%s" % search_str
         api_url = "%slookup/%s" % (
             self.base_url,
-            search_str if resp_format.lower() == "xml" else search_str + ".json",
+            search_str if resp_format.lower() == "xml" else f"{search_str}.json",
         )
         LOGGER.debug(api_url)
+
         req = self.session.get(api_url)
         req.raise_for_status()
+
         LOGGER.debug(req.text)
+
         return xmltodict.parse(req.text) if resp_format.lower() == "xml" else req.json()
 
     def get_quote(
         self,
-        symbols: list,
+        symbols: list[str],
         detail_flag: str = None,
         require_earnings_date: str = None,
         skip_mini_options_check: str = None,
@@ -96,7 +99,7 @@ class ETradeMarket(object):
         """:description: Get quote data on symbols provided in the list args.
 
         :param symbols: Symbols in list args format. Limit 25.
-        :type symbols: list[], required
+        :type symbols: list[str], required
         :param detail_flag: Market fields returned from a quote request, defaults to None
         :type detail_flag: str, optional
         :param require_earnings_date: Provides Earnings date if True, defaults to None
@@ -143,12 +146,13 @@ class ETradeMarket(object):
         assert skip_mini_options_check in (True, False, None)
         assert isinstance(symbols, list or tuple)
 
-        if len(symbols) > 25:
+        if len(symbols) >= 26:
             LOGGER.warning(
                 "get_quote asked for %d requests; only first 25 returned" % len(symbols)
             )
 
         args = list()
+
         if detail_flag is not None:
             args.append("detailflag=%s" % detail_flag.upper())
         if require_earnings_date:
@@ -264,10 +268,11 @@ class ETradeMarket(object):
             "optionchains?" if resp_format.lower() == "xml" else "optionchains.json?",
             "&".join(args),
         )
+        LOGGER.debug(api_url)
 
         req = self.session.get(api_url)
         req.raise_for_status()
-        LOGGER.debug(api_url)
+
         LOGGER.debug(req.text)
 
         return xmltodict.parse(req.text) if resp_format.lower() == "xml" else req.json()
@@ -295,11 +300,11 @@ class ETradeMarket(object):
             else "optionexpiredate.json",
         )
 
-        payload = {"symbol": symbol, "expiryType": "ALL"}
         LOGGER.debug(api_url)
 
-        req = self.session.get(api_url, params=payload)
+        req = self.session.get(api_url, params={"symbol": symbol, "expiryType": "ALL"})
         req.raise_for_status()
+
         LOGGER.debug(req.text)
 
         return xmltodict.parse(req.text) if resp_format.lower() == "xml" else req.json()

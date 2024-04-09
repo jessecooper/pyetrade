@@ -135,6 +135,7 @@ class ETradeAccessManager(object):
         :rtype: bool (True or False)
         :EtradeRef: https://apisb.etrade.com/docs/api/authorization/renew_access_token.html
         """
+
         resp = self.session.get(self.renew_access_token_url)
         resp.raise_for_status()
 
@@ -149,8 +150,8 @@ class ETradeAccessManager(object):
         :return: Success or failure
         :rtype: bool (True or False)
         :EtradeRef: https://apisb.etrade.com/docs/api/authorization/revoke_access_token.html
-
         """
+
         resp = self.session.get(self.revoke_access_token_url)
         resp.raise_for_status()
 

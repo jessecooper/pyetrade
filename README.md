@@ -29,6 +29,7 @@
 
 * Order API
   * list_orders
+  * list_order_details
   * find_option_orders
   * preview_equity_order
   * change_preview_equity_order

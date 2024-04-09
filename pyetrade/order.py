@@ -1,4 +1,5 @@
 import logging
+from datetime import datetime
 from typing import Union
 
 import dateutil.parser
@@ -31,16 +32,14 @@ def to_decimal_str(price: float, round_down: bool) -> str:
     return spstr
 
 
-def get_request_result(
-    req: OAuth1Session.request, empty_json: dict, resp_format: str = "xml"
-) -> dict:
+def get_request_result(req: OAuth1Session.request, resp_format: str = "xml") -> dict:
     LOGGER.debug(req.text)
 
     if resp_format == "json":
         if req.text.strip() == "":
             # otherwise, when ETrade server return empty string, we got this error:
             # simplejson.errors.JSONDecodeError: Expecting value: line 1 column 1 (char 0)
-            req_output = empty_json  # empty json object
+            req_output = {}
         else:
             req_output = req.json()
     else:
@@ -50,8 +49,7 @@ def get_request_result(
         raise Exception(
             f'Etrade API Error - Code: {req_output["Error"]["code"]}, Msg: {req_output["Error"]["message"]}'
         )
-    else:
-        return req_output
+    return req_output
 
 
 # return Etrade internal option symbol: e.g. "PLTR--220218P00023000" ref:_test_option_symbol()
@@ -96,7 +94,7 @@ class ETradeOrder(object):
     :param resource_owner_key: Resource key from :class:`pyetrade.authorization.ETradeOAuth`
     :type resource_owner_key: str, required
     :param resource_owner_secret: Resource secret from
-         :class:`pyetrade.authorization.ETradeOAuth`
+           :class: `pyetrade.authorization.ETradeOAuth`
     :type resource_owner_secret: str, required
     :param dev: Defines Sandbox (True) or Live (False) ETrade, defaults to True
     :type dev: bool, optional
@@ -126,30 +124,135 @@ class ETradeOrder(object):
         )
 
     def list_orders(
-        self, account_id_key: str, resp_format: str = "json", **kwargs
+        self,
+        account_id_key: str,
+        marker: str = None,
+        count: int = 25,
+        status: str = None,
+        from_date: datetime = None,
+        to_date: datetime = None,
+        symbols: list[str] = None,
+        security_type: str = None,
+        transaction_type: str = None,
+        market_session: str = "REGULAR",
+        resp_format: str = "json",
     ) -> dict:
         """:description: Lists orders for a specific account ID Key
 
         :param account_id_key: AccountIDKey from :class:`pyetrade.accounts.ETradeAccounts.list_accounts`
         :type  account_id_key: str, required
-        :param resp_format: Desired Response format, defaults to xml
+        :param marker: Specifies the desired starting point of the set of items to return (defaults to None)
+        :type  marker: str, optional
+        :param count: Number of transactions to return, defaults to 25 (max 100)
+        :type  count: int, optional
+        :param status: Order status (defaults to None)
+        :type  status: str, optional
+        :status values:
+            * OPEN
+            * EXECUTED
+            * CANCELLED
+            * INDIVIDUAL_FILLS
+            * CANCEL_REQUESTED
+            * EXPIRED
+            * REJECTED
+        :param from_date: The earliest date to include in the date range (history is available for two years).
+                          Both fromDate and toDate should be used together, toDate should be greater than fromDate.
+                          (defaults to None)
+        :type  from_date: datetime obj, optional
+        :param to_date: The latest date to include in the date range (history is available for two years).
+                        Both fromDate and toDate should be used together, toDate should be greater than fromDate.
+                        (defaults to None)
+        :type  to_date: datetime obj, optional
+        :param symbols: The market symbol(s) for the security being bought or sold. (defaults to None, Max 25 symbols)
+        :type  symbols: list[str], optional
+        :param security_type: The security type (defaults to None - Returns all types)
+        :type  security_type: str, optional
+        :security_type values:
+            * EQ
+            * OPTN
+            * MF
+            * MMF
+        :param transaction_type: Type of transaction (defaults to None - Returns all types)
+        :type  transaction_type: str, optional
+        :transaction_type values:
+            * ATNM
+            * BUY
+            * SELL
+            * SELL_SHORT
+            * BUY_TO_COVER
+            * MF_EXCHANGE
+        :param market_session: The market session, defaults to REGULAR
+        :type  market_session: str, optional
+        :market_session values:
+            * REGULAR
+            * EXTENDED
+        :param resp_format: Desired Response format, defaults to json
         :type  resp_format: str, optional
-        :param kwargs: Parameters for api. Refer to EtradeRef for options
-        :type  kwargs: ``**kwargs``, optional
         :return: List of orders for an account
         :rtype: ``xml`` or ``json`` based on ``resp_format``
         :EtradeRef: https://apisb.etrade.com/docs/api/order/api-order-v1.html
         """
 
-        api_url = f"{self.base_url}/{account_id_key}/orders"
+        if symbols and len(symbols) >= 26:
+            LOGGER.warning(
+                "list_orders asked for %d requests; only first 25 returned"
+                % len(symbols)
+            )
 
-        if resp_format == "json":
-            api_url += ".json"
-
+        api_url = f"{self.base_url}/{account_id_key}/orders{'.json' if resp_format == 'json' else ''}"
         LOGGER.debug(api_url)
-        req = self.session.get(api_url, params=kwargs, timeout=self.timeout)
 
-        return get_request_result(req, {}, resp_format)
+        if count >= 101:
+            LOGGER.debug(
+                f"Count {count} is greater than the max allowable value (100), using 100"
+            )
+            count = 100
+
+        payload = {
+            "marker": marker,
+            "count": count,
+            "status": status,
+            "fromDate": from_date.date().strftime("%m%d%Y") if from_date else from_date,
+            "toDate": to_date.date().strftime("%m%d%Y") if to_date else to_date,
+            "symbol": ",".join([sym for sym in symbols[:25]]) if symbols else symbols,
+            "securityType": security_type,
+            "transactionType": transaction_type,
+            "marketSession": market_session,
+        }
+
+        req = self.session.get(api_url, params=payload, timeout=self.timeout)
+        req.raise_for_status()
+
+        LOGGER.debug(req.text)
+
+        return get_request_result(req, resp_format)
+
+    def list_order_details(
+        self, account_id_key: str, order_id: int, resp_format: str = "json"
+    ):
+        """
+        :description: Lists order details of a specific account ID Key and order ID
+
+        :param account_id_key: AccountIDKey from :class:`pyetrade.accounts.ETradeAccounts.list_accounts`
+        :type  account_id_key: str, required
+        :param order_id: Order ID of placed order, order IDs can be retrieved from calling the list_orders() function
+        :type  account_id_key: int, required
+        :param resp_format: Desired Response format, defaults to json
+        :type  resp_format: str, optional
+        :return: List of orders for an account
+        :rtype: ``xml`` or ``json`` based on ``resp_format``
+        :EtradeRef: https://apisb.etrade.com/docs/api/order/api-order-v1.html
+        """
+
+        api_url = f"{self.base_url}/{account_id_key}/orders/{order_id}{'.json' if resp_format == 'json' else ''}"
+        LOGGER.debug(api_url)
+
+        req = self.session.get(api_url)
+        req.raise_for_status()
+
+        LOGGER.debug(req.text)
+
+        return xmltodict.parse(req.text) if resp_format.lower() == "xml" else req.json()
 
     def find_option_orders(
         self,
@@ -327,7 +430,7 @@ class ETradeOrder(object):
             LOGGER.debug("xml payload: %s", payload)
             req = method(api_url, data=payload, headers=headers, timeout=self.timeout)
 
-        return get_request_result(req, {}, resp_format)
+        return get_request_result(req, resp_format)
 
     def preview_equity_order(self, **kwargs) -> dict:
         """API is used to submit an order request for preview before placing it
@@ -496,6 +599,7 @@ class ETradeOrder(object):
                 "No previewId given, previewing before placing order "
                 "because of an Etrade bug as of 1/1/2019"
             )
+
             preview = self.preview_equity_order(**kwargs)
             kwargs["previewId"] = preview["PreviewOrderResponse"]["PreviewIds"][
                 "previewId"

@@ -55,6 +55,21 @@ class TestETradeOrder(unittest.TestCase):
         self.assertTrue(MockOAuthSession().get().json.called)
         self.assertTrue(MockOAuthSession().get.called)
 
+    @patch("pyetrade.order.OAuth1Session")
+    def test_list_order_details(self, MockOAuthSession):
+        MockOAuthSession().get().json.return_value = {"accountId": "12345"}
+        MockOAuthSession().get().text = r"<xml> returns </xml>"
+
+        orders = order.ETradeOrder(
+            "abc123", "xyz123", "abctoken", "xyzsecret", dev=False
+        )
+
+        self.assertTrue(
+            isinstance(orders.list_order_details("12345", 123, "json"), dict)
+        )
+        self.assertTrue(MockOAuthSession().get().json.called)
+        self.assertTrue(MockOAuthSession().get.called)
+
     def test_find_option_orders(self):
         orders = order.ETradeOrder(
             "abc123", "xyz123", "abctoken", "xyzsecret", dev=False

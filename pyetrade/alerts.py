@@ -48,7 +48,7 @@ class ETradeAlerts(object):
         )
 
     def list_alerts(
-        self, count: int = 25 <= 300, sort_order: str = "DESC", resp_format: str = "xml"
+        self, count: int = 25, sort_order: str = "DESC", resp_format: str = "xml"
     ) -> dict:
         """:description: Lists alerts in Etrade
 
@@ -62,12 +62,23 @@ class ETradeAlerts(object):
         :rtype: ``xml`` or ``json`` based on ``resp_format``
         :EtradeRef: https://apisb.etrade.com/docs/api/user/api-alert-v1.html
         """
-        api_url = "%s%s" % (self.base_url, ".json" if resp_format == "json" else "")
 
+        api_url = "%s%s" % (
+            self.base_url,
+            ".json" if resp_format == "json" else "",
+        )
         LOGGER.debug(api_url)
+
+        if count >= 301:
+            LOGGER.debug(
+                f"Count {count} is greater than the max allowable value (300), using 300"
+            )
+            count = 300
+
         req = self.session.get(
             api_url, params={"count": count, "direction": sort_order}
         )
+
         req.raise_for_status()
         LOGGER.debug(req.text)
 
@@ -80,7 +91,8 @@ class ETradeAlerts(object):
 
         :param alert_id: Alert ID obtained from :class:`list_alerts`
         :type alert_id: int, required
-        :param html_tags: The HTML tags on the alert, defaults to false. If set to true, it returns the alert details msgText with html tags.  # noqa: E501
+        :param html_tags: The HTML tags on the alert, defaults to false. If set to true,
+                          it returns the alert details msgText with html tags.
         :type  html_tags: bool, optional
         :param resp_format: Desired Response format, defaults to xml
         :type  resp_format: str, optional
@@ -96,8 +108,10 @@ class ETradeAlerts(object):
         )
 
         LOGGER.debug(api_url)
+
         req = self.session.get(api_url, params={"htmlTags": html_tags})
         req.raise_for_status()
+
         LOGGER.debug(req.text)
 
         return xmltodict.parse(req.text) if resp_format.lower() == "xml" else req.json()
@@ -121,8 +135,10 @@ class ETradeAlerts(object):
         )
 
         LOGGER.debug(api_url)
+
         req = self.session.delete(api_url)
         req.raise_for_status()
+
         LOGGER.debug(req.text)
 
         return xmltodict.parse(req.text) if resp_format.lower() == "xml" else req.json()

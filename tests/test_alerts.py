@@ -13,7 +13,7 @@ def test_list_alerts(mocker):
     MockOAuthSession().get().text = r"<xml> returns </xml>"
 
     alert = alerts.ETradeAlerts("abc123", "xyz123", "abctoken", "xyzsecret", dev=True)
-    default_params = {"count": True, "direction": "DESC"}
+    default_params = {"count": 25, "direction": "DESC"}
 
     # Test Dev JSON
     assert alert.list_alerts(resp_format="json") == "{'alert': 'abc123'}"
@@ -42,6 +42,13 @@ def test_list_alerts(mocker):
     MockOAuthSession().get.assert_called_with(
         "https://api.etrade.com/v1/user/alerts", params=default_params
     )
+
+    assert alert.list_alerts(count=301, resp_format="json") == "{'alert': 'abc123'}"
+    MockOAuthSession().get.assert_called_with(
+        "https://api.etrade.com/v1/user/alerts.json",
+        params={"count": 300, "direction": "DESC"},
+    )
+
     assert MockOAuthSession().get().json.called
     assert MockOAuthSession().get.called
 

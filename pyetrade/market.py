@@ -290,7 +290,6 @@ class ETradeMarket(object):
         :EtradeRef: https://apisb.etrade.com/docs/api/market/api-market-v1.html
         """
 
-        assert isinstance(resp_format, str)
         assert resp_format in ["xml", "json"]
 
         api_url = "%s%s" % (

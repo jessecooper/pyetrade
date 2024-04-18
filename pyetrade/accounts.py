@@ -277,10 +277,8 @@ class ETradeAccounts(object):
         )
 
         payload = {
-            "startDate": start_date.date().strftime("%m%d%Y")
-            if start_date
-            else start_date,
-            "endDate": end_date.date().strftime("%m%d%Y") if end_date else end_date,
+            "startDate": start_date.date().strftime("%m%d%Y") if start_date else None,
+            "endDate": end_date.date().strftime("%m%d%Y") if end_date else None,
             "sortOrder": sort_order,
             "marker": marker,
             "count": count,

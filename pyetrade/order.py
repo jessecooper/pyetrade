@@ -35,20 +35,22 @@ def to_decimal_str(price: float, round_down: bool) -> str:
 def get_request_result(req: OAuth1Session.request, resp_format: str = "xml") -> dict:
     LOGGER.debug(req.text)
 
-    if resp_format == "json":
-        if req.text.strip() == "":
-            # otherwise, when ETrade server return empty string, we got this error:
-            # simplejson.errors.JSONDecodeError: Expecting value: line 1 column 1 (char 0)
-            req_output = {}
-        else:
-            req_output = req.json()
-    else:
+    # Initialize as empty dict, otherwise, when ETrade server returns an empty string, you get this error:
+    # "simplejson.errors.JSONDecodeError: Expecting value: line 1 column 1 (char 0)"
+    req_output = {}
+
+    assert resp_format in ["xml", "json"]
+
+    if resp_format == "json" and req.text.strip() != "":
+        req_output = req.json()
+    elif resp_format == "xml":
         req_output = xmltodict.parse(req.text)
 
     if "Error" in req_output.keys():
         raise Exception(
             f'Etrade API Error - Code: {req_output["Error"]["code"]}, Msg: {req_output["Error"]["message"]}'
         )
+
     return req_output
 
 
@@ -204,7 +206,7 @@ class ETradeOrder(object):
 
         if count >= 101:
             LOGGER.debug(
-                f"Count {count} is greater than the max allowable value (100), using 100"
+                f"Count {count} is greater than the max allowable value (100), using 100."
             )
             count = 100
 
@@ -212,9 +214,9 @@ class ETradeOrder(object):
             "marker": marker,
             "count": count,
             "status": status,
-            "fromDate": from_date.date().strftime("%m%d%Y") if from_date else from_date,
-            "toDate": to_date.date().strftime("%m%d%Y") if to_date else to_date,
-            "symbol": ",".join([sym for sym in symbols[:25]]) if symbols else symbols,
+            "fromDate": from_date.date().strftime("%m%d%Y") if from_date else None,
+            "toDate": to_date.date().strftime("%m%d%Y") if to_date else None,
+            "symbol": ",".join([sym for sym in symbols[:25]]) if symbols else None,
             "securityType": security_type,
             "transactionType": transaction_type,
             "marketSession": market_session,

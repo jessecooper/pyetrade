@@ -3,8 +3,6 @@ init:
 devel:
 	pip install -r requirements_dev.txt
 	pre-commit install --hook-type pre-push --install-hooks -t post-checkout -t post-merge
-	curl -sSL https://install.python-poetry.org | python3 -
-	pip install poetry-plugin-export
 test:
 	tox
 analysis: # Lint, format, import optimizer, etc.

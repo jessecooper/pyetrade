@@ -124,12 +124,7 @@ pip install -r requirements.txt
 pip install -r requirements_dev.txt
 pip install -e .
 pre-commit install --hook-type pre-commit --hook-type pre-push --install-hooks -t post-checkout -t post-merge
-curl -sSL https://install.python-poetry.org | python3 -
-pip install poetry-plugin-export
 ```
-
-> **NOTE:** For either option you will need to have installed poetry in order for pre-commit hooks to work correctly. See
-> here for more info: https://python-poetry.org/docs/#installation
 
 * Lint (Run analysis - pre-commit-config)
 

@@ -1,6 +1,16 @@
 default_stages: [commit, push]
 fail_fast: false
 repos:
+  - repo: https://github.com/python-poetry/poetry
+    rev: 1.8.2
+    hooks:
+      - id: poetry-check
+      - id: poetry-lock
+      - id: poetry-export
+        args: ["-f", "requirements.txt", "-o", "requirements.txt", "--without-hashes"]
+      - id: poetry-export  # Dev dependencies
+        args: ["-f", "requirements.txt", "-o", "requirements_dev.txt", "--with", "dev", "--without-hashes"]
+      - id: poetry-install
   - repo: https://github.com/asottile/reorder_python_imports
     rev: v3.12.0
     hooks:

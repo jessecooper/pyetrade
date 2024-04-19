@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
-
-from setuptools import setup, find_packages
 from codecs import open
 from os import path
+
+from setuptools import find_packages
+from setuptools import setup
 
 __version__ = "2.0.1"
 here = path.abspath(path.dirname(__file__))
@@ -39,10 +40,10 @@ setup(
         "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
         "Natural Language :: English",
         "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: 3.10",
         "Programming Language :: Python :: 3.11",
+        "Programming Language :: Python :: 3.12",
         "Topic :: Software Development :: Libraries",
     ],
 )

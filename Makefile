@@ -2,11 +2,11 @@ init:
 	pip install -r requirements.txt
 devel:
 	pip install -r requirements_dev.txt
-	pre-commit install
+	pre-commit install --hook-type pre-push --install-hooks -t post-checkout -t post-merge
 test:
 	tox
-lint:
-	flake8 pyetrade tests
+analysis: # Lint, format, import optimizer, etc.
+	poetry run pre-commit run --all-files
 install:
 	pip install --upgrade .
 dist:

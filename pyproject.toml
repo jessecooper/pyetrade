@@ -1,0 +1,35 @@
+[tool.poetry]
+name = "pyetrade"
+version = "2.0.1"
+description = "eTrade API wrapper"
+authors = ["Jesse Cooper <jesse_cooper@codeholics.com>"]
+license = "GPL-3.0"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.9"
+python-dateutil = "^2.9.0.post0"
+requests = "^2.31.0"
+requests-oauthlib = "^2.0.0"
+xmltodict = "^0.13.0"
+jxmlease = "^1.0.3"
+
+[tool.poetry.group.dev.dependencies]
+black = "^24.4.0"
+bumpversion = "0.5.3"
+coverage = "^7.4.4"
+flake8 = "^7.0.0"
+pre-commit = "^3.7.0"
+poetry = "^1.8.2"
+poetry-plugin-export = "^1.7.1"
+pylint = "^3.1.0"
+pytest = "^8.1.1"
+pytest-cov = "^5.0.0"
+pytest-mock = "^3.14.0"
+python-dateutil = "^2.9.0.post0"
+Sphinx = "^7.3.6"
+tox = "^4.14.2"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

@@ -1,19 +1,40 @@
-defualt_stages: [commit, push]
-fail_fast: true
+default_stages: [commit, push]
+fail_fast: false
 repos:
-- repo: https://github.com/ambv/black
-  rev: 23.1.0
-  hooks:
-  - id: black
-- repo: https://github.com/pre-commit/pre-commit-hooks
-  rev: v4.4.0
-  hooks:
-  - id: trailing-whitespace
-- repo: https://gitlab.com/pycqa/flake8
-  rev: 3.9.2
-  hooks:
-  - id: flake8
-- repo: https://github.com/szebenyib/pre-commit-pytest
-  rev: 051fea31dbabf063ab38428c34a92c76d1abd5dc
-  hooks:
-  - id: pytest
+  - repo: https://github.com/python-poetry/poetry
+    rev: 1.8.2
+    hooks:
+      - id: poetry-check
+      - id: poetry-lock
+      - id: poetry-export
+        args: ["-f", "requirements.txt", "-o", "requirements.txt", "--without-hashes"]
+      - id: poetry-export  # Dev dependencies
+        args: ["-f", "requirements.txt", "-o", "requirements_dev.txt", "--with", "dev", "--without-hashes"]
+      - id: poetry-install
+  - repo: https://github.com/asottile/reorder_python_imports
+    rev: v3.12.0
+    hooks:
+      - id: reorder-python-imports
+  - repo: https://github.com/ambv/black
+    rev: 23.1.0
+    hooks:
+    - id: black
+  - repo: https://github.com/PyCQA/flake8
+    rev: 7.0.0
+    hooks:
+      - id: flake8
+        exclude: docs/conf.py
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0
+    hooks:
+      - id: check-ast
+      - id: check-added-large-files
+      - id: check-merge-conflict
+      - id: end-of-file-fixer
+      - id: mixed-line-ending
+        args: ['--fix=no']
+      - id: trailing-whitespace
+  - repo: https://github.com/szebenyib/pre-commit-pytest
+    rev: 051fea31dbabf063ab38428c34a92c76d1abd5dc
+    hooks:
+    - id: pytest

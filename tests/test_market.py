@@ -6,6 +6,7 @@
 import datetime as dt
 import unittest
 from unittest.mock import patch
+
 from pyetrade import market
 
 
@@ -13,16 +14,31 @@ from pyetrade import market
 class TestETradeMarket(unittest.TestCase):
     """TestEtradeAccounts Unit Test"""
 
+    def test__str__(self):
+        """test__str__()
+        type: mock.MagicMock
+        """
+
+        mark = market.ETradeMarket(
+            "abc123", "xyz123", "abctoken", "xyzsecret", dev=False
+        )
+
+        # Test __str__ response
+        self.assertEqual(
+            "Use development environment: False\nBase URL: https://api.etrade.com/v1/market/",
+            mark.__str__(),
+        )
+
     @patch("pyetrade.market.OAuth1Session")
     def test_look_up_product(self, MockOAuthSession):
         """test_look_up_product(MockOAuthSession)
-            param: MockOAuthSession
-           type: mock.MagicMock
-           description: MagicMock of OAuth1Session
+         param: MockOAuthSession
+        type: mock.MagicMock
+        description: MagicMock of OAuth1Session
 
-           3 tests based on resp_format = (None,'xml')
-           test exception raised when resp_format is something
-           different from two choices
+        3 tests based on resp_format = (None,'xml')
+        test exception raised when resp_format is something
+        different from two choices
         """
 
         response = {"symbol": "MMM", "description": "3M CO COM", "type": "EQUITY"}
@@ -34,7 +50,9 @@ class TestETradeMarket(unittest.TestCase):
                             </LookupResponse>"""
         # Set Mock returns for resp_format=xml
         MockOAuthSession().get().text = XML_response
-        mark = market.ETradeMarket("abc123", "xyz123", "abctoken", "xyzsecret", dev=False)
+        mark = market.ETradeMarket(
+            "abc123", "xyz123", "abctoken", "xyzsecret", dev=False
+        )
         # Test Get Quote returning python dict
         resp = mark.look_up_product("mmm")
         assert isinstance(resp, dict)
@@ -42,7 +60,9 @@ class TestETradeMarket(unittest.TestCase):
 
         # Set Mock returns for resp_format=json
         MockOAuthSession().get().json.return_value = response
-        mark = market.ETradeMarket("abc123", "xyz123", "abctoken", "xyzsecret", dev=False)
+        mark = market.ETradeMarket(
+            "abc123", "xyz123", "abctoken", "xyzsecret", dev=False
+        )
         # Test Get Quote returning python dict
         resp = mark.look_up_product("mmm", resp_format="json")
         assert isinstance(resp, dict)
@@ -51,9 +71,9 @@ class TestETradeMarket(unittest.TestCase):
     @patch("pyetrade.market.OAuth1Session")
     def test_get_quote(self, MockOAuthSession):
         """test_get_quote(MockOAuthSession)
-           param: MockOAuthSession
-           type: mock.MagicMock
-           description: MagicMock of OAuth1Session
+        param: MockOAuthSession
+        type: mock.MagicMock
+        description: MagicMock of OAuth1Session
         """
 
         response = {
@@ -83,7 +103,9 @@ class TestETradeMarket(unittest.TestCase):
         MockOAuthSession().get().text = XML_response
         MockOAuthSession().get().json.return_value = response
 
-        mark = market.ETradeMarket("abc123", "xyz123", "abctoken", "xyzsecret", dev=False)
+        mark = market.ETradeMarket(
+            "abc123", "xyz123", "abctoken", "xyzsecret", dev=False
+        )
 
         # Test XML return
         resp = mark.get_quote(["MMM"])
@@ -96,7 +118,7 @@ class TestETradeMarket(unittest.TestCase):
         assert MockOAuthSession().get.called
 
         # Test list of symbols greater than 25
-        resp = mark.get_quote(["MMM"]*26, resp_format="json")
+        resp = mark.get_quote(["MMM"] * 26, resp_format="json")
         assert isinstance(resp, dict)
         assert MockOAuthSession().get.called
 
@@ -106,8 +128,13 @@ class TestETradeMarket(unittest.TestCase):
         assert MockOAuthSession().get.called
 
         # Test detail_flag, requireEarningsDate, skipMiniOptionsCheck
-        resp = mark.get_quote(["MMM"], detail_flag="ALL", require_earnings_date=True,
-                              skip_mini_options_check=True, resp_format="json")
+        resp = mark.get_quote(
+            ["MMM"],
+            detail_flag="ALL",
+            require_earnings_date=True,
+            skip_mini_options_check=True,
+            resp_format="json",
+        )
         assert isinstance(resp, dict)
         assert MockOAuthSession().get.called
 
@@ -123,12 +150,16 @@ class TestETradeMarket(unittest.TestCase):
     @patch("pyetrade.market.OAuth1Session")
     def test_get_option_chains(self, MockOAuthSession):
         """test_get_optionexpiredate(MockOAuthSession)
-           param: MockOAuthSession
-           type: mock.MagicMock
-           description: MagicMock of OAuth1Session
+        param: MockOAuthSession
+        type: mock.MagicMock
+        description: MagicMock of OAuth1Session
         """
 
-        response = {"timeStamp": 1546546266, "bid": 41.55, "OptionGreeks": {"iv": 0.6716}}
+        response = {
+            "timeStamp": 1546546266,
+            "bid": 41.55,
+            "OptionGreeks": {"iv": 0.6716},
+        }
         XML_response = r"""<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
         <OptionChainResponse><OptionPair><Call>
                            <timeStamp>1546546266</timeStamp><bid>41.55</bid>
@@ -138,31 +169,62 @@ class TestETradeMarket(unittest.TestCase):
 
         # Set Mock returns for resp_format=xml
         MockOAuthSession().get().text = XML_response
-        mark = market.ETradeMarket("abc123", "xyz123", "abctoken", "xyzsecret", dev=False)
-        resp = mark.get_option_chains("AAPL", expiry_date=dt.date(2019, 2, 15), resp_format="xml")
+        mark = market.ETradeMarket(
+            "abc123", "xyz123", "abctoken", "xyzsecret", dev=False
+        )
+        resp = mark.get_option_chains(
+            "AAPL", expiry_date=dt.date(2019, 2, 15), resp_format="xml"
+        )
+        assert isinstance(resp, dict)
+        assert MockOAuthSession().get.called
+
+        # Set Mock returns for resp_format=xml and expiry_date=None
+        MockOAuthSession().get().text = XML_response
+        mark = market.ETradeMarket(
+            "abc123", "xyz123", "abctoken", "xyzsecret", dev=False
+        )
+        resp = mark.get_option_chains("AAPL", expiry_date=None, resp_format="xml")
         assert isinstance(resp, dict)
         assert MockOAuthSession().get.called
 
         # Set Mock returns for resp_format=xml and dev=True
         MockOAuthSession().get().text = XML_response
-        mark = market.ETradeMarket("abc123", "xyz123", "abctoken", "xyzsecret", dev=True)
-        resp = mark.get_option_chains("AAPL", expiry_date=dt.date(2019, 2, 15), resp_format="xml")
+        mark = market.ETradeMarket(
+            "abc123", "xyz123", "abctoken", "xyzsecret", dev=True
+        )
+        resp = mark.get_option_chains(
+            "AAPL", expiry_date=dt.date(2019, 2, 15), resp_format="xml"
+        )
         assert isinstance(resp, dict)
         assert MockOAuthSession().get.called
 
         # Set Mock returns for resp_format=xml
         MockOAuthSession().get().json.return_value = response
-        mark = market.ETradeMarket("abc123", "xyz123", "abctoken", "xyzsecret", dev=True)
-        resp = mark.get_option_chains("AAPL", expiry_date=dt.date(2019, 2, 15), resp_format="xml")
+        mark = market.ETradeMarket(
+            "abc123", "xyz123", "abctoken", "xyzsecret", dev=True
+        )
+        resp = mark.get_option_chains(
+            "AAPL", expiry_date=dt.date(2019, 2, 15), resp_format="xml"
+        )
         assert isinstance(resp, dict)
         assert MockOAuthSession().get.called
 
         # Set Mock returns for resp_format=json
         MockOAuthSession().get().json.return_value = response
-        mark = market.ETradeMarket("abc123", "xyz123", "abctoken", "xyzsecret", dev=False)
-        resp = mark.get_option_chains("AAPL", expiry_date=dt.date(2019, 2, 15),
-                                      strike_price_near=100, chain_type="CALL", option_category="ALL",
-                                      price_type="ALL", skip_adjusted=False, no_of_strikes=5, resp_format="json")
+        mark = market.ETradeMarket(
+            "abc123", "xyz123", "abctoken", "xyzsecret", dev=False
+        )
+        resp = mark.get_option_chains(
+            "AAPL",
+            expiry_date=dt.date(2019, 2, 15),
+            strike_price_near=100,
+            chain_type="CALL",
+            option_category="ALL",
+            price_type="ALL",
+            skip_adjusted=False,
+            no_of_strikes=5,
+            resp_format="json",
+        )
         assert isinstance(resp, dict)
         assert MockOAuthSession().get.called
 
@@ -178,9 +240,9 @@ class TestETradeMarket(unittest.TestCase):
     @patch("pyetrade.market.OAuth1Session")
     def test_get_option_expire_date(self, MockOAuthSession):
         """test_get_optionexpiredate(MockOAuthSession)
-           param: MockOAuthSession
-           type: mock.MagicMock
-           description: MagicMock of OAuth1Session
+        param: MockOAuthSession
+        type: mock.MagicMock
+        description: MagicMock of OAuth1Session
         """
 
         # response = [dt.date(2019, 1, 18), dt.date(2019, 1, 25)]
@@ -190,13 +252,17 @@ class TestETradeMarket(unittest.TestCase):
         )
         # Set Mock returns for resp_format=None
         MockOAuthSession().get().text = XML_response
-        mark = market.ETradeMarket("abc123", "xyz123", "abctoken", "xyzsecret", dev=False)
+        mark = market.ETradeMarket(
+            "abc123", "xyz123", "abctoken", "xyzsecret", dev=False
+        )
         resp = mark.get_option_expire_date("AAPL", resp_format="xml")
         assert isinstance(resp, dict)
         assert MockOAuthSession().get.called
 
         MockOAuthSession().get().text = XML_response
-        mark = market.ETradeMarket("abc123", "xyz123", "abctoken", "xyzsecret", dev=True)
+        mark = market.ETradeMarket(
+            "abc123", "xyz123", "abctoken", "xyzsecret", dev=True
+        )
         resp = mark.get_option_expire_date("AAPL", resp_format="xml")
         assert isinstance(resp, dict)
         assert MockOAuthSession().get.called

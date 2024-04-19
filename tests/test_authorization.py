@@ -3,9 +3,9 @@
    TODO:
     * add more mock tests for revoke
     * add more mock tests for renew"""
-
 import unittest
 from unittest.mock import patch
+
 from pyetrade import authorization
 
 

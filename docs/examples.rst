@@ -6,17 +6,17 @@ PyEtrade examples for some of the modules are as below
 Important requirements
 -----------------------
 
-Getting access tokens requires the users `Consumer key` and `Consumer Secret` 
-obtained from E*TRADE. This applies equally to both the sandbox and Live 
-environments. 
+Getting access tokens requires the users `Consumer key` and `Consumer Secret`
+obtained from E*TRADE. This applies equally to both the sandbox and Live
+environments.
 
-For the sandbox key, request a Sandbox consumer key via 
+For the sandbox key, request a Sandbox consumer key via
 `<https://us.etrade.com/etx/ris/apikey>`_ and for the Live/Production environment,
-request a key through the E*TRADE secure message. Please refer 
+request a key through the E*TRADE secure message. Please refer
 `E*TRADE Developer <https://developer.etrade.com/getting-started>`_ for
 more information
 
-The following examples assume you were successfully able to obtain the 
+The following examples assume you were successfully able to obtain the
 `Consumer key` and `Consumer Secret` from E*TRADE.
 
 Primary Authorization
@@ -27,8 +27,8 @@ Primary Authorization
 
 .. code-block:: python
 
-    # Importing the pyetrade module 
-    import pyetrade 
+    # Importing the pyetrade module
+    import pyetrade
 
     # Obtained secrets from Etrade for Sandbox or Live
     consumer_key = "<CONSUMER_KEY>"
@@ -51,7 +51,7 @@ Access Management
 
 .. code-block:: python
 
-    # Importing the pyetrade module 
+    # Importing the pyetrade module
     import pyetrade
 
     # Obtained secrets from Etrade for Sandbox or Live
@@ -100,14 +100,14 @@ Accounts Management
         consumer_secret,
         tokens['oauth_token'],
         tokens['oauth_token_secret'],
-        dev=True  
+        dev=True
     )
 
-    # lists all the accounts for 
+    # lists all the accounts for
     print(accounts.list_accounts(resp_format='json'))
 
-    # The above produces a json with all the accounts and their 
-    # respective accountIDKeys 
+    # The above produces a json with all the accounts and their
+    # respective accountIDKeys
 
     accountIDKey = '<Key for the chosen account from list_accounts>'
 

@@ -3,6 +3,10 @@ build:
   os: ubuntu-lts-latest
   tools:
     python: "latest"
+python:
+  install:
+    - requirements: requirements.txt
+    - requirements: docs/requirements.txt
 sphinx:
   builder: html
   configuration: docs/conf.py

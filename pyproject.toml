@@ -9,7 +9,7 @@ readme = "README.md"
 [tool.poetry.dependencies]
 python = "^3.9"
 python-dateutil = "^2.9.0.post0"
-requests = "^2.31.0"
+requests = "^2.32.0"
 requests-oauthlib = "^2.0.0"
 xmltodict = "^0.13.0"
 jxmlease = "^1.0.3"

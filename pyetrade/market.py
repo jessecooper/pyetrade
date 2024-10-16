@@ -243,34 +243,33 @@ class ETradeMarket(object):
         assert skip_adjusted in (True, False, None)
         assert isinstance(resp_format, str)
 
-        args = ["symbol=%s" % underlier]
-
+        payload = {"symbol": underlier}
+        
         if expiry_date is not None:
-            args.append(
-                "expiryDay=%02d&expiryMonth=%02d&expiryYear=%04d"
-                % (expiry_date.day, expiry_date.month, expiry_date.year)
-            )
+            payload["expiryDay"] = '%02d' % expiry_date.day
+            payload["expiryMonth"] = '%02d' % expiry_date.month
+            payload["expiryYear"] = '%04d' % expiry_date.year
         if strike_price_near is not None:
-            args.append("strikePriceNear=%0.2f" % strike_price_near)
+            payload["strikePriceNear"] = "%0.2f" % strike_price_near
         if chain_type is not None:
-            args.append("chainType=%s" % chain_type.upper())
+            payload["chainType"] = "%s" % chain_type.upper()
         if option_category is not None:
-            args.append("optionCategory=%s" % option_category.upper())
+            payload["optionCategory"] = "%s" % option_category.upper()
         if price_type is not None:
-            args.append("priceType=%s" % price_type.upper())
+            payload["priceType"] = "%s" % price_type.upper()
         if skip_adjusted is not None:
-            args.append("skipAdjusted=%s" % str(skip_adjusted))
+            payload["skipAdjusted"]= "%s" % str(skip_adjusted)
         if no_of_strikes is not None:
-            args.append("noOfStrikes=%d" % no_of_strikes)
+            payload["noOfStrikes"] = "%d" % no_of_strikes
 
-        api_url = "%s%s%s" % (
+        api_url = "%s%s" % (
             self.base_url,
-            "optionchains?" if resp_format.lower() == "xml" else "optionchains.json?",
-            "&".join(args),
+            "optionchains" if resp_format.lower() == "xml" else "optionchains.json"
         )
+
         LOGGER.debug(api_url)
 
-        req = self.session.get(api_url)
+        req = self.session.get(api_url, params=payload)
         req.raise_for_status()
 
         LOGGER.debug(req.text)

@@ -13,6 +13,7 @@ requests = "^2.31.0"
 requests-oauthlib = "^2.0.0"
 xmltodict = "^0.13.0"
 jxmlease = "^1.0.3"
+urllib3 = "1.26.19"
 
 [tool.poetry.group.dev.dependencies]
 black = "^24.4.0"

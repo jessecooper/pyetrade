@@ -1,5 +1,3 @@
-"""Alerts - ETrade Alerts API
-"""
 import logging
 
 import xmltodict

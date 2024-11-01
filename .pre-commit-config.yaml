@@ -10,7 +10,6 @@ repos:
         args: ["-f", "requirements.txt", "-o", "requirements.txt", "--without-hashes"]
       - id: poetry-export  # Dev dependencies
         args: ["-f", "requirements.txt", "-o", "requirements_dev.txt", "--with", "dev", "--without-hashes"]
-      - id: poetry-install
   - repo: https://github.com/asottile/reorder_python_imports
     rev: v3.12.0
     hooks:
@@ -39,3 +38,5 @@ repos:
     rev: 051fea31dbabf063ab38428c34a92c76d1abd5dc
     hooks:
     - id: pytest
+      args: ['--cov-config=.coveragerc', '--cov-branch', '--cov=pyetrade', '--cov-fail-under', '90',
+             '--cov-report', 'term-missing', '--cov-report', 'xml', 'tests/']

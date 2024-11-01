@@ -239,8 +239,8 @@ class ETradeAccounts(object):
     def list_transactions(
         self,
         account_id_key: str,
-        start_date: datetime = None,
-        end_date: datetime = None,
+        start_date: datetime.date = None,
+        end_date: datetime.date = None,
         sort_order: str = "DESC",
         marker: str = None,
         count: int = 50,
@@ -252,10 +252,10 @@ class ETradeAccounts(object):
         :type  account_id_key: str, required
         :param start_date: The earliest date to include in the date range (history is available for two years),
                            defaults to None
-        :type  start_date: datetime obj, optional
+        :type  start_date: datetime.date obj, optional
         :param end_date: The latest date to include in the date range (history is available for two years),
                          defaults to None
-        :type  end_date: datetime obj, optional
+        :type  end_date: datetime.date obj, optional
         :param sort_order: The sort order request (ASC or DESC), default is DESC
         :type  sort_order: str, optional
         :param marker: Specifies the desired starting point of the set of items to return (used for paging),
@@ -277,8 +277,8 @@ class ETradeAccounts(object):
         )
 
         payload = {
-            "startDate": start_date.date().strftime("%m%d%Y") if start_date else None,
-            "endDate": end_date.date().strftime("%m%d%Y") if end_date else None,
+            "startDate": start_date.strftime("%m%d%Y") if start_date else None,
+            "endDate": end_date.strftime("%m%d%Y") if end_date else None,
             "sortOrder": sort_order,
             "marker": marker,
             "count": count,

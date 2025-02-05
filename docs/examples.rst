@@ -260,6 +260,7 @@ Order Module
     orderTerm = "GOOD_UNTIL_CANCEL"  # "IMMEDIATE_OR_CANCEL"  # "GOOD_FOR_DAY"
     marketSession = "REGULAR"
     priceType = "LIMIT"
+    clientOrderId = "ABC123456" # Unique alphanumeric identifier to prevent duplicate submissions of the same order
 
     resp = order.place_option_order(
           resp_format="xml",

@@ -32,6 +32,11 @@ def to_decimal_str(price: float, round_down: bool) -> str:
     return spstr
 
 
+class RequestException(Exception):
+    """:description: Exception raised when request to Etrade API returns an error"""
+    pass
+
+
 def get_request_result(req: OAuth1Session.request, resp_format: str = "xml") -> dict:
     LOGGER.debug(req.text)
 
@@ -47,7 +52,7 @@ def get_request_result(req: OAuth1Session.request, resp_format: str = "xml") -> 
         req_output = xmltodict.parse(req.text)
 
     if "Error" in req_output.keys():
-        raise Exception(
+        raise RequestException(
             f'Etrade API Error - Code: {req_output["Error"]["code"]}, Msg: {req_output["Error"]["message"]}'
         )
 

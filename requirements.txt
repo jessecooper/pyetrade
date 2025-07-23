@@ -7,5 +7,5 @@ python-dateutil==2.9.0.post0 ; python_version >= "3.9" and python_version < "4.0
 requests-oauthlib==2.0.0 ; python_version >= "3.9" and python_version < "4.0"
 requests==2.32.4 ; python_version >= "3.9" and python_version < "4.0"
 six==1.16.0 ; python_version >= "3.9" and python_version < "4.0"
-urllib3==1.26.19 ; python_version >= "3.9" and python_version < "4.0"
+urllib3==2.5.0 ; python_version >= "3.9" and python_version < "4.0"
 xmltodict==0.13.0 ; python_version >= "3.9" and python_version < "4.0"

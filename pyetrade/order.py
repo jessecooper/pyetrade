@@ -604,7 +604,7 @@ class ETradeOrder(object):
         if "previewId" not in kwargs:
             LOGGER.debug(
                 "No previewId given, previewing before placing order "
-                "because of an Etrade bug as of 1/1/2019"
+                "because Etrade requires all orders to have a previewId"
             )
 
             preview = self.preview_equity_order(**kwargs)

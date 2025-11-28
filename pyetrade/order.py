@@ -52,8 +52,12 @@ def get_request_result(req: OAuth1Session.request, resp_format: str = "xml") -> 
         req_output = xmltodict.parse(req.text)
 
     if "Error" in req_output.keys():
+        try:
+            code = req_output["Error"]["code"]
+        except KeyError:
+            code = None
         raise RequestException(
-            f'Etrade API Error - Code: {req_output["Error"]["code"]}, Msg: {req_output["Error"]["message"]}'
+            f'Etrade API Error - Code: {code}, Msg: {req_output["Error"]["message"]}'
         )
 
     return req_output

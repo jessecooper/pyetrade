@@ -1,6 +1,7 @@
 import logging
 from datetime import datetime
 from typing import Union
+from copy import deepcopy
 
 import dateutil.parser
 import xmltodict
@@ -304,101 +305,134 @@ class ETradeOrder(object):
                     if symbol == opt_sym:
                         results.append(o)
         return results
-
+        
     @staticmethod
     def check_order(**kwargs):
         """:description: Check that required params for preview or place order are there and correct
 
         (Used internally)
         """
+        # For multi-leg orders
+        if "legs" in kwargs:
+            mandatory = [
+                "accountIdKey",
+                "clientOrderId",
+                "priceType",
+                "orderTerm",
+                "marketSession",
+                "legs"
+            ]
 
-        mandatory = [
-            "accountIdKey",
-            "symbol",
-            "orderAction",
-            "clientOrderId",
-            "priceType",
-            "quantity",
-            "orderTerm",
-            "marketSession",
-        ]
+            if not all(param in kwargs for param in mandatory):
+                raise OrderException("Missing required parameter for multi-leg order.")
 
-        if not all(param in kwargs for param in mandatory):
-            raise OrderException
+            for i, leg in enumerate(kwargs["legs"]):
+                required_leg_keys = {"symbol", "orderAction", "callPut", "strikePrice", "expiryDate", "quantity"}
+                if not required_leg_keys.issubset(leg):
+                    raise OrderException(f"Missing leg fields in leg {i}: {required_leg_keys - set(leg)}")
+        else:
+            # Single-leg orders
+            mandatory = [
+                "accountIdKey",
+                "symbol",
+                "orderAction",
+                "clientOrderId",
+                "priceType",
+                "quantity",
+                "orderTerm",
+                "marketSession",
+            ]
 
-        if kwargs["priceType"] == "STOP" and "stopPrice" not in kwargs:
-            raise OrderException
-        if kwargs["priceType"] == "LIMIT" and "limitPrice" not in kwargs:
-            raise OrderException
-        if (
-            kwargs["priceType"] == "STOP_LIMIT"
-            and "limitPrice" not in kwargs
-            and "stopPrice" not in kwargs
-        ):
-            raise OrderException
+            if not all(param in kwargs for param in mandatory):
+                raise OrderException("Missing required parameter for single-leg order.")
 
+            if kwargs["priceType"] == "STOP" and "stopPrice" not in kwargs:
+                raise OrderException
+            if kwargs["priceType"] == "LIMIT" and "limitPrice" not in kwargs:
+                raise OrderException
+            if kwargs["priceType"] == "STOP_LIMIT" and (
+                "limitPrice" not in kwargs or "stopPrice" not in kwargs
+            ):
+                raise OrderException
+    
     @staticmethod
     def build_order_payload(order_type: str, **kwargs) -> dict:
-        """:description: Builds the POST payload of a preview or place order
-                      (Used internally)
-
-        :param order_type: PreviewOrderRequest or PlaceOrderRequest
-        :type  order_type: str, required
-        :securityType: EQ or OPTN
-        :orderAction: for OPTN: BUY_OPEN, SELL_CLOSE
-        :callPut: CALL or PUT
-        :expiryDate: string, e.g. "2022-02-18"
-        :return: Builds Order Payload
-        :rtype: ``xml`` or ``json`` based on ``resp_format``
-        :EtradeRef: https://apisb.etrade.com/docs/api/order/api-order-v1.html
-
         """
-        securityType = kwargs.get("securityType", "EQ")  # EQ by default
-        product = {"securityType": securityType, "symbol": kwargs["symbol"]}
+        Builds the POST payload for preview or place order (including support for multi-leg spreads).
 
-        if securityType == "OPTN":
-            expiryDate = dateutil.parser.parse(
-                kwargs.pop("expiryDate")
-            )  # dateutil can handle most date formats
-            product.update(
-                {
-                    "expiryDay": expiryDate.day,
-                    "expiryMonth": expiryDate.month,
-                    "expiryYear": expiryDate.year,
-                    "callPut": kwargs["callPut"],
-                    "strikePrice": kwargs["strikePrice"],
+        :param order_type: "PreviewOrderRequest" or "PlaceOrderRequest"
+        :return: dict payload ready for submission
+        """
+        payload_order = deepcopy(kwargs)
+        instruments = []
+
+        # Check if multi-leg order
+        if "legs" in kwargs and isinstance(kwargs["legs"], list):
+            payload_order["orderType"] = "SPREADS"
+            for leg in kwargs["legs"]:
+                expiry = dateutil.parser.parse(leg["expiryDate"])
+                product = {
+                    "securityType": "OPTN",
+                    "symbol": leg["symbol"],
+                    "expiryDay": expiry.day,
+                    "expiryMonth": expiry.month,
+                    "expiryYear": expiry.year,
+                    "callPut": leg["callPut"],
+                    "strikePrice": leg["strikePrice"]
                 }
-            )
+                instrument = {
+                    "Product": product,
+                    "orderAction": leg["orderAction"],
+                    "quantityType": "QUANTITY",
+                    "quantity": leg["quantity"]
+                }
+                instruments.append(instrument)
 
-        instrument = {
-            "Product": product,
-            "orderAction": kwargs["orderAction"],
-            "quantityType": "QUANTITY",
-            "quantity": kwargs["quantity"],
-        }
+            payload_order["Instrument"] = instruments
+            payload_order.pop("legs", None)  # Remove the key here
+        else:
+            # Single leg fallback
+            payload_order["orderType"] = "OPTN"
+            expiry = dateutil.parser.parse(kwargs["expiryDate"])
+            product = {
+                "securityType": "OPTN",
+                "symbol": kwargs["symbol"],
+                "expiryDay": expiry.day,
+                "expiryMonth": expiry.month,
+                "expiryYear": expiry.year,
+                "callPut": kwargs["callPut"],
+                "strikePrice": kwargs["strikePrice"]
+            }
+            instrument = {
+                "Product": product,
+                "orderAction": kwargs["orderAction"],
+                "quantityType": "QUANTITY",
+                "quantity": kwargs["quantity"]
+            }
+            instruments.append(instrument)
 
-        order = kwargs
-        order["Instrument"] = instrument
+        payload_order["Instrument"] = instruments
 
-        def remove_invalid_price_from_kwargs(key: str) -> None:
-            if float(kwargs.get(key, 0)) <= 0:
-                kwargs.pop(key, 0)
+        # Clean up invalid pricing
+        for key in ["limitPrice", "stopPrice"]:
+            try:
+                if float(kwargs.get(key, 0)) <= 0:
+                    payload_order.pop(key, None)
+            except:
+                payload_order.pop(key, None)
 
-        remove_invalid_price_from_kwargs("stopPrice")
-        remove_invalid_price_from_kwargs("limitPrice")
-
+        # Optional: Format stopPrice
         if "stopPrice" in kwargs:
-            stopPrice = float(kwargs["stopPrice"])
-            round_down = "SELL" == kwargs["orderAction"][:4]
-            spstr = to_decimal_str(stopPrice, round_down)
+            stop = float(kwargs["stopPrice"])
+            round_down = kwargs.get("orderAction", "").startswith("SELL")
+            payload_order["stopPrice"] = to_decimal_str(stop, round_down)
 
-            order["stopPrice"] = spstr
-
+        # Build final payload
         payload = {
             order_type: {
-                "orderType": securityType,
+                "orderType": payload_order["orderType"],
                 "clientOrderId": kwargs["clientOrderId"],
-                "Order": order,
+                "Order": payload_order
             }
         }
 
@@ -577,13 +611,13 @@ class ETradeOrder(object):
         payload = self.build_order_payload("PreviewOrderRequest", **kwargs)
 
         return self.perform_request(self.session.put, api_url, payload, "xml")
-
+    
     def place_option_order(self, **kwargs) -> dict:
-        """:description: Places Option Order, only single leg CALL or PUT is supported for now
-        :return: Returns confirmation of the equity order
+        """:description: Places Option Order, now supports multi-leg strategies
+        :return: Returns confirmation of the option order
         """
         kwargs["securityType"] = "OPTN"
-
+        
         return self.place_equity_order(**kwargs)
 
     def place_equity_order(self, **kwargs) -> dict:

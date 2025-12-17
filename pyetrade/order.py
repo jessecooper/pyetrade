@@ -86,13 +86,14 @@ def option_symbol(
 class OrderException(Exception):
     """:description: Exception raised when giving bad args to a method not from Etrade calls"""
 
-    def __init__(self, explanation=None, params=None) -> None:
+    def __init__(self, explanation: str = "", params=None) -> None:
         super().__init__()
-        self.required = params
+        self.explanation = explanation or "missing required parameters"
+        self.required = params or []
         self.args = (explanation, params)
 
     def __str__(self) -> str:
-        return "Missing required parameters"
+        return f"{self.explanation}: {self.required}"
 
 
 class ETradeOrder(object):
@@ -327,19 +328,20 @@ class ETradeOrder(object):
             "marketSession",
         ]
 
-        if not all(param in kwargs for param in mandatory):
-            raise OrderException
+        missing = [param for param in mandatory if param not in kwargs]
+        if missing:
+            raise OrderException(params=missing)
 
         if kwargs["priceType"] == "STOP" and "stopPrice" not in kwargs:
-            raise OrderException
+            raise OrderException(params=["stopPrice"])
         if kwargs["priceType"] == "LIMIT" and "limitPrice" not in kwargs:
-            raise OrderException
+            raise OrderException(params=["limitPrice"])
         if (
             kwargs["priceType"] == "STOP_LIMIT"
             and "limitPrice" not in kwargs
             and "stopPrice" not in kwargs
         ):
-            raise OrderException
+            raise OrderException(params=["limitPrice", "stopPrice"])
 
     @staticmethod
     def build_order_payload(order_type: str, **kwargs) -> dict:

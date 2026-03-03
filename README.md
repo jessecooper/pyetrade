@@ -105,6 +105,10 @@ print(accounts.list_accounts())
 
 [PyEtrade Documentation](https://pyetrade.readthedocs.io/en/latest/)
 
+### OAuth & E*TRADE Integration
+
+For detailed information on E*TRADE OAuth integration, including known quirks, workarounds, and best practices, see [OAUTH_QUIRKS.md](docs/OAUTH_QUIRKS.md).
+
 ## Contribute to pyetrade
 
 [ETrade API Docs](https://apisb.etrade.com/docs/api/account/api-account-v1.html)

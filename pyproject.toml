@@ -7,7 +7,7 @@ license = "GPL-3.0"
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = "^3.9"
+python = ">=3.11,<3.13"
 python-dateutil = "^2.9.0.post0"
 requests = "^2.32.4"
 requests-oauthlib = "^2.0.0"

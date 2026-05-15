@@ -556,7 +556,7 @@ class ETradeOrder(object):
         # payload creation
         payload = self.build_order_payload("PreviewOrderRequest", **kwargs)
 
-        return self.perform_request(self.session.post, api_url, payload, "xml")
+        return self.perform_request(self.session.post, api_url, payload, kwargs.get("resp_format", "xml"))
 
     def change_preview_equity_order(
         self, account_id_key: str, order_id: str, **kwargs
@@ -582,7 +582,7 @@ class ETradeOrder(object):
         # payload creation
         payload = self.build_order_payload("PreviewOrderRequest", **kwargs)
 
-        return self.perform_request(self.session.put, api_url, payload, "xml")
+        return self.perform_request(self.session.put, api_url, payload, kwargs.get("resp_format", "xml"))
 
     def place_option_order(self, **kwargs) -> dict:
         """:description: Places Option Order, only single leg CALL or PUT is supported for now
@@ -627,7 +627,7 @@ class ETradeOrder(object):
         # payload creation
         payload = self.build_order_payload("PlaceOrderRequest", **kwargs)
 
-        return self.perform_request(self.session.post, api_url, payload, "xml")
+        return self.perform_request(self.session.post, api_url, payload, kwargs.get("resp_format", "xml"))
 
     def place_changed_option_order(self, **kwargs) -> dict:
         """:description: Places Option Order, only single leg CALL or PUT is supported for now
@@ -677,7 +677,7 @@ class ETradeOrder(object):
         # payload creation
         payload = self.build_order_payload("PlaceOrderRequest", **kwargs)
 
-        return self.perform_request(self.session.put, api_url, payload, "xml")
+        return self.perform_request(self.session.put, api_url, payload, kwargs.get("resp_format", "xml"))
 
     def cancel_order(
         self, account_id_key: str, order_num: int, resp_format: str = "xml"

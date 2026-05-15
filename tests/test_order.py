@@ -4,6 +4,7 @@
        * Test request error
        * Test API URL
 """
+import json
 import unittest
 from unittest.mock import MagicMock
 from unittest.mock import patch
@@ -357,4 +358,127 @@ class TestETradeOrder(unittest.TestCase):
         self.assertTrue(MockOAuthSession().put.called)
         self.assertTrue(
             isinstance(orders.cancel_order("12345", 42, resp_format="xml"), dict)
+        )
+
+    @patch("pyetrade.order.OAuth1Session")
+    def test_preview_equity_order_resp_format_json(self, MockOAuthSession):
+        """Test that preview_equity_order forwards resp_format='json' to perform_request"""
+        json_response = {"PreviewOrderResponse": {"PreviewIds": {"previewId": "321"}}}
+        MockOAuthSession().post().json.return_value = json_response
+        MockOAuthSession().post().text = json.dumps(json_response)
+
+        orders = order.ETradeOrder(
+            "abc123", "xyz123", "abctoken", "xyzsecret", dev=False
+        )
+
+        result = orders.preview_equity_order(
+            accountIdKey="12345",
+            symbol="ABC",
+            orderAction="BUY",
+            clientOrderId="1a2b3c",
+            priceType="MARKET",
+            quantity=100,
+            orderTerm="GOOD_UNTIL_CANCEL",
+            marketSession="REGULAR",
+            resp_format="json",
+        )
+
+        self.assertEqual(result, json_response)
+        MockOAuthSession().post.assert_called_with(
+            "https://api.etrade.com/v1/accounts/12345/orders/preview",
+            json=unittest.mock.ANY,
+            timeout=30,
+        )
+
+    @patch("pyetrade.order.OAuth1Session")
+    def test_place_equity_order_resp_format_json(self, MockOAuthSession):
+        """Test that place_equity_order forwards resp_format='json' to perform_request"""
+        json_response = {"PlaceOrderResponse": {"OrderIds": {"orderId": "456"}}}
+        MockOAuthSession().post().json.return_value = json_response
+        MockOAuthSession().post().text = json.dumps(json_response)
+
+        orders = order.ETradeOrder(
+            "abc123", "xyz123", "abctoken", "xyzsecret", dev=False
+        )
+
+        result = orders.place_equity_order(
+            accountIdKey="12345",
+            symbol="ABC",
+            orderAction="BUY",
+            clientOrderId="1a2b3c",
+            priceType="MARKET",
+            quantity=100,
+            orderTerm="GOOD_UNTIL_CANCEL",
+            marketSession="REGULAR",
+            previewId="321",
+            resp_format="json",
+        )
+
+        self.assertEqual(result, json_response)
+        MockOAuthSession().post.assert_called_with(
+            "https://api.etrade.com/v1/accounts/12345/orders/place",
+            json=unittest.mock.ANY,
+            timeout=30,
+        )
+
+    @patch("pyetrade.order.OAuth1Session")
+    def test_place_option_order_resp_format_json(self, MockOAuthSession):
+        """Test that place_option_order forwards resp_format='json' to perform_request"""
+        json_response = {"PlaceOrderResponse": {"OrderIds": {"orderId": "789"}}}
+        MockOAuthSession().post().json.return_value = json_response
+        MockOAuthSession().post().text = json.dumps(json_response)
+
+        orders = order.ETradeOrder(
+            "abc123", "xyz123", "abctoken", "xyzsecret", dev=False
+        )
+
+        result = orders.place_option_order(
+            accountIdKey="12345",
+            symbol="AAPL",
+            orderAction="BUY_OPEN",
+            clientOrderId="opt1",
+            priceType="MARKET",
+            quantity=1,
+            orderTerm="GOOD_FOR_DAY",
+            marketSession="REGULAR",
+            securityType="OPTN",
+            callPut="CALL",
+            expiryDate="2022-02-18",
+            strikePrice=150,
+            previewId="321",
+            resp_format="json",
+        )
+
+        self.assertEqual(result, json_response)
+
+    @patch("pyetrade.order.OAuth1Session")
+    def test_place_changed_equity_order_resp_format_json(self, MockOAuthSession):
+        """Test that place_changed_equity_order forwards resp_format='json' to perform_request"""
+        json_response = {"PlaceOrderResponse": {"OrderIds": {"orderId": "999"}}}
+        MockOAuthSession().put().json.return_value = json_response
+        MockOAuthSession().put().text = json.dumps(json_response)
+
+        orders = order.ETradeOrder(
+            "abc123", "xyz123", "abctoken", "xyzsecret", dev=False
+        )
+
+        result = orders.place_changed_equity_order(
+            accountIdKey="12345",
+            orderId="111",
+            symbol="ABC",
+            orderAction="BUY",
+            clientOrderId="1a2b3c",
+            priceType="MARKET",
+            quantity=100,
+            orderTerm="GOOD_UNTIL_CANCEL",
+            marketSession="REGULAR",
+            previewId="321",
+            resp_format="json",
+        )
+
+        self.assertEqual(result, json_response)
+        MockOAuthSession().put.assert_called_with(
+            "https://api.etrade.com/v1/accounts/12345/orders/111/change/place",
+            json=unittest.mock.ANY,
+            timeout=30,
         )

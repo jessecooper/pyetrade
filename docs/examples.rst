@@ -278,3 +278,39 @@ Order Module
           orderTerm=orderTerm,
           marketSession=marketSession,
         )
+        
+    # place multi-leg option order:
+    quantity = 1
+    strikePrice1 = 200
+    strikePrice2 = 210
+    expiryDate = "2022-02-18"
+    
+    legs=[
+    {
+        "symbol": "PLTR",
+        "orderAction": "BUY_OPEN",
+        "callPut": "CALL",
+        "strikePrice": strikePrice1,
+        "expiryDate": expiryDate,
+        "quantity": quantity
+    },
+    {
+        "symbol": "PLTR",
+        "orderAction": "SELL_OPEN",
+        "callPut": "CALL",
+        "strikePrice": strikePrice2,
+        "expiryDate": expiryDate,
+        "quantity": quantity
+    }]
+    
+    resp = orders.place_option_order(
+        resp_format="json",
+        accountIdKey = accountIDKey,
+        legs=legs,
+        clientOrderId=clientOrderId,
+        priceType= priceType,
+        limitPrice=limitPrice,
+        allOrNone=False,
+        orderTerm=orderTerm,
+        marketSession=marketSession
+    )

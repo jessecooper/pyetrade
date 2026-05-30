@@ -21,19 +21,24 @@ class ETradeOAuth(object):
     :type consumer_secret: str, required
     :param callback_url: Callback URL passed to OAuth mod, defaults to "oob"
     :type callback_url: str, optional
+    :param dev: Defines Sandbox (True) or Live (False) ETrade, defaults to False
+    :type dev: bool, optional
     :EtradeRef: https://apisb.etrade.com/docs/api/authorization/request_token.html
     """
 
     def __init__(
-        self, consumer_key: str, consumer_secret: str, callback_url: str = "oob"
+        self,
+        consumer_key: str,
+        consumer_secret: str,
+        callback_url: str = "oob",
+        dev: bool = False,
     ):
         self.consumer_key = consumer_key
         self.consumer_secret = consumer_secret
-        self.base_url_prod = r"https://api.etrade.com"
-        self.base_url_dev = r"https://apisb.etrade.com"
-        self.req_token_url = r"https://api.etrade.com/oauth/request_token"
+        self.base_url = f'https://{"apisb" if dev else "api"}.etrade.com'
+        self.req_token_url = f"{self.base_url}/oauth/request_token"
         self.auth_token_url = r"https://us.etrade.com/e/t/etws/authorize"
-        self.access_token_url = r"https://api.etrade.com/oauth/access_token"
+        self.access_token_url = f"{self.base_url}/oauth/access_token"
         self.callback_url = callback_url
         self.access_token = None
         self.resource_owner_key = None
